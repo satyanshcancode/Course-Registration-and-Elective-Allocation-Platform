@@ -38,7 +38,7 @@ export class EnvValidationError extends Error {
 }
 
 /** Loads the repo-root .env if present. Existing variables are never overridden. */
-function loadDotEnvFile(): void {
+export function loadDotEnvFile(): void {
   if (existsSync(ROOT_ENV_FILE)) {
     process.loadEnvFile(ROOT_ENV_FILE);
   }

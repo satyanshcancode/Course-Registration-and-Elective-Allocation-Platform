@@ -1,9 +1,9 @@
 import type { ApiResponse, HealthStatus } from '@course-reg/shared';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../src/app.js';
-import type { HealthRepository } from '../src/repositories/healthRepository.js';
-import { createHealthService } from '../src/services/healthService.js';
+import { createApp } from '../../src/app.js';
+import type { HealthRepository } from '../../src/repositories/healthRepository.js';
+import { createHealthService } from '../../src/services/healthService.js';
 
 const FIXED_NOW = new Date('2026-01-15T09:30:00.000Z');
 
