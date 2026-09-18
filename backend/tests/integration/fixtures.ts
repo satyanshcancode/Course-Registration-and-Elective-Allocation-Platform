@@ -7,7 +7,8 @@ import bcrypt from 'bcryptjs';
 import type { Pool } from 'pg';
 
 // Low cost factor: fast, and still a real bcrypt hash that passes the CHECK.
-export const TEST_PASSWORD_HASH = bcrypt.hashSync('Test@123', 4);
+export const TEST_PASSWORD = 'Test@123';
+export const TEST_PASSWORD_HASH = bcrypt.hashSync(TEST_PASSWORD, 4);
 
 let counter = 0;
 const nextId = (): number => {
