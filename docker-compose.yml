@@ -37,6 +37,7 @@ services:
       CORS_ORIGIN: http://localhost:5173
       JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-100kb}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       # Bind mounts from Windows/macOS hosts do not emit inotify events.
       CHOKIDAR_USEPOLLING: 'true'
       CHOKIDAR_INTERVAL: '500'

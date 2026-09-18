@@ -16,6 +16,31 @@ export interface UserRow {
   updated_at: Date;
 }
 
+/** users LEFT JOIN students/programs: the student columns are null for admins. */
+export interface CurrentUserRow {
+  id: string;
+  email: string;
+  role: string;
+  name: string | null;
+  roll_number: string | null;
+  program_code: string | null;
+  program_name: string | null;
+  semester: number | null;
+  credits_completed: number | null;
+}
+
+export interface StudentProfileRow {
+  user_id: string;
+  email: string;
+  name: string;
+  roll_number: string;
+  program_code: string;
+  program_name: string;
+  semester: number;
+  credits_completed: number;
+  expected_graduation_term: string;
+}
+
 export interface DepartmentRow {
   id: string;
   code: string;

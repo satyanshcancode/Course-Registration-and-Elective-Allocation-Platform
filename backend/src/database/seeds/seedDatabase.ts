@@ -5,6 +5,7 @@
 import { DEFAULT_PREFERENCE_PRIORITY_CONFIG } from '@course-reg/shared';
 import bcrypt from 'bcryptjs';
 import type { Pool, PoolClient } from 'pg';
+import { PASSWORD_HASH_ROUNDS } from '../../config/session.js';
 import { evaluateEligibility } from '../../services/eligibilityRules.js';
 import type { Logger } from '../../utils/logger.js';
 import { createSeededRandom } from '../../utils/random.js';
@@ -36,7 +37,6 @@ export const SEED_RANDOM_SEED = 20_260_901;
 /** Stored on the Fall 2026 window for allocation tie-breaks. */
 export const FALL_2026_WINDOW_RANDOM_SEED = 2_026_091_801;
 
-const DEFAULT_PASSWORD_HASH_ROUNDS = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface SeedOptions {
@@ -252,7 +252,7 @@ export function countEligibleStudents(
 }
 
 export async function seedDatabase(pool: Pool, options: SeedOptions = {}): Promise<SeedSummary> {
-  const rounds = options.passwordHashRounds ?? DEFAULT_PASSWORD_HASH_ROUNDS;
+  const rounds = options.passwordHashRounds ?? PASSWORD_HASH_ROUNDS;
   const students = buildSeedStudents();
 
   // Hash each distinct demo password once; bcrypt salts make each run's hash differ.

@@ -7,15 +7,24 @@ import { createHealthService } from '../../src/services/healthService.js';
 
 const FIXED_NOW = new Date('2026-01-15T09:30:00.000Z');
 
+const notUsed = () => Promise.reject(new Error('not used in this test'));
+
 function buildApp(repository: HealthRepository) {
   return createApp({
     corsOrigins: ['http://localhost:5173'],
     jsonBodyLimit: '100kb',
+    cookieSecure: false,
     services: {
       healthService: createHealthService(repository, {
         now: () => FIXED_NOW,
         uptimeSeconds: () => 42.9,
       }),
+      authService: {
+        login: notUsed,
+        resolveSession: () => Promise.resolve(null),
+        getCurrentUser: notUsed,
+      },
+      studentService: { getOwnProfile: notUsed },
     },
   });
 }
