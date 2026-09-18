@@ -1,0 +1,12 @@
+.placeholder {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.body {
+  padding: var(--space-5);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+}
