@@ -25,6 +25,7 @@ import {
   type CompletedCourse,
   type Course,
   type CourseOffering,
+  type CurrentUser,
   type Department,
   type Enrollment,
   type Notification,
@@ -34,6 +35,7 @@ import {
   type RegistrationHistoryEvent,
   type RegistrationWindow,
   type Student,
+  type StudentProfile,
   type User,
   type WaitlistEntry,
 } from '@course-reg/shared';
@@ -44,6 +46,7 @@ import type {
   CompletedCourseRow,
   CourseOfferingRow,
   CourseRow,
+  CurrentUserRow,
   DepartmentRow,
   EnrollmentRow,
   NotificationRow,
@@ -52,6 +55,7 @@ import type {
   ProgramRow,
   RegistrationHistoryRow,
   RegistrationWindowRow,
+  StudentProfileRow,
   StudentRow,
   UserRow,
   WaitlistEntryRow,
@@ -111,6 +115,49 @@ export function mapUserRow(row: UserRow): User {
     email: row.email,
     role: oneOf(USER_ROLES, row.role, 'users.role'),
     createdAt: iso(row.created_at),
+  };
+}
+
+/** Session user: admins have no profile; students must have one. */
+export function mapCurrentUserRow(row: CurrentUserRow): CurrentUser {
+  const role = oneOf(USER_ROLES, row.role, 'users.role');
+  if (role === 'ADMIN') {
+    return { id: row.id, email: row.email, role };
+  }
+  if (
+    row.name === null ||
+    row.roll_number === null ||
+    row.program_code === null ||
+    row.program_name === null ||
+    row.semester === null ||
+    row.credits_completed === null
+  ) {
+    throw new RowMappingError('students (profile missing for STUDENT user)', row.id);
+  }
+  return {
+    id: row.id,
+    email: row.email,
+    role,
+    student: {
+      name: row.name,
+      rollNumber: row.roll_number,
+      program: { code: row.program_code, name: row.program_name },
+      semester: row.semester,
+      creditsCompleted: row.credits_completed,
+    },
+  };
+}
+
+export function mapStudentProfileRow(row: StudentProfileRow): StudentProfile {
+  return {
+    userId: row.user_id,
+    email: row.email,
+    name: row.name,
+    rollNumber: row.roll_number,
+    program: { code: row.program_code, name: row.program_name },
+    semester: row.semester,
+    creditsCompleted: row.credits_completed,
+    expectedGraduationTerm: term(row.expected_graduation_term, 'students.expected_graduation_term'),
   };
 }
 

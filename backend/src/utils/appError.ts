@@ -19,6 +19,14 @@ export class AppError extends Error {
     return new AppError(400, message, errors);
   }
 
+  static unauthorized(message = 'Please sign in to continue.'): AppError {
+    return new AppError(401, message);
+  }
+
+  static forbidden(message = 'You do not have permission to do that.'): AppError {
+    return new AppError(403, message);
+  }
+
   static notFound(message = 'Resource not found'): AppError {
     return new AppError(404, message);
   }

@@ -1,8 +1,7 @@
 import { createApp } from './app.js';
 import { appEnvSchema, loadEnv } from './config/env.js';
+import { createServices } from './container.js';
 import { createPool } from './database/pool.js';
-import { createHealthRepository } from './repositories/healthRepository.js';
-import { createHealthService } from './services/healthService.js';
 import { logger } from './utils/logger.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -14,13 +13,15 @@ function start(): void {
   const app = createApp({
     corsOrigins: env.CORS_ORIGIN,
     jsonBodyLimit: env.JSON_BODY_LIMIT,
-    services: {
-      healthService: createHealthService(createHealthRepository(pool)),
-    },
+    cookieSecure: env.COOKIE_SECURE,
+    services: createServices(pool, { jwtSecret: env.JWT_SECRET }),
   });
 
   const server = app.listen(env.PORT, () => {
-    logger.info(`Backend listening on port ${env.PORT}`, { nodeEnv: env.NODE_ENV });
+    logger.info(`Backend listening on port ${env.PORT}`, {
+      nodeEnv: env.NODE_ENV,
+      secureCookies: env.COOKIE_SECURE,
+    });
   });
 
   const shutdown = (signal: NodeJS.Signals): void => {
@@ -51,6 +52,6 @@ try {
   start();
 } catch (error) {
   // Fail fast: invalid configuration must stop the process immediately.
-  logger.error(error instanceof Error ? error.message : 'Failed to start backend', { error });
+  logger.error(error instanceof Error ? error.message : 'Failed to start backend');
   process.exit(1);
 }

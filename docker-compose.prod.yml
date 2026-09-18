@@ -34,6 +34,7 @@ services:
       CORS_ORIGIN: http://localhost:8080
       JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-100kb}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
     depends_on:
       postgres:
         condition: service_healthy

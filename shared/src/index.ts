@@ -2,6 +2,15 @@
 export type { ApiFailure, ApiFieldError, ApiResponse, ApiSuccess } from './api/apiResponse.js';
 export { isApiResponse } from './api/apiResponse.js';
 export type {
+  AdminPing,
+  CurrentAdmin,
+  CurrentStudent,
+  CurrentUser,
+  LoginRequest,
+  StudentProfile,
+  StudentProfileSummary,
+} from './api/auth.js';
+export type {
   DatabaseHealth,
   DependencyStatus,
   HealthStatus,

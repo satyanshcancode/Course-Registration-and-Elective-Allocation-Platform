@@ -12,19 +12,46 @@ export const databaseEnvSchema = z.object({
   LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
 });
 
-export const appEnvSchema = databaseEnvSchema.extend({
-  PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  CORS_ORIGIN: z
-    .string()
-    .min(1)
-    .transform((value) =>
-      value
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter((origin) => origin.length > 0),
-    ),
-  JSON_BODY_LIMIT: z.string().min(1).default('100kb'),
-});
+/** The placeholder shipped in .env.example; production refuses to start with it. */
+export const EXAMPLE_JWT_SECRET = 'replace-with-a-long-random-secret-of-at-least-32-characters';
+
+export const JWT_SECRET_MIN_LENGTH = 32;
+
+export const appEnvSchema = databaseEnvSchema
+  .extend({
+    PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    CORS_ORIGIN: z
+      .string()
+      .min(1)
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter((origin) => origin.length > 0),
+      ),
+    JSON_BODY_LIMIT: z.string().min(1).default('100kb'),
+    JWT_SECRET: z
+      .string()
+      .min(JWT_SECRET_MIN_LENGTH, `must be at least ${JWT_SECRET_MIN_LENGTH} characters`),
+    /** Defaults to true in production; set "false" only for plain-HTTP deployments. */
+    COOKIE_SECURE: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((value) => (value === undefined ? undefined : value === 'true')),
+  })
+  .superRefine((env, context) => {
+    if (env.NODE_ENV === 'production' && env.JWT_SECRET === EXAMPLE_JWT_SECRET) {
+      context.addIssue({
+        code: 'custom',
+        path: ['JWT_SECRET'],
+        message: 'is still the example value from .env.example; generate a real secret',
+      });
+    }
+  })
+  .transform(({ COOKIE_SECURE, ...env }) => ({
+    ...env,
+    COOKIE_SECURE: COOKIE_SECURE ?? env.NODE_ENV === 'production',
+  }));
 
 export type DatabaseEnv = z.infer<typeof databaseEnvSchema>;
 export type AppEnv = z.infer<typeof appEnvSchema>;
