@@ -27,3 +27,4 @@ Thumbs.db
 
 # Local editor settings
 .editor/settings.local.json
+.editor/launch.json
