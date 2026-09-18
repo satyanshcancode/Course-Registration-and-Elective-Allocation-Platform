@@ -1,8 +1,10 @@
 import { SystemStatusPanel } from '../components/SystemStatusPanel';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useHealthStatus } from '../hooks/useHealthStatus';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
+  useDocumentTitle('Home');
   const { state, retry } = useHealthStatus();
 
   return (

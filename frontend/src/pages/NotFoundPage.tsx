@@ -1,7 +1,9 @@
 import { Link } from 'react-router';
 import { PagePlaceholder } from '../components/PagePlaceholder';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function NotFoundPage() {
+  useDocumentTitle('Page not found');
   return (
     <PagePlaceholder title="Page not found">
       <p>

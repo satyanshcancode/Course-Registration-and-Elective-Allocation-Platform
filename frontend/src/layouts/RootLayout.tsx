@@ -1,12 +1,41 @@
 import { NavLink, Outlet } from 'react-router';
+import { LogoutButton } from '../components/LogoutButton';
+import { useAuth } from '../hooks/useAuth';
+import { homePathFor } from '../utils/authRedirects';
 import styles from './RootLayout.module.css';
 
-const NAV_LINKS = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/student', label: 'Student', end: false },
-  { to: '/admin', label: 'Admin', end: false },
-  { to: '/login', label: 'Sign in', end: false },
-] as const;
+function SessionNav() {
+  const { state } = useAuth();
+
+  if (state.status === 'loading') {
+    return null;
+  }
+  if (state.status === 'anonymous') {
+    return (
+      <li>
+        <NavLink to="/login" className={styles.navLink}>
+          Sign in
+        </NavLink>
+      </li>
+    );
+  }
+  const { user } = state;
+  return (
+    <>
+      <li>
+        <NavLink to={homePathFor(user.role)} className={styles.navLink}>
+          {user.role === 'ADMIN' ? 'Admin' : 'My registration'}
+        </NavLink>
+      </li>
+      <li className={styles.userName}>
+        {user.role === 'STUDENT' ? user.student.name : user.email}
+      </li>
+      <li>
+        <LogoutButton />
+      </li>
+    </>
+  );
+}
 
 export function RootLayout() {
   return (
@@ -21,13 +50,12 @@ export function RootLayout() {
           </NavLink>
           <nav aria-label="Main">
             <ul className={styles.navList}>
-              {NAV_LINKS.map((link) => (
-                <li key={link.to}>
-                  <NavLink to={link.to} end={link.end} className={styles.navLink}>
-                    {link.label}
-                  </NavLink>
-                </li>
-              ))}
+              <li>
+                <NavLink to="/" end className={styles.navLink}>
+                  Home
+                </NavLink>
+              </li>
+              <SessionNav />
             </ul>
           </nav>
         </div>
