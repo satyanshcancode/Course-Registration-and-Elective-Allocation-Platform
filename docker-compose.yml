@@ -1,0 +1,107 @@
+# Development stack with hot reload. Usage: `docker compose up --build`
+# Credentials come from .env (copy .env.example). Only 5173, 4000 and 5432
+# are published on the host.
+name: course-registration
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dev
+    init: true
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      CORS_ORIGIN: http://localhost:5173
+      JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-100kb}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Bind mounts from Windows/macOS hosts do not emit inotify events.
+      CHOKIDAR_USEPOLLING: 'true'
+      CHOKIDAR_INTERVAL: '500'
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      - ./tsconfig.base.json:/app/tsconfig.base.json:ro
+      # Named volumes shadow the bind mounts so host (Windows) and container
+      # (Linux) dependencies never mix.
+      - root-node-modules-backend:/app/node_modules
+      - backend-node-modules:/app/backend/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+    init: true
+    environment:
+      API_PROXY_TARGET: http://backend:4000
+      WATCH_POLLING: 'true'
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+      - ./tsconfig.base.json:/app/tsconfig.base.json:ro
+      - root-node-modules-frontend:/app/node_modules
+      - frontend-node-modules:/app/frontend/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  root-node-modules-backend:
+  backend-node-modules:
+  root-node-modules-frontend:
+  frontend-node-modules:
