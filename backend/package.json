@@ -11,7 +11,11 @@
     "migrate": "tsx --conditions=source src/database/migrate.ts",
     "migrate:prod": "node dist/database/migrate.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed": "tsx --conditions=source src/database/seeds/seed.ts",
+    "seed:demo-submissions": "tsx --conditions=source src/database/seeds/seedDemoSubmissions.ts",
+    "seed:prod": "node dist/database/seeds/seed.js",
+    "seed:demo-submissions:prod": "node dist/database/seeds/seedDemoSubmissions.js"
   },
   "dependencies": {
     "@course-reg/shared": "0.1.0",

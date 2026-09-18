@@ -17,6 +17,8 @@
     "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
     "preview": "concurrently --names backend,frontend --prefix-colors blue,magenta \"npm run start -w backend\" \"npm run preview -w frontend\"",
     "migrate": "npm run migrate -w backend",
+    "seed": "npm run seed -w backend",
+    "seed:demo-submissions": "npm run seed:demo-submissions -w backend",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -27,7 +29,10 @@
     "docker:logs": "docker compose logs -f",
     "docker:reset": "docker compose down --volumes --remove-orphans",
     "docker:prod": "docker compose -f docker-compose.prod.yml up --build -d",
-    "docker:prod:down": "docker compose -f docker-compose.prod.yml down"
+    "docker:prod:down": "docker compose -f docker-compose.prod.yml down",
+    "docker:migrate": "docker compose exec backend npm run migrate",
+    "docker:seed": "docker compose exec backend npm run seed",
+    "docker:seed:demo-submissions": "docker compose exec backend npm run seed:demo-submissions"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
