@@ -1,0 +1,19 @@
+# Used by BuildKit for frontend/Dockerfile (build context is the repo root).
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/.vite
+.git
+.env
+.env.*
+!.env.example
+*.log
+docs
+backend/src
+backend/tests
+backend/*.ts
+backend/*.json
+!backend/package.json
+backend/Dockerfile*
+docker-compose*.yml
