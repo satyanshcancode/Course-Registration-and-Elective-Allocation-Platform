@@ -8,3 +8,6 @@ package-lock.json
 
 # Official brief: must stay byte-for-byte as provided.
 docs/PROBLEM_STATEMENT.md
+
+# Local Claude Code / desktop-app files
+.claude/

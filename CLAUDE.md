@@ -32,6 +32,19 @@
   `backend/src/database/migrations`, named `NNNN_description.sql`, applied by
   `npm run migrate` and tracked in `schema_migrations`. Never edit an applied
   migration; add a new one.
+- Database design, constraints and seed data are documented in
+  `docs/DATABASE.md`; update it with every schema change.
+- Seat counts live on the offering (`registration_window_courses`), not on
+  `courses`. `allocated_count` is maintained by a trigger on `enrollments`;
+  never update it by hand in application code.
+- Status/role/method values are `TEXT` + named `CHECK` constraints mirrored by
+  the const tuples in `shared/src/domain/enums.ts`; change both together.
+- DB rows (snake_case, `backend/src/repositories/rows.ts`) are mapped to shared
+  camelCase models in `backend/src/repositories/mappers.ts`, never in `shared/`.
+- Backend integration tests (`backend/tests/integration`) use the separate
+  `<db>_test` database and truncate it between tests; they need PostgreSQL
+  running (`npm run docker:up`). Deterministic randomness uses
+  `backend/src/utils/random.ts` (seeded, reproducible).
 - No Redis and no separate worker container in this scope; allocation runs
   inside the backend. Allocation strategies are classes implementing a common
   `AllocationStrategy` interface (in `backend/src/allocation/`) so more
