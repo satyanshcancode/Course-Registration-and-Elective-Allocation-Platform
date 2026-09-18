@@ -1,0 +1,41 @@
+/*
+ * A deliberately small set of layout helpers. Anything more specific belongs
+ * in a component's CSS Module.
+ */
+
+/* Hidden visually, still read by assistive technology. The only place
+   !important is allowed: it must win over any component style. */
+.visually-hidden:not(:focus-within, :active) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Vertical rhythm: children separated by --stack-gap. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, var(--space-4));
+}
+
+/* Horizontal group that wraps (buttons, badges, metadata). */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-gap, var(--space-2));
+}
+
+/* Centred, width-limited content column with side gutters. */
+.container {
+  width: 100%;
+  max-width: var(--container-max, var(--layout-max-width));
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
