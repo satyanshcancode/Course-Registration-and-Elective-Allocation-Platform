@@ -1,0 +1,338 @@
+/**
+ * Row -> domain model mappers. Enum-like columns and JSONB are validated here,
+ * so a row that somehow violates the contract fails loudly instead of leaking
+ * an invalid value into the application.
+ */
+import {
+  ALLOCATION_METHODS,
+  ALLOCATION_OUTCOMES,
+  ALLOCATION_RUN_STATUSES,
+  ENROLLMENT_SOURCES,
+  HISTORY_EVENT_TYPES,
+  isAcademicTerm,
+  isAllocationConfig,
+  isOneOf,
+  NOTIFICATION_TYPES,
+  PREFERENCE_RANKS,
+  REGISTRATION_WINDOW_STATUSES,
+  USER_ROLES,
+  WAITLIST_STATUSES,
+  type AcademicTerm,
+  type AllocationConfig,
+  type AllocationResult,
+  type AllocationRun,
+  type AuditLogEntry,
+  type CompletedCourse,
+  type Course,
+  type CourseOffering,
+  type Department,
+  type Enrollment,
+  type Notification,
+  type PreferenceItem,
+  type PreferenceSubmission,
+  type Program,
+  type RegistrationHistoryEvent,
+  type RegistrationWindow,
+  type Student,
+  type User,
+  type WaitlistEntry,
+} from '@course-reg/shared';
+import type {
+  AllocationResultRow,
+  AllocationRunRow,
+  AuditLogRow,
+  CompletedCourseRow,
+  CourseOfferingRow,
+  CourseRow,
+  DepartmentRow,
+  EnrollmentRow,
+  NotificationRow,
+  PreferenceItemRow,
+  PreferenceSubmissionRow,
+  ProgramRow,
+  RegistrationHistoryRow,
+  RegistrationWindowRow,
+  StudentRow,
+  UserRow,
+  WaitlistEntryRow,
+} from './rows.js';
+
+/** A row did not match the schema contract (should be impossible given the CHECKs). */
+export class RowMappingError extends Error {
+  constructor(column: string, value: unknown) {
+    super(`Unexpected value for ${column}: ${JSON.stringify(value)}`);
+    this.name = 'RowMappingError';
+  }
+}
+
+function oneOf<const T extends readonly unknown[]>(values: T, value: unknown, column: string) {
+  if (!isOneOf(values, value)) {
+    throw new RowMappingError(column, value);
+  }
+  return value;
+}
+
+function term(value: string, column: string): AcademicTerm {
+  if (!isAcademicTerm(value)) {
+    throw new RowMappingError(column, value);
+  }
+  return value;
+}
+
+function allocationConfig(value: unknown, column: string): AllocationConfig {
+  if (!isAllocationConfig(value)) {
+    throw new RowMappingError(column, value);
+  }
+  return value;
+}
+
+/** BIGINT arrives as a string; every BIGINT we store fits in a safe integer. */
+function bigint(value: string, column: string): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) {
+    throw new RowMappingError(column, value);
+  }
+  return parsed;
+}
+
+const iso = (value: Date): string => value.toISOString();
+const isoOrNull = (value: Date | null): string | null => (value ? value.toISOString() : null);
+
+function jsonObject(value: unknown, column: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new RowMappingError(column, value);
+  }
+  return value as Record<string, unknown>;
+}
+
+export function mapUserRow(row: UserRow): User {
+  return {
+    id: row.id,
+    email: row.email,
+    role: oneOf(USER_ROLES, row.role, 'users.role'),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function mapDepartmentRow(row: DepartmentRow): Department {
+  return { id: row.id, code: row.code, name: row.name };
+}
+
+export function mapProgramRow(row: ProgramRow): Program {
+  return { id: row.id, code: row.code, name: row.name, departmentId: row.department_id };
+}
+
+export function mapStudentRow(row: StudentRow): Student {
+  return {
+    userId: row.user_id,
+    rollNumber: row.roll_number,
+    name: row.name,
+    programId: row.program_id,
+    semester: row.semester,
+    creditsCompleted: row.credits_completed,
+    expectedGraduationTerm: term(row.expected_graduation_term, 'students.expected_graduation_term'),
+  };
+}
+
+export function mapCompletedCourseRow(row: CompletedCourseRow): CompletedCourse {
+  return {
+    studentId: row.student_id,
+    courseId: row.course_id,
+    completedTerm: term(row.completed_term, 'student_completed_courses.completed_term'),
+  };
+}
+
+export function mapCourseRow(row: CourseRow): Course {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    departmentId: row.department_id,
+    credits: row.credits,
+    description: row.description,
+    minSemester: row.min_semester,
+    minCredits: row.min_credits,
+  };
+}
+
+export function mapRegistrationWindowRow(row: RegistrationWindowRow): RegistrationWindow {
+  return {
+    id: row.id,
+    name: row.name,
+    term: term(row.term, 'registration_windows.term'),
+    startsAt: iso(row.starts_at),
+    endsAt: iso(row.ends_at),
+    status: oneOf(REGISTRATION_WINDOW_STATUSES, row.status, 'registration_windows.status'),
+    allocationMethod: oneOf(
+      ALLOCATION_METHODS,
+      row.allocation_method,
+      'registration_windows.allocation_method',
+    ),
+    config: allocationConfig(row.config, 'registration_windows.config'),
+    randomSeed: bigint(row.random_seed, 'registration_windows.random_seed'),
+  };
+}
+
+export function mapCourseOfferingRow(row: CourseOfferingRow): CourseOffering {
+  return {
+    windowId: row.window_id,
+    courseId: row.course_id,
+    capacity: row.capacity,
+    allocatedCount: row.allocated_count,
+  };
+}
+
+export function mapPreferenceSubmissionRow(row: PreferenceSubmissionRow): PreferenceSubmission {
+  const base = {
+    id: row.id,
+    studentId: row.student_id,
+    windowId: row.window_id,
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+
+  if (row.status === 'DRAFT') {
+    return {
+      ...base,
+      status: 'DRAFT',
+      idempotencyKey: row.idempotency_key,
+      submittedAt: null,
+      submissionSequence: null,
+    };
+  }
+  if (
+    row.status === 'SUBMITTED' &&
+    row.idempotency_key !== null &&
+    row.submitted_at !== null &&
+    row.submission_sequence !== null
+  ) {
+    return {
+      ...base,
+      status: 'SUBMITTED',
+      idempotencyKey: row.idempotency_key,
+      submittedAt: iso(row.submitted_at),
+      submissionSequence: bigint(
+        row.submission_sequence,
+        'preference_submissions.submission_sequence',
+      ),
+    };
+  }
+  throw new RowMappingError('preference_submissions.status', row.status);
+}
+
+export function mapPreferenceItemRow(row: PreferenceItemRow): PreferenceItem {
+  return {
+    submissionId: row.submission_id,
+    windowId: row.window_id,
+    courseId: row.course_id,
+    rank: oneOf(PREFERENCE_RANKS, row.rank, 'preference_items.rank'),
+  };
+}
+
+export function mapEnrollmentRow(row: EnrollmentRow): Enrollment {
+  const base = {
+    id: row.id,
+    studentId: row.student_id,
+    windowId: row.window_id,
+    courseId: row.course_id,
+    source: oneOf(ENROLLMENT_SOURCES, row.source, 'enrollments.source'),
+    enrolledAt: iso(row.enrolled_at),
+  };
+
+  if (row.status === 'ACTIVE') {
+    return { ...base, status: 'ACTIVE', droppedAt: null };
+  }
+  if (row.status === 'DROPPED' && row.dropped_at !== null) {
+    return { ...base, status: 'DROPPED', droppedAt: iso(row.dropped_at) };
+  }
+  throw new RowMappingError('enrollments.status', row.status);
+}
+
+export function mapWaitlistEntryRow(row: WaitlistEntryRow): WaitlistEntry {
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    windowId: row.window_id,
+    courseId: row.course_id,
+    score: row.score,
+    position: row.position,
+    status: oneOf(WAITLIST_STATUSES, row.status, 'waitlist_entries.status'),
+    createdAt: iso(row.created_at),
+    promotedAt: isoOrNull(row.promoted_at),
+    removedAt: isoOrNull(row.removed_at),
+  };
+}
+
+export function mapAllocationRunRow(row: AllocationRunRow): AllocationRun {
+  return {
+    id: row.id,
+    windowId: row.window_id,
+    method: oneOf(ALLOCATION_METHODS, row.method, 'allocation_runs.method'),
+    algorithmVersion: row.algorithm_version,
+    randomSeed: bigint(row.random_seed, 'allocation_runs.random_seed'),
+    configSnapshot: allocationConfig(row.config_snapshot, 'allocation_runs.config_snapshot'),
+    status: oneOf(ALLOCATION_RUN_STATUSES, row.status, 'allocation_runs.status'),
+    startedAt: iso(row.started_at),
+    finishedAt: isoOrNull(row.finished_at),
+    errorMessage: row.error_message,
+    triggeredBy: row.triggered_by,
+  };
+}
+
+export function mapAllocationResultRow(row: AllocationResultRow): AllocationResult {
+  return {
+    id: bigint(row.id, 'allocation_results.id'),
+    runId: row.run_id,
+    studentId: row.student_id,
+    courseId: row.course_id,
+    outcome: oneOf(ALLOCATION_OUTCOMES, row.outcome, 'allocation_results.outcome'),
+    preferenceRank: oneOf(
+      PREFERENCE_RANKS,
+      row.preference_rank,
+      'allocation_results.preference_rank',
+    ),
+    preferenceScore: row.preference_score,
+    priorityScore: row.priority_score,
+    totalScore: row.total_score,
+    finalRank: row.final_rank,
+    explanation: row.explanation,
+  };
+}
+
+export function mapRegistrationHistoryRow(row: RegistrationHistoryRow): RegistrationHistoryEvent {
+  return {
+    id: bigint(row.id, 'registration_history.id'),
+    studentId: row.student_id,
+    windowId: row.window_id,
+    courseId: row.course_id,
+    eventType: oneOf(HISTORY_EVENT_TYPES, row.event_type, 'registration_history.event_type'),
+    details: jsonObject(row.details, 'registration_history.details'),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function mapNotificationRow(row: NotificationRow): Notification {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: oneOf(NOTIFICATION_TYPES, row.type, 'notifications.type'),
+    title: row.title,
+    body: row.body,
+    readAt: isoOrNull(row.read_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function mapAuditLogRow(row: AuditLogRow): AuditLogEntry {
+  return {
+    id: bigint(row.id, 'audit_logs.id'),
+    actorUserId: row.actor_user_id,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    oldValue: row.old_value,
+    newValue: row.new_value,
+    reason: row.reason,
+    createdAt: iso(row.created_at),
+  };
+}
