@@ -52,6 +52,32 @@
 - Authorization is enforced server-side. Never trust client-side seat counts,
   eligibility, identity or priority values.
 
+## Authentication and authorization
+
+- Sessions are an HS256 JWT (`sub` = user id, `role`, 8 h expiry) in the
+  httpOnly, SameSite=Strict cookie `cr_session` (path `/api`, Secure in
+  production). Never put the token in a response body, localStorage or JS.
+- Backend middleware (`backend/src/middleware/`):
+  - `createRequireAuth(authService)` (built once in `routes/index.ts` as
+    `requireAuth`): verifies the cookie, re-loads the user, sets `req.auth`
+    (`AuthContext` in `backend/src/types/auth.ts`, typed via
+    `backend/src/types/express.d.ts`). 401 otherwise.
+  - `requireRole('ADMIN' | 'STUDENT')`: 403 on role mismatch. Mount
+    `router.use(requireAuth, requireRole(...))` on every admin/student router.
+  - `rejectCrossOriginWrites(origins)`: 403 for POST/PUT/PATCH/DELETE with a
+    foreign `Origin`. `createLoginRateLimiter`: failed logins per IP + e-mail.
+- **Student identity comes from `req.auth` only.** Student endpoints live under
+  `/api/students/me/...`, call `requireStudentId(req)` and never accept a
+  student id from the URL, query or body. Admin endpoints use `getAuth(req)`.
+- Record security-relevant admin actions in `audit_logs`
+  (`auditLogRepository.record`); admin logins are recorded as `LOGIN`.
+- Frontend: `AuthProvider` (inside the router) + `useAuth()`; guard pages with
+  `<ProtectedRoute role="...">` as a layout route. API calls go through
+  `apiClient` (`credentials: 'include'`); a 401 on any call except `/auth/me`
+  and `/auth/login` ends the session and redirects to `/login`.
+- Demo credentials are in the README; `JWT_SECRET` comes from `.env`
+  (min 32 chars; production refuses the example value).
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one

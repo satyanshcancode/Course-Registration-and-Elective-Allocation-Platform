@@ -5,7 +5,8 @@ pre-check, a registration cart with atomic submit, preference-and-priority
 allocation for oversubscribed electives, waitlists with automatic promotion,
 add/drop, and a personal registration history.
 
-> **Status: Phase 2 (database).** The stack, database schema, seed data and a health
+> **Status: Phase 3 (authentication).** The stack, database schema, seed data,
+> sign-in with role-based access and a health
 > check are in place; API endpoints and screens arrive in later phases. The full
 > README comes in the final phase.
 
@@ -70,6 +71,41 @@ After changing dependencies, refresh the `node_modules` volumes with
 **Production stack:** `npm run docker:prod`, then open http://localhost:8080.
 nginx serves the built frontend and proxies `/api` to the backend; only port
 8080 is published.
+
+## Authentication
+
+Sign in at `/login` with one of the [demo accounts](#demo-accounts). Students land
+on `/student`, administrators on `/admin`.
+
+- **Session cookie.** `POST /api/auth/login` checks the password with bcrypt and
+  sets a signed JWT (HS256, user id + role, 8 hours) in the `cr_session` cookie:
+  `HttpOnly` (JavaScript can't read it), `SameSite=Strict`, `Path=/api`, and
+  `Secure` in production. The token is never in a response body or localStorage.
+- **No account enumeration.** An unknown e-mail and a wrong password give the same
+  401 message, and both paths run a bcrypt comparison so timing looks the same.
+- **Brute-force limit.** At most 10 failed sign-ins per IP and e-mail every 15
+  minutes, then `429`.
+- **CSRF.** Besides `SameSite=Strict`, state-changing requests with a foreign
+  `Origin` header are rejected (`403`).
+- **Authorization on the server.** Every request re-validates the cookie and
+  re-loads the user (`requireAuth`); `requireRole` returns `403` for the wrong
+  role. Student endpoints take the student's identity from the session, never
+  from an id in the request. Admin sign-ins are written to `audit_logs`.
+- **Frontend.** `AuthProvider` restores the session via `GET /api/auth/me`;
+  `<ProtectedRoute>` sends visitors to `/login` (and back afterwards) and sends
+  users of the other role to their own home. If a session expires, the next API
+  call sends you to `/login` with a notice.
+
+| Endpoint                | Access    | Purpose                                            |
+| ----------------------- | --------- | -------------------------------------------------- |
+| `POST /api/auth/login`  | public    | Sign in; sets the session cookie; returns the user |
+| `POST /api/auth/logout` | public    | Clears the session cookie                          |
+| `GET /api/auth/me`      | signed in | Current user (plus profile summary for students)   |
+| `GET /api/students/me`  | student   | The caller's own student profile                   |
+| `GET /api/admin/ping`   | admin     | Role check                                         |
+
+`JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
+The server refuses to start in production with the example value.
 
 ## Seed data and demo accounts
 
