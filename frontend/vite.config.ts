@@ -30,6 +30,9 @@ const apiProxy: Record<string, ProxyOptions> = {
   '/api': {
     target: readSetting('API_PROXY_TARGET') ?? DEFAULT_API_PROXY_TARGET,
     changeOrigin: true,
+    // Adds X-Forwarded-For so the backend (trust proxy = 1) sees the client IP,
+    // which the login rate limiter keys on.
+    xfwd: true,
   },
 };
 

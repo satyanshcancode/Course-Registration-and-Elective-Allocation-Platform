@@ -44,6 +44,11 @@ export default defineConfig(
     files: ['frontend/src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended, jsxA11y.flatConfigs.recommended],
     languageOptions: { globals: globals.browser },
+    rules: {
+      // Our components may take a `role` prop (e.g. <ProtectedRoute role="ADMIN">);
+      // ARIA roles are still checked on DOM elements.
+      'jsx-a11y/aria-role': ['error', { ignoreNonDOM: true }],
+    },
   },
 
   // Tests may use non-null assertions on values the test itself just asserted.

@@ -12,6 +12,29 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * Requests whose 401 means "not signed in" rather than "session expired":
+ * the session probe on page load and a failed sign-in attempt.
+ */
+const SESSION_PROBE_PATHS: ReadonlySet<string> = new Set(['/auth/me', '/auth/login']);
+
+type UnauthorizedHandler = () => void;
+
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+/**
+ * Registers what happens when any other request gets 401 (the session expired
+ * or was revoked). Returns a function that removes the handler again.
+ */
+export function setUnauthorizedHandler(handler: UnauthorizedHandler): () => void {
+  unauthorizedHandler = handler;
+  return () => {
+    if (unauthorizedHandler === handler) {
+      unauthorizedHandler = null;
+    }
+  };
+}
+
 function failure(message: string): ApiFailure {
   return { success: false, data: null, message };
 }
@@ -36,6 +59,9 @@ async function readJson(response: Response): Promise<unknown> {
  * Typed fetch wrapper. Always resolves to an ApiResponse — network failures and
  * non-envelope responses become ApiFailure — so callers narrow on `success`
  * instead of wrapping every call in try/catch. Only aborts are re-thrown.
+ *
+ * The session lives in an httpOnly cookie that the browser attaches itself
+ * (`credentials: 'include'`); no token is ever handled by JavaScript.
  */
 export async function request<T>(
   method: HttpMethod,
@@ -53,6 +79,7 @@ export async function request<T>(
       method,
       headers: requestHeaders,
       body: body === undefined ? null : JSON.stringify(body),
+      credentials: 'include',
       signal: signal ?? null,
     });
   } catch (error) {
@@ -60,6 +87,10 @@ export async function request<T>(
       throw error;
     }
     return failure('Could not reach the server. Check your connection and try again.');
+  }
+
+  if (response.status === 401 && !SESSION_PROBE_PATHS.has(path)) {
+    unauthorizedHandler?.();
   }
 
   const payload = await readJson(response);

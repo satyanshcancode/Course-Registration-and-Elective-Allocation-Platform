@@ -20,9 +20,19 @@ const healthyBody: ApiResponse<HealthStatus> = {
   },
 };
 
+const notSignedInBody = { success: false, data: null, message: 'Please sign in to continue.' };
+
+/** Health succeeds; the session probe says "not signed in". */
+function fakeBackend(input: RequestInfo | URL): Promise<Response> {
+  const url = input instanceof Request ? input.url : String(input);
+  return Promise.resolve(
+    url.endsWith('/api/auth/me') ? jsonResponse(notSignedInBody, 401) : jsonResponse(healthyBody),
+  );
+}
+
 describe('App', () => {
   it('renders the layout and shows backend and database health', async () => {
-    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(healthyBody)));
+    const fetchMock = vi.fn(fakeBackend);
     vi.stubGlobal('fetch', fetchMock);
 
     render(<App />);
@@ -32,6 +42,8 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.getByText('Checking services…')).toBeInTheDocument();
+    // Anonymous visitors are offered the sign-in link once the session probe answers.
+    expect(await screen.findByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
 
     const databaseRow = (await screen.findByText('Database')).closest('div');
     expect(databaseRow).not.toBeNull();
