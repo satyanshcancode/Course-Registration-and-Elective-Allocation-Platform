@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+package-lock.json
+.env
+.env.*
+
+# Official brief: must stay byte-for-byte as provided.
+docs/PROBLEM_STATEMENT.md
