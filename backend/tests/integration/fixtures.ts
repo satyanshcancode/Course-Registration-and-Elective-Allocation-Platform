@@ -1,0 +1,221 @@
+/**
+ * Minimal row builders for integration tests. Each returns the generated id(s)
+ * and accepts overrides for the columns a test cares about.
+ */
+import { DEFAULT_PREFERENCE_PRIORITY_CONFIG } from '@course-reg/shared';
+import bcrypt from 'bcryptjs';
+import type { Pool } from 'pg';
+
+// Low cost factor: fast, and still a real bcrypt hash that passes the CHECK.
+export const TEST_PASSWORD_HASH = bcrypt.hashSync('Test@123', 4);
+
+let counter = 0;
+const nextId = (): number => {
+  counter += 1;
+  return counter;
+};
+
+async function insertReturningId(
+  pool: Pool,
+  sql: string,
+  values: unknown[],
+  column = 'id',
+): Promise<string> {
+  const result = await pool.query<Record<string, string>>(sql, values);
+  const id = result.rows[0]?.[column];
+  if (id === undefined) {
+    throw new Error(`Insert did not return ${column}`);
+  }
+  return id;
+}
+
+/** 1 -> "B", 26 -> "BA": department codes must be letters only. */
+function toLetters(n: number): string {
+  let value = n;
+  let letters = '';
+  do {
+    letters = String.fromCharCode(65 + (value % 26)) + letters;
+    value = Math.floor(value / 26);
+  } while (value > 0);
+  return letters;
+}
+
+export function createDepartment(pool: Pool): Promise<string> {
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    'INSERT INTO departments (code, name) VALUES ($1, $2) RETURNING id',
+    [`DEP${toLetters(n)}`, `Department ${n}`],
+  );
+}
+
+export function createProgram(pool: Pool, departmentId: string): Promise<string> {
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    'INSERT INTO programs (code, name, department_id) VALUES ($1, $2, $3) RETURNING id',
+    [`PROG-${n}`, `Program ${n}`, departmentId],
+  );
+}
+
+export function createUser(
+  pool: Pool,
+  overrides: { email?: string; role?: 'STUDENT' | 'ADMIN' } = {},
+): Promise<string> {
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id',
+    [overrides.email ?? `user${n}@university.edu`, TEST_PASSWORD_HASH, overrides.role ?? 'STUDENT'],
+  );
+}
+
+export async function createStudent(
+  pool: Pool,
+  programId: string,
+  overrides: { semester?: number; creditsCompleted?: number; userId?: string } = {},
+): Promise<string> {
+  const userId = overrides.userId ?? (await createUser(pool));
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    `INSERT INTO students
+       (user_id, roll_number, name, program_id, semester, credits_completed, expected_graduation_term)
+     VALUES ($1, $2, $3, $4, $5, $6, '2028-SPRING')
+     RETURNING user_id`,
+    [
+      userId,
+      `ROLL${String(n).padStart(4, '0')}`,
+      `Student ${n}`,
+      programId,
+      overrides.semester ?? 5,
+      overrides.creditsCompleted ?? 90,
+    ],
+    'user_id',
+  );
+}
+
+export function createCourse(pool: Pool, departmentId: string): Promise<string> {
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    `INSERT INTO courses (code, name, department_id, credits)
+     VALUES ($1, $2, $3, 4) RETURNING id`,
+    [`TST${String(n % 1000).padStart(3, '0')}`, `Course ${n}`, departmentId],
+  );
+}
+
+export function createWindow(
+  pool: Pool,
+  overrides: { name?: string; status?: string } = {},
+): Promise<string> {
+  const n = nextId();
+  return insertReturningId(
+    pool,
+    `INSERT INTO registration_windows
+       (name, term, starts_at, ends_at, status, allocation_method, config, random_seed)
+     VALUES ($1, '2026-FALL', now(), now() + interval '14 days', $2, 'PREFERENCE_PRIORITY', $3, 42)
+     RETURNING id`,
+    [
+      overrides.name ?? `Window ${n}`,
+      overrides.status ?? 'DRAFT',
+      DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+    ],
+  );
+}
+
+export async function createOffering(
+  pool: Pool,
+  windowId: string,
+  courseId: string,
+  capacity = 2,
+): Promise<void> {
+  await pool.query(
+    'INSERT INTO registration_window_courses (window_id, course_id, capacity) VALUES ($1, $2, $3)',
+    [windowId, courseId, capacity],
+  );
+}
+
+export function createDraftSubmission(
+  pool: Pool,
+  studentId: string,
+  windowId: string,
+  idempotencyKey: string | null = null,
+): Promise<string> {
+  return insertReturningId(
+    pool,
+    `INSERT INTO preference_submissions (student_id, window_id, idempotency_key)
+     VALUES ($1, $2, $3) RETURNING id`,
+    [studentId, windowId, idempotencyKey],
+  );
+}
+
+export async function addPreference(
+  pool: Pool,
+  submissionId: string,
+  windowId: string,
+  courseId: string,
+  rank: number,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO preference_items (submission_id, window_id, course_id, rank)
+     VALUES ($1, $2, $3, $4)`,
+    [submissionId, windowId, courseId, rank],
+  );
+}
+
+export async function markSubmitted(
+  pool: Pool,
+  submissionId: string,
+  idempotencyKey: string,
+): Promise<void> {
+  await pool.query(
+    `UPDATE preference_submissions
+     SET status = 'SUBMITTED', idempotency_key = $2, submitted_at = now(),
+         submission_sequence = nextval('preference_submission_sequence')
+     WHERE id = $1`,
+    [submissionId, idempotencyKey],
+  );
+}
+
+export function createEnrollment(
+  pool: Pool,
+  studentId: string,
+  windowId: string,
+  courseId: string,
+  status: 'ACTIVE' | 'DROPPED' = 'ACTIVE',
+): Promise<string> {
+  return insertReturningId(
+    pool,
+    `INSERT INTO enrollments (student_id, window_id, course_id, status, source, dropped_at)
+     VALUES ($1, $2, $3, $4, 'ALLOCATION', CASE WHEN $4 = 'DROPPED' THEN now() END)
+     RETURNING id`,
+    [studentId, windowId, courseId, status],
+  );
+}
+
+/** A window with one offered course and a student: the usual starting point. */
+export async function createScenario(pool: Pool, capacity = 2) {
+  const departmentId = await createDepartment(pool);
+  const programId = await createProgram(pool, departmentId);
+  const courseId = await createCourse(pool, departmentId);
+  const otherCourseId = await createCourse(pool, departmentId);
+  const windowId = await createWindow(pool);
+  await createOffering(pool, windowId, courseId, capacity);
+  await createOffering(pool, windowId, otherCourseId, capacity);
+  const studentId = await createStudent(pool, programId);
+  return { departmentId, programId, courseId, otherCourseId, windowId, studentId };
+}
+
+export async function allocatedCount(
+  pool: Pool,
+  windowId: string,
+  courseId: string,
+): Promise<number> {
+  const result = await pool.query<{ allocated_count: number }>(
+    `SELECT allocated_count FROM registration_window_courses
+     WHERE window_id = $1 AND course_id = $2`,
+    [windowId, courseId],
+  );
+  return result.rows[0]?.allocated_count ?? Number.NaN;
+}
