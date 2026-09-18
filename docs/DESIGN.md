@@ -1,0 +1,152 @@
+# Design direction
+
+**Concept: the university course catalogue, digitised.** The interface borrows
+from printed academic catalogues, timetables and registrar forms: calm, precise,
+information-dense and trustworthy. Students use it under time pressure, so
+clarity always beats decoration.
+
+All UI follows this document. Tokens live in
+[`frontend/src/styles/variables.css`](../frontend/src/styles/variables.css); every
+component in `/dev/components` (dev only) shows them in use.
+
+## Typography
+
+| Role                                   | Face                                                          | Why                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Headings                               | **Source Serif 4** (variable, `opsz` axis)                    | A bookish transitional serif made for catalogues and long reading. Its optical-size axis gives headings sharper, higher-contrast "display" letterforms while small text stays sturdy — the character comes from the cut, not from bolding everything. Fraunces was considered but its soft, wonky shapes read as editorial or playful rather than institutional. |
+| UI and body                            | **IBM Plex Sans** 400 / 500 / 600                             | Engineered, slightly technical, very legible at 14–16px, with a clear distinction between `I`, `l` and `1`. Not Inter, not Roboto.                                                                                                                                                                                                                               |
+| Codes, seat counts, timestamps, tables | **IBM Plex Mono** 400 / 500, plus `tabular-nums` in Plex Sans | Course codes read like catalogue labels; digits line up in columns like a timetable.                                                                                                                                                                                                                                                                             |
+
+- All fonts are self-hosted through `@fontsource` (Latin subset only), loaded in
+  `styles/fonts.css`. No Google Fonts CDN.
+- Scale: ratio **1.2** (minor third) from a 1rem base:
+  12.2 · 13.3 · **16** · 19.2 · 23 · 27.6 · 33.2 · 39.8 px. The three largest
+  steps are fluid (`clamp()`), so page titles shrink on phones without media queries.
+- Headings: serif, weight 560–620 (not 700), `letter-spacing: -0.015em` to
+  `-0.02em`, line-height 1.15–1.2, `font-optical-sizing: auto`.
+- Body: 1rem / 1.55. Dense UI text (tables, meta) 0.833rem / 1.45.
+- **Kicker**: a small uppercase label above a serif title
+  (`FALL 2026 · REGISTRATION`): Plex Sans 600, 0.694rem, `letter-spacing: 0.08em`,
+  muted ink.
+
+## Colour
+
+**Accent: deep library green `#1F4D3A`.** It recalls cloth-bound catalogues,
+green-shaded desk lamps and the registrar's stamp, and reads as calm and
+institutional rather than commercial. Oxblood was the alternative, but this
+product's most common negative status is "not allocated" (brick red), and red
+validation errors sit right next to primary buttons. With an oxblood accent the
+main action would look like a destructive one, so red is reserved for problems.
+The allocated/success green is a separate, yellower moss (`#2D6630`), and it
+always appears with a check icon and the word, so the two greens are never
+confused.
+
+Semantic tokens (light "paper" / dark "ink"):
+
+| Token                    | Light     | Dark      | Use                                                      |
+| ------------------------ | --------- | --------- | -------------------------------------------------------- |
+| `--color-paper`          | `#F7F5F0` | `#1B1916` | Page background (warm off-white / warm charcoal)         |
+| `--color-surface`        | `#FCFBF8` | `#23201C` | Cards, tables, inputs, header                            |
+| `--color-surface-sunken` | `#EFECE4` | `#16140F` | Table stripes, meter track, code blocks                  |
+| `--color-ink`            | `#1D1B17` | `#ECE7DC` | Primary text (never pure black/white)                    |
+| `--color-ink-muted`      | `#5A554C` | `#B3AC9E` | Secondary text, captions, kickers                        |
+| `--color-rule`           | `#DCD6CA` | `#3A3630` | Hairline borders and table rules (decorative)            |
+| `--color-rule-strong`    | `#8C8577` | `#7D7667` | Input borders, meter edges (≥ 3:1, WCAG 1.4.11)          |
+| `--color-accent`         | `#1F4D3A` | `#8CC3A4` | Primary buttons, active nav, links, focus ring           |
+| `--color-success`        | `#2D6630` | `#96C68E` | Allocated, enrolled, eligible                            |
+| `--color-warning`        | `#85560A` | `#DDAE55` | Waitlisted, nearly full (ochre)                          |
+| `--color-danger`         | `#9A2F22` | `#E8978A` | Not allocated, errors, full, destructive actions (brick) |
+| `--color-info`           | `#475467` | `#AEB8C6` | Pending, draft, neutral notices (slate)                  |
+
+Each status colour has a `-soft` background (`--color-success-soft` …) for badges
+and notices. Status is **never shown by colour alone**: every status has a
+colour, an icon and a text label (`StatusBadge`), and the seat meter always prints
+its numbers.
+
+The dark theme is an "ink" version: a warm charcoal paper with light warm ink.
+It is a single `@media (prefers-color-scheme: dark)` block that only redefines
+colour tokens.
+
+### Contrast (WCAG 2.2 AA)
+
+Computed with the WCAG relative-luminance formula. Text needs 4.5:1;
+non-text UI (input borders, focus ring, meter fill) needs 3:1.
+
+| Pair                                   | Light         | Dark          |
+| -------------------------------------- | ------------- | ------------- |
+| ink on paper                           | 15.78:1       | 14.22:1       |
+| ink on surface                         | 16.62:1       | 13.15:1       |
+| ink on surface-sunken (stripes)        | 14.56:1       | 14.92:1       |
+| ink-muted on paper                     | 6.79:1        | 7.78:1        |
+| ink-muted on surface                   | 7.15:1        | 7.19:1        |
+| ink-muted on surface-sunken            | 6.27:1        | 8.16:1        |
+| accent on paper (links, active nav)    | 8.84:1        | 8.73:1        |
+| accent on surface                      | 9.31:1        | 8.08:1        |
+| accent on accent-soft                  | 7.89:1        | 6.65:1        |
+| on-accent on accent (primary button)   | 9.31:1        | 8.41:1        |
+| on-accent on accent-hover              | 12.12:1       | 10.04:1       |
+| success on success-soft / surface      | 5.70 / 6.64:1 | 7.11 / 8.31:1 |
+| warning on warning-soft / surface      | 5.22 / 6.09:1 | 6.67 / 7.92:1 |
+| danger on danger-soft / surface        | 5.98 / 7.24:1 | 6.41 / 7.12:1 |
+| info on info-soft / surface            | 6.27 / 7.43:1 | 7.00 / 8.09:1 |
+| rule-strong on surface (input borders) | 3.54:1        | 3.60:1        |
+| accent on surface-sunken (meter fill)  | 8.16:1        | 9.16:1        |
+
+`--color-rule` is deliberately below 3:1: hairlines separate content that is
+already grouped by alignment and spacing. They're decorative, not the only cue.
+
+## Shape, depth and layout
+
+- **Hairlines, not boxes.** 1px warm-grey rules separate content. Cards are
+  hairline-bordered surfaces with no shadow.
+- **Shadows only for things that float**: modals, toasts and menus
+  (`--shadow-float`, `--shadow-overlay`).
+- **Small radii**: 2px (tags, badges), 4px (inputs, buttons, cards), 6px
+  (dialogs). No pills, no 24px rounded cards.
+- **Left-aligned grids** with clear alignment lines. Tables are set like a
+  timetable: tabular numerals, hairline rules, subtle striping, right-aligned numbers.
+- **Course codes** look like catalogue labels: Plex Mono 500, letter-spaced,
+  uppercase, in a thin outlined tag (`CourseCode`).
+- **Seat availability** is a slim 6px horizontal meter with the exact numbers
+  beside it ("37 of 50 allocated · 13 left"), never a donut.
+- **Kicker + serif title** for section and page headings.
+- **Motion** is short and functional only: 120ms (hover, press) and 180ms
+  (dialog, toast, status change), with a standard ease-out curve. Nothing
+  bounces, parallaxes or fades in on scroll. `prefers-reduced-motion` switches
+  transitions and animations off.
+
+## Layout
+
+- **Desktop (≥ 1024px)**: a CSS Grid shell with a sticky left sidebar (15rem)
+  and the content column. The top bar is sticky, and inside `main` a sticky page
+  header holds the title and actions.
+- **Tablet (640–1023px)**: the sidebar collapses to a 4rem icon rail. Labels
+  appear as tooltips on hover and keyboard focus, and stay in the accessibility
+  tree the whole time.
+- **Mobile (< 640px)**: a fixed bottom navigation bar with the four most-used
+  destinations plus **More** (the rest). Content is padded so nothing hides
+  behind the bar, and toasts sit above it.
+
+## Icons
+
+Lucide, used through one `Icon` wrapper: 1.5px stroke (absolute), 16/20/24px
+grid, `aria-hidden`. Every icon sits next to visible text or has a
+visually-hidden label. No emoji, no sparkles.
+
+## Copy
+
+Short, direct and specific: "13 of 50 seats left", "Registration opens Mon 21
+Sep, 10:00", "You're #7 on the waitlist". Say what happened and what to do next.
+No marketing language and no placeholder text.
+
+## Banned
+
+Purple/blue/pink gradients and gradient text · glassmorphism and blur panels ·
+emoji or sparkle icons · giant hero sections or welcome banners inside the app ·
+big shadows and large radii on every card · centring everything · rows of
+identical stat cards with huge numbers and tiny labels · lorem ipsum or vague
+copy · default browser-blue links and buttons.
+
+## Review
+
+_(Filled in after the screenshot review; see below.)_
