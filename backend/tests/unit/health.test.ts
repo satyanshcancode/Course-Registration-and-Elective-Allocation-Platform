@@ -25,6 +25,12 @@ function buildApp(repository: HealthRepository) {
         getCurrentUser: notUsed,
       },
       studentService: { getOwnProfile: notUsed },
+      catalogueService: {
+        getCurrentWindow: notUsed,
+        listCatalogue: notUsed,
+        getCourse: notUsed,
+        getSeats: notUsed,
+      },
     },
   });
 }

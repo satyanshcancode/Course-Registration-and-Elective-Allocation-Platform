@@ -218,3 +218,66 @@ export interface AuditLogRow {
   reason: string | null;
   created_at: Date;
 }
+
+// ---------------------------------------------------------------------------
+// Catalogue read models (joined / aggregated queries)
+// ---------------------------------------------------------------------------
+
+export interface WindowSummaryRow {
+  id: string;
+  name: string;
+  term: string;
+  status: string;
+  starts_at: Date;
+  ends_at: Date;
+}
+
+/** One offering with its course, department, demand and rule lists (JSON arrays). */
+export interface CatalogueOfferingRow {
+  course_id: string;
+  code: string;
+  name: string;
+  credits: number;
+  description: string;
+  min_semester: number;
+  min_credits: number;
+  department_code: string;
+  department_name: string;
+  capacity: number;
+  allocated_count: number;
+  demand: number;
+  /** [{ id, code, name }] */
+  prerequisites: unknown;
+  /** [{ id, code, name }] */
+  eligible_programs: unknown;
+}
+
+export interface SeatRow {
+  code: string;
+  capacity: number;
+  allocated_count: number;
+  demand: number;
+}
+
+export interface EligibilityFactsRow {
+  program_id: string;
+  semester: number;
+  credits_completed: number;
+  completed_course_ids: string[];
+}
+
+/** One of the caller's own cart items, enrollments or waitlist places. */
+export interface CourseStatusRow {
+  course_id: string;
+  kind: string;
+  rank: number | null;
+  position: number | null;
+}
+
+export interface LockedOfferingRow {
+  window_id: string;
+  course_id: string;
+  code: string;
+  capacity: number;
+  allocated_count: number;
+}

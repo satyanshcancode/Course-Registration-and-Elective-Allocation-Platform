@@ -104,7 +104,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Probability and Statistics',
     departmentCode: 'MATH',
     credits: 3,
-    description: 'Random variables, distributions, estimation and hypothesis testing.',
+    description:
+      'Random variables, distributions, estimation and hypothesis testing. Builds the statistical toolkit used in machine learning, networking and finance electives. Weekly problem sets and one data analysis project.',
     minSemester: 2,
     minCredits: 15,
     prerequisites: [],
@@ -119,7 +120,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Linear Algebra',
     departmentCode: 'MATH',
     credits: 3,
-    description: 'Vector spaces, linear maps, eigenvalues and matrix decompositions.',
+    description:
+      'Vector spaces, linear maps, eigenvalues and matrix decompositions. Emphasises the geometric meaning of each result alongside computation. Required background for numerical methods and machine learning.',
     minSemester: 2,
     minCredits: 15,
     prerequisites: [],
@@ -134,7 +136,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Data Structures and Algorithms',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Lists, trees, graphs, hashing and algorithm analysis.',
+    description:
+      'Lists, trees, graphs, hashing and algorithm analysis. Students implement each structure and measure its cost in time and memory. Two programming assignments per unit and a final design exercise.',
     minSemester: 3,
     minCredits: 30,
     prerequisites: [],
@@ -149,7 +152,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Database Management Systems',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Relational model, SQL, normalisation, transactions and indexing.',
+    description:
+      'Relational model, SQL, normalisation, transactions and indexing. Covers schema design through to query plans and concurrency control. Includes a term project building and tuning a small application database.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: ['CS201'],
@@ -164,7 +168,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Operating Systems',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Processes, scheduling, memory management, file systems and concurrency.',
+    description:
+      'Processes, scheduling, memory management, file systems and concurrency. Labs work inside a teaching kernel to add scheduling and paging features. Assumes comfortable C programming.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: ['CS201'],
@@ -179,7 +184,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Computer Networks',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Layered architecture, TCP/IP, routing, congestion control and sockets.',
+    description:
+      'Layered architecture, TCP/IP, routing, congestion control and sockets. Each layer is studied through packet traces and small socket programs. Prepares students for cloud security and distributed systems.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: ['CS201'],
@@ -196,7 +202,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Artificial Intelligence',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Search, knowledge representation, planning and an introduction to learning.',
+    description:
+      'Search, knowledge representation, planning and an introduction to learning. Covers uninformed and heuristic search, logic, probabilistic reasoning and a first look at learning agents. Assessed through four programming assignments and a final project.',
     minSemester: 5,
     minCredits: 80,
     prerequisites: ['CS201', 'MA201'],
@@ -211,7 +218,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Cloud Security',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Identity, isolation, encryption and threat models for cloud platforms.',
+    description:
+      'Identity, isolation, encryption and threat models for cloud platforms. Case studies of real incidents show how cloud systems fail and how they are defended. Lab work uses a sandboxed cloud account.',
     minSemester: 5,
     minCredits: 80,
     prerequisites: ['CS302'],
@@ -226,7 +234,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Distributed Systems',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Consistency, consensus, replication and fault tolerance.',
+    description:
+      'Consistency, consensus, replication and fault tolerance. Students build a replicated key-value store over the term and test it under simulated failures. Weekly paper readings.',
     minSemester: 6,
     minCredits: 90,
     prerequisites: ['CS301'],
@@ -241,7 +250,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Blockchain Technology',
     departmentCode: 'CSE',
     credits: 3,
-    description: 'Distributed ledgers, consensus protocols and smart contracts.',
+    description:
+      'Distributed ledgers, consensus protocols and smart contracts. Starts from cryptographic hashes and signatures and ends with writing and auditing a smart contract. Open to management students with the programming prerequisite.',
     minSemester: 5,
     minCredits: 70,
     prerequisites: ['CS201'],
@@ -258,7 +268,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Machine Learning',
     departmentCode: 'CSE',
     credits: 4,
-    description: 'Supervised and unsupervised learning, model evaluation and regularisation.',
+    description:
+      'Supervised and unsupervised learning, model evaluation and regularisation. Balances theory with hands-on work on real data sets using Python. Assessed through labs, a midterm and a group project.',
     minSemester: 5,
     minCredits: 80,
     prerequisites: ['MA201', 'MA202'],
@@ -273,7 +284,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Human-Computer Interaction',
     departmentCode: 'CSE',
     credits: 3,
-    description: 'User research, prototyping, usability evaluation and accessibility.',
+    description:
+      'User research, prototyping, usability evaluation and accessibility. Students run a full design cycle with real participants, from interviews to a tested prototype. Studio format with weekly critiques.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: [],
@@ -288,7 +300,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Embedded Systems',
     departmentCode: 'ECE',
     credits: 4,
-    description: 'Microcontrollers, real-time constraints and hardware/software co-design.',
+    description:
+      'Microcontrollers, real-time constraints and hardware/software co-design. Hands-on labs with development boards cover interrupts, timers and communication buses. Ends with a small embedded product built in teams.',
     minSemester: 5,
     minCredits: 70,
     prerequisites: [],
@@ -303,7 +316,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'VLSI Design',
     departmentCode: 'ECE',
     credits: 4,
-    description: 'CMOS logic, layout, timing analysis and design automation.',
+    description:
+      'CMOS logic, layout, timing analysis and design automation. Uses industry-standard design tools from schematic to layout verification. Lab-heavy; access to the design lab is scheduled in slots.',
     minSemester: 6,
     minCredits: 90,
     prerequisites: [],
@@ -318,7 +332,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Internet of Things',
     departmentCode: 'ECE',
     credits: 3,
-    description: 'Sensors, low-power networking, edge computing and IoT security.',
+    description:
+      'Sensors, low-power networking, edge computing and IoT security. Students design, deploy and secure a small sensor network. Covers protocols such as MQTT and the trade-offs of edge processing.',
     minSemester: 5,
     minCredits: 70,
     prerequisites: [],
@@ -333,7 +348,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Robotics',
     departmentCode: 'ME',
     credits: 4,
-    description: 'Kinematics, dynamics, control and robot perception.',
+    description:
+      'Kinematics, dynamics, control and robot perception. Combines modelling in simulation with work on physical robot arms. Assumes familiarity with linear algebra.',
     minSemester: 5,
     minCredits: 70,
     prerequisites: [],
@@ -348,7 +364,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Renewable Energy Systems',
     departmentCode: 'ME',
     credits: 3,
-    description: 'Solar, wind and storage technologies and their integration.',
+    description:
+      'Solar, wind and storage technologies and their integration. Examines the engineering and economics of each technology and how they combine on the grid. Includes a site assessment project.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: [],
@@ -363,7 +380,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Numerical Methods',
     departmentCode: 'MATH',
     credits: 3,
-    description: 'Root finding, interpolation, numerical integration and ODE solvers.',
+    description:
+      'Root finding, interpolation, numerical integration and ODE solvers. Algorithms are implemented and analysed for accuracy, stability and cost. Weekly computer labs.',
     minSemester: 4,
     minCredits: 50,
     prerequisites: ['MA202'],
@@ -378,7 +396,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Financial Management',
     departmentCode: 'MGMT',
     credits: 3,
-    description: 'Time value of money, capital budgeting and financial statements.',
+    description:
+      'Time value of money, capital budgeting and financial statements. Grounded in case studies of real companies. Useful for any student planning to start or manage a business.',
     minSemester: 3,
     minCredits: 30,
     prerequisites: [],
@@ -393,7 +412,8 @@ export const COURSES: readonly CourseSeed[] = [
     name: 'Entrepreneurship and Innovation',
     departmentCode: 'MGMT',
     credits: 3,
-    description: 'Opportunity discovery, business models and pitching a venture.',
+    description:
+      'Opportunity discovery, business models and pitching a venture. Teams develop a venture idea over the term and pitch it to a panel of mentors. Open to students from every program.',
     minSemester: 4,
     minCredits: 40,
     prerequisites: [],
