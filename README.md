@@ -5,14 +5,18 @@ pre-check, a registration cart with atomic submit, preference-and-priority
 allocation for oversubscribed electives, waitlists with automatic promotion,
 add/drop, and a personal registration history.
 
-> **Status: Phase 3 (authentication).** The stack, database schema, seed data,
-> sign-in with role-based access and a health
-> check are in place; API endpoints and screens arrive in later phases. The full
-> README comes in the final phase.
+> **Status: Phase 4 (frontend foundation).** The stack, database schema, seed
+> data, sign-in with role-based access, the design system, the app shell and
+> the component library are in place. Feature screens arrive in later phases.
+> The full README comes in the final phase.
 
 - Brief: [docs/PROBLEM_STATEMENT.md](docs/PROBLEM_STATEMENT.md)
 - Specification: [docs/SPEC.md](docs/SPEC.md)
 - Database design: [docs/DATABASE.md](docs/DATABASE.md)
+- Design direction and review: [docs/DESIGN.md](docs/DESIGN.md) (screenshots in
+  [docs/screenshots/](docs/screenshots/))
+
+![Student dashboard, desktop](docs/screenshots/student-dashboard-1280-light.png)
 
 ## Stack
 
