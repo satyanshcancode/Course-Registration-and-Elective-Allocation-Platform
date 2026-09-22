@@ -149,4 +149,39 @@ copy · default browser-blue links and buttons.
 
 ## Review
 
-_(Filled in after the screenshot review; see below.)_
+### Phase 4: design system and shell
+
+Screenshots were taken with headless Chrome against the Docker dev stack at
+1280, 820 and 390px, in light and dark mode, over four rounds. Each round also
+checked for horizontal page scroll and measured the toast region against the
+bottom navigation.
+
+| Finding                                                                                                       | Fix                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| The sign-in panel stretched to the height of the "How registration works" aside                               | `align-items: start` on the login grid                                                                                     |
+| The public layout (sign-in, 404) had a sticky page header with nothing to scroll past                         | `PageHeader` takes `sticky={false}`; public pages and the gallery use it                                                   |
+| On phones the sticky page header covered a third of the screen                                                | The page header is `position: static` below 40rem                                                                          |
+| Seat meters in a column had ragged left edges, because the numbers pushed the bar                             | Compact meters use a fixed grid (`5.5rem minmax(0, 1fr)`), so every bar starts at the same line                            |
+| The table filter stretched across the full width                                                              | The filter is capped at a readable width, and the result count sits on the right                                           |
+| At 390px the table columns were crushed to a few characters                                                   | The grid is `width: max-content; min-width: 100%` inside a keyboard-focusable scroll region, so the table scrolls sideways |
+| The modal sat in the top-left corner, because the reset's `* { margin: 0 }` removed the dialog's auto margin  | `margin: auto` on the dialog                                                                                               |
+| Pagination "Previous/Next" labels were hidden with `display: none` on phones, which also removed their names  | The labels are visually clipped instead, so the buttons keep their accessible names                                        |
+| The sidebar and the phone bottom bar were both in the DOM, giving two navigation landmarks with the same name | `AppShell` renders only one of them, chosen with `useMediaQuery`                                                           |
+
+Checked against the banned list, none were found: no gradients, blur,
+emoji, hero banners, big shadows or radii, rows of stat cards, vague copy or
+browser-blue links. In the final round no page scrolls sideways at any width
+or theme. On a 390px phone the toast region ends at 768px and the bottom nav
+starts at 779px, so toasts never cover it.
+
+Final screenshots, in [`docs/screenshots/`](screenshots/):
+
+| Page                      | Width, theme    | File                                                                             |
+| ------------------------- | --------------- | -------------------------------------------------------------------------------- |
+| Sign in                   | 1280, light     | [login-1280-light.png](screenshots/login-1280-light.png)                         |
+| Student dashboard         | 1280, light     | [student-dashboard-1280-light.png](screenshots/student-dashboard-1280-light.png) |
+| Student dashboard (rail)  | 820, light      | [student-dashboard-820-light.png](screenshots/student-dashboard-820-light.png)   |
+| Cart placeholder (phone)  | 390, dark (ink) | [student-cart-390-dark.png](screenshots/student-cart-390-dark.png)               |
+| Admin dashboard           | 1280, dark      | [admin-dashboard-1280-dark.png](screenshots/admin-dashboard-1280-dark.png)       |
+| Component gallery: table  | 820, light      | [gallery-table-820-light.png](screenshots/gallery-table-820-light.png)           |
+| Component gallery: dialog | 1280, light     | [gallery-modal-1280-light.png](screenshots/gallery-modal-1280-light.png)         |

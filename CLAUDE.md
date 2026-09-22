@@ -78,6 +78,30 @@
 - Demo credentials are in the README; `JWT_SECRET` comes from `.env`
   (min 32 chars; production refuses the example value).
 
+## Design and UI conventions
+
+- All UI follows `docs/DESIGN.md`: the catalogue concept, Source Serif 4
+  headings, IBM Plex Sans/Mono, one accent colour (deep green), hairlines, small
+  radii, shadows only on floating things, and its **Banned** list.
+- Tokens live in `frontend/src/styles/variables.css`. Never hard-code a colour,
+  space, radius, font size, z-index or duration. The dark theme only redefines
+  colour tokens.
+- Components live in `frontend/src/components/<Name>/` as `<Name>.tsx`,
+  `<Name>.module.css` and `index.ts`, with a typed `<Name>Props` interface. Keep
+  CSS Module selectors flat (one class, or a class plus an attribute or state).
+  Use `data-*` attributes for variants such as tone and state.
+- Build pages from the library: `PageHeader` (kicker + serif title, focuses
+  the `h1`, sets `document.title`), `FormField` for every form control (label,
+  hint, error, `aria-describedby`), `DataTable<T>` for tabular data, and
+  `EmptyState`, `Skeleton` and `ErrorMessage` for the async states. Icons go
+  through `Icon`, never `lucide-react` directly.
+- Status is never colour alone: use `StatusBadge` / `Badge` (icon + text), and
+  `SeatMeter` always prints its numbers.
+- `AppShell` renders exactly one navigation landmark (sidebar/rail or the phone
+  bottom bar, chosen with `useMediaQuery`). Nav items come from
+  `layouts/navigation.ts` and include in-scope features only.
+- `/dev/components` (component gallery) is registered only in DEV builds.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one
