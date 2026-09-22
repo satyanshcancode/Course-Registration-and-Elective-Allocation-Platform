@@ -110,7 +110,7 @@ export const routes: RouteObject[] = [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: 'dashboard', element: <StudentDashboardPage /> },
               { path: 'courses', element: <StudentCoursesPage /> },
-              { path: 'courses/:id', element: <CourseDetailPage /> },
+              { path: 'courses/:code', element: <CourseDetailPage /> },
               { path: 'eligibility', element: <EligibilityPage /> },
               { path: 'cart', element: <CartPage /> },
               { path: 'results', element: <ResultsPage /> },
