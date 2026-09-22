@@ -26,6 +26,10 @@ function readSetting(key: string): string | undefined {
   return parseEnv(readFileSync(ROOT_ENV_FILE, 'utf8'))[key];
 }
 
+// Low-memory machines fail to start more fork workers; override with
+// VITEST_MAX_WORKERS=<n> (or --maxWorkers) when there is memory to spare.
+const vitestMaxWorkers = Number(readSetting('VITEST_MAX_WORKERS') ?? 2);
+
 const apiProxy: Record<string, ProxyOptions> = {
   '/api': {
     target: readSetting('API_PROXY_TARGET') ?? DEFAULT_API_PROXY_TARGET,
@@ -60,5 +64,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    maxWorkers: vitestMaxWorkers,
   },
 });
