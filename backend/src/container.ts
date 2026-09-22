@@ -7,10 +7,12 @@ import { SESSION_TTL_SECONDS } from './config/session.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
 import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
 import { createHealthRepository } from './repositories/healthRepository.js';
+import { createOfferingRepository } from './repositories/offeringRepository.js';
 import { createRegistrationWindowRepository } from './repositories/registrationWindowRepository.js';
 import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import type { ApiServices } from './routes/index.js';
+import { createAdminCourseService } from './services/adminCourseService.js';
 import { createAuthService } from './services/authService.js';
 import { createCatalogueService } from './services/catalogueService.js';
 import { createHealthService } from './services/healthService.js';
@@ -34,5 +36,12 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
     }),
     studentService: createStudentService(students),
     catalogueService: createCatalogueService({ windows, catalogue, students }),
+    adminCourseService: createAdminCourseService({
+      pool,
+      windows,
+      catalogue,
+      offeringsFor: createOfferingRepository,
+      auditLogsFor: createAuditLogRepository,
+    }),
   };
 }

@@ -6,6 +6,7 @@ import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
 import { createLoginRateLimiter, type RateLimitOptions } from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
+import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AuthService } from '../services/authService.js';
 import type { CatalogueService } from '../services/catalogueService.js';
 import type { HealthService } from '../services/healthService.js';
@@ -23,6 +24,7 @@ export interface ApiServices {
   authService: AuthService;
   studentService: StudentService;
   catalogueService: CatalogueService;
+  adminCourseService: AdminCourseService;
 }
 
 export interface ApiRouterOptions {
@@ -53,6 +55,9 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     createRegistrationWindowRouter(courseController, requireAuth),
   );
   router.use('/courses', createCourseRouter(courseController, requireAuth));
-  router.use('/admin', createAdminRouter(createAdminController(), requireAuth));
+  router.use(
+    '/admin',
+    createAdminRouter(createAdminController(services.adminCourseService), requireAuth),
+  );
   return router;
 }
