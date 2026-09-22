@@ -424,6 +424,16 @@ describe('GET /api/courses/seats', () => {
     expect(unchanged.status).toBe(304);
     expect(unchanged.text).toBe('');
 
+    // Browsers add "Cache-Control: no-cache" to fetch(…, { cache: 'no-store' });
+    // the explicit If-None-Match must still be honoured.
+    const fromBrowser = await request(app)
+      .get('/api/courses/seats')
+      .set('Cookie', cookie)
+      .set('Cache-Control', 'no-cache')
+      .set('Pragma', 'no-cache')
+      .set('If-None-Match', first.headers.etag!);
+    expect(fromBrowser.status).toBe(304);
+
     // Someone takes a CS101 seat: the version changes and the body comes back.
     await createEnrollment(pool, await createStudent(pool, csProgram), windowId, ids.basics);
     const changed = await request(app)

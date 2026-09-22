@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { getAuth } from '../middleware/requireAuth.js';
 import type { CatalogueService } from '../services/catalogueService.js';
 import { sendSuccess } from '../utils/apiResponse.js';
+import { etagMatches } from '../utils/etag.js';
 import { catalogueQuerySchema, courseCodeSchema } from '../validation/courseSchemas.js';
 import { parseInput } from '../validation/parse.js';
 
@@ -31,12 +32,12 @@ export function createCourseController(catalogueService: CatalogueService): Cour
 
     async getSeats(req, res) {
       const snapshot = await catalogueService.getSeats();
-      // A strong ETag from the content hash. The browser may keep the body but
-      // must revalidate every time (no-cache), and it is never shared (private).
-      res.set('ETag', `"${snapshot.version}"`);
+      const etag = `"${snapshot.version}"`;
+      // A strong ETag from the content hash. Caches must revalidate every time
+      // (no-cache), and the response is never shared (private).
+      res.set('ETag', etag);
       res.set('Cache-Control', 'private, no-cache');
-      // req.fresh compares If-None-Match with the ETag set above.
-      if (req.fresh) {
+      if (etagMatches(req.get('If-None-Match'), etag)) {
         res.status(304).end();
         return;
       }
