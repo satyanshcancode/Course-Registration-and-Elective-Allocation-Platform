@@ -187,6 +187,7 @@ export function createCatalogueService({
           met: context ? context.facts.completedCourseIds.has(id) : null,
         })),
         window: window.summary,
+        serverTime: now().toISOString(),
       };
     },
 
