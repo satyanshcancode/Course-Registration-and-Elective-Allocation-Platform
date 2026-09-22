@@ -288,6 +288,46 @@ application code has a bug or two requests race.
 - **Not waitlisted and enrolled in the same course at once** spans two tables,
   so the service keeps it inside one transaction.
 
+## Catalogue queries and indexes
+
+A catalogue request runs a fixed number of queries, however many courses a
+window offers:
+
+1. The session user (`requireAuth`).
+2. The current window.
+3. **One** aggregated query for every offering: the course and department,
+   seats, and demand as `count(*)` of SUBMITTED `preference_items` per course
+   (a CTE). Prerequisites and eligible programmes come as `json_agg` arrays
+   from two more CTEs.
+4. For students only, in parallel with (3): their eligibility facts (programme,
+   semester, credits and passed courses, via `array_agg`) and their own cart,
+   seat and waitlist rows (one `UNION ALL`).
+
+Eligibility is then computed by the pure TypeScript rule, and filtering,
+sorting and paging happen in memory. That is because "eligible only" depends on
+that rule, and a window has at most a few hundred offerings. An integration
+test counts `pool.query` calls for 5 courses and for 25, and they are equal
+(no N+1).
+
+`EXPLAIN (ANALYZE, BUFFERS)` of the offerings query on the seeded data (20
+offerings, 150 submissions, 474 preference items) takes 1.75 ms, with every
+page read from shared buffers:
+
+- The window's offerings use `registration_window_courses_pkey` (bitmap
+  index scan on `window_id`).
+- The other tables are read with sequential scans. At 5–474 rows that is
+  cheaper than an index.
+- Demand is a hash aggregate over the window's preference items.
+
+With `enable_seqscan = off`, the demand aggregate uses the existing
+`preference_items_window_course_idx` and
+`preference_submissions_window_sequence_idx`. So the indexes needed at larger
+volumes already exist, and **no new index was added**.
+
+`GET /api/courses/seats` runs the same demand aggregate with only the seat
+columns. Its ETag is a SHA-256 hash of the numbers, so an unchanged catalogue
+costs one small query and an empty `304`.
+
 ## Test database
 
 Integration tests use a separate database named `<POSTGRES_DB>_test`

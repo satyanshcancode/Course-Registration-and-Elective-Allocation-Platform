@@ -5,10 +5,11 @@ pre-check, a registration cart with atomic submit, preference-and-priority
 allocation for oversubscribed electives, waitlists with automatic promotion,
 add/drop, and a personal registration history.
 
-> **Status: Phase 4 (frontend foundation).** The stack, database schema, seed
-> data, sign-in with role-based access, the design system, the app shell and
-> the component library are in place. Feature screens arrive in later phases.
-> The full README comes in the final phase.
+> **Status: Phase 5 (course catalogue).** The stack, database schema, seed
+> data, sign-in with role-based access, the design system and app shell, and
+> the first feature, the course catalogue with live seat counts, are in place.
+> The other features arrive in later phases. The full README comes in the final
+> phase.
 
 - Brief: [docs/PROBLEM_STATEMENT.md](docs/PROBLEM_STATEMENT.md)
 - Specification: [docs/SPEC.md](docs/SPEC.md)
@@ -17,6 +18,39 @@ add/drop, and a personal registration history.
   [docs/screenshots/](docs/screenshots/))
 
 ![Student dashboard, desktop](docs/screenshots/student-dashboard-1280-light.png)
+
+## Features
+
+| #   | Feature (from the brief)                      | Status                                          |
+| --- | --------------------------------------------- | ----------------------------------------------- |
+| 1   | Course catalogue with live seat counts        | **Done** (see below)                            |
+| 2   | Eligibility pre-check before the window opens | Shown per course in the catalogue; page to come |
+| 3   | Registration cart with atomic submit          | Planned                                         |
+| 4   | Fair allocation for oversubscribed electives  | Planned                                         |
+| 5   | Waitlist with automatic promotion             | Planned                                         |
+| 6   | Add/drop                                      | Planned                                         |
+| 7   | Registration status and history               | Planned                                         |
+
+**Course catalogue** (`/student/courses`):
+
+- Every offering in the current window, with capacity, allocated, available,
+  demand (submitted requests) and the demand ratio. For students it also shows
+  their eligibility, with reasons, and their own status.
+- Search (debounced), department, credits, "eligible only" and "seats left"
+  filters and five sort orders, all kept in the URL so a view can be shared or
+  refreshed. Card and table views; the table's row buttons use event delegation.
+- Seat numbers refresh every 10 s while the tab is visible. The poll sends the
+  last ETag and gets a bodiless 304 when nothing changed. Changed numbers flash
+  briefly.
+- Course detail (`/student/courses/:code`): full description, every
+  eligibility reason, prerequisites met or not, eligible programmes, seats and
+  status. Its back link keeps the catalogue filters.
+- Admin courses (`/admin/courses`): a sortable table of all offerings with
+  oversubscribed rows marked, and "Edit capacity" (reason required, never below
+  the allocated seats, written to `audit_logs`).
+
+How the JavaScript concepts are used is written up in
+[docs/javascript-concepts.md](docs/javascript-concepts.md).
 
 ## Stack
 
@@ -107,6 +141,15 @@ on `/student`, administrators on `/admin`.
 | `GET /api/auth/me`      | signed in | Current user (plus profile summary for students)   |
 | `GET /api/students/me`  | student   | The caller's own student profile                   |
 | `GET /api/admin/ping`   | admin     | Role check                                         |
+
+| Catalogue endpoint                        | Access    | Purpose                                                                                                                                                      |
+| ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/registration-windows/current`   | signed in | The OPEN (else latest) window and the server time                                                                                                            |
+| `GET /api/courses`                        | signed in | Catalogue page: `search`, `department`, `credits`, `onlyAvailable`, `onlyEligible`, `sort`, `order`, `page`, `pageSize` (≤ 48); personal fields for students |
+| `GET /api/courses/:code`                  | signed in | One course in full, prerequisites met or not                                                                                                                 |
+| `GET /api/courses/seats`                  | signed in | Seat numbers only, with `ETag`; `If-None-Match` → `304`                                                                                                      |
+| `GET /api/admin/courses`                  | admin     | Every offering with seats, demand and an oversubscribed flag                                                                                                 |
+| `PATCH /api/admin/courses/:code/capacity` | admin     | `{ capacity, reason }`; `409` below the allocated seats; audited                                                                                             |
 
 `JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
 The server refuses to start in production with the example value.
