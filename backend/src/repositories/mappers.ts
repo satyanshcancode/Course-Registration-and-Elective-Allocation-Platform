@@ -40,12 +40,20 @@ import {
   type WaitlistEntry,
 } from '@course-reg/shared';
 import type {
+  CourseStatusRecord,
+  IdentifiedRef,
+  OfferingRecord,
+  WindowRecord,
+} from '../types/catalogue.js';
+import type {
   AllocationResultRow,
   AllocationRunRow,
   AuditLogRow,
+  CatalogueOfferingRow,
   CompletedCourseRow,
   CourseOfferingRow,
   CourseRow,
+  CourseStatusRow,
   CurrentUserRow,
   DepartmentRow,
   EnrollmentRow,
@@ -59,6 +67,7 @@ import type {
   StudentRow,
   UserRow,
   WaitlistEntryRow,
+  WindowSummaryRow,
 } from './rows.js';
 
 /** A row did not match the schema contract (should be impossible given the CHECKs). */
@@ -382,4 +391,77 @@ export function mapAuditLogRow(row: AuditLogRow): AuditLogEntry {
     reason: row.reason,
     createdAt: iso(row.created_at),
   };
+}
+
+export function mapWindowSummaryRow(row: WindowSummaryRow): WindowRecord {
+  return {
+    id: row.id,
+    summary: {
+      name: row.name,
+      term: term(row.term, 'registration_windows.term'),
+      status: oneOf(REGISTRATION_WINDOW_STATUSES, row.status, 'registration_windows.status'),
+      startsAt: iso(row.starts_at),
+      endsAt: iso(row.ends_at),
+    },
+  };
+}
+
+function isIdentifiedRef(value: unknown): value is IdentifiedRef {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'code' in value &&
+    typeof value.code === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string'
+  );
+}
+
+/** A json_agg column of { id, code, name } objects. */
+function identifiedRefs(value: unknown, column: string): IdentifiedRef[] {
+  if (!Array.isArray(value) || !value.every(isIdentifiedRef)) {
+    throw new RowMappingError(column, value);
+  }
+  return value.map(({ id, code, name }) => ({ id, code, name }));
+}
+
+export function mapCatalogueOfferingRow(row: CatalogueOfferingRow): OfferingRecord {
+  return {
+    courseId: row.course_id,
+    code: row.code,
+    name: row.name,
+    credits: row.credits,
+    description: row.description,
+    minSemester: row.min_semester,
+    minCredits: row.min_credits,
+    department: { code: row.department_code, name: row.department_name },
+    capacity: row.capacity,
+    allocated: row.allocated_count,
+    demand: row.demand,
+    prerequisites: identifiedRefs(row.prerequisites, 'course_prerequisites'),
+    eligiblePrograms: identifiedRefs(row.eligible_programs, 'course_eligible_programs'),
+  };
+}
+
+export function mapCourseStatusRow(row: CourseStatusRow): CourseStatusRecord {
+  switch (row.kind) {
+    case 'DRAFT':
+    case 'SUBMITTED':
+      return {
+        courseId: row.course_id,
+        kind: row.kind,
+        rank: oneOf(PREFERENCE_RANKS, row.rank, 'preference_items.rank'),
+      };
+    case 'ENROLLED':
+      return { courseId: row.course_id, kind: 'ENROLLED' };
+    case 'WAITLISTED':
+      if (row.position === null || row.position < 1) {
+        throw new RowMappingError('waitlist position', row.position);
+      }
+      return { courseId: row.course_id, kind: 'WAITLISTED', position: row.position };
+    default:
+      throw new RowMappingError('course status kind', row.kind);
+  }
 }

@@ -5,11 +5,14 @@
 import type { Pool } from 'pg';
 import { SESSION_TTL_SECONDS } from './config/session.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
+import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
 import { createHealthRepository } from './repositories/healthRepository.js';
+import { createRegistrationWindowRepository } from './repositories/registrationWindowRepository.js';
 import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import type { ApiServices } from './routes/index.js';
 import { createAuthService } from './services/authService.js';
+import { createCatalogueService } from './services/catalogueService.js';
 import { createHealthService } from './services/healthService.js';
 import { createStudentService } from './services/studentService.js';
 import { createTokenService } from './services/tokenService.js';
@@ -19,6 +22,9 @@ export interface ServiceConfig {
 }
 
 export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
+  const windows = createRegistrationWindowRepository(pool);
+  const catalogue = createCourseCatalogueRepository(pool);
+  const students = createStudentRepository(pool);
   return {
     healthService: createHealthService(createHealthRepository(pool)),
     authService: createAuthService({
@@ -26,6 +32,7 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       auditLogs: createAuditLogRepository(pool),
       tokens: createTokenService({ secret: config.jwtSecret, ttlSeconds: SESSION_TTL_SECONDS }),
     }),
-    studentService: createStudentService(createStudentRepository(pool)),
+    studentService: createStudentService(students),
+    catalogueService: createCatalogueService({ windows, catalogue, students }),
   };
 }
