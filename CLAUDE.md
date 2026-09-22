@@ -102,6 +102,32 @@
   `layouts/navigation.ts` and include in-scope features only.
 - `/dev/components` (component gallery) is registered only in DEV builds.
 
+## Catalogue conventions (Phase 5)
+
+- Course DTOs live in `shared/src/api/courses.ts`. Courses are addressed by
+  `code`; internal ids never leave the server. Personal fields (`personal`:
+  eligibility + `myStatus`) are computed only for the calling student, from
+  their own rows, and are `null` for admins.
+- Catalogue logic is pure and unit-tested (`backend/src/services/catalogueRules.ts`).
+  A catalogue request runs a fixed number of aggregated queries; keep it that
+  way (the integration test counts queries for 5 vs 25 courses).
+- Live seats: `useLiveSeats` polls `GET /api/courses/seats` every 10 s (paused
+  while the tab is hidden) with `If-None-Match`. Pages merge the numbers with
+  `withLiveSeats` / `seatsNewerThan` instead of refetching. The server
+  compares ETags with `etagMatches`, **not** `req.fresh`: browsers send
+  `Cache-Control: no-cache` with `fetch(..., { cache: 'no-store' })`, and
+  `req.fresh` then never returns 304.
+- Catalogue filters live in the URL (`useCatalogueFilters`,
+  `utils/catalogueFilters.ts`); defaults are left out of the URL.
+- Table row actions use event delegation: buttons carry `data-action` and
+  `data-course-code`, and one `onBodyClick` on the `DataTable` body handles them
+  through `findRowAction` (`utils/tableActions.ts`). No per-row listeners.
+- Format ratios with `formatDemandRatio` and requests with `describeDemand`
+  (`utils/courseText.ts`); don't format them by hand.
+- API failures carry `httpStatus` on the client (`ClientFailure`), and
+  `useAsync`'s error state keeps the thrown `error`. Use `isNotFound(error)`
+  for proper 404 states.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one

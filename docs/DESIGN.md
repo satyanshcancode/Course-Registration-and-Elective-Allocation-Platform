@@ -185,3 +185,45 @@ Final screenshots, in [`docs/screenshots/`](screenshots/):
 | Admin dashboard           | 1280, dark      | [admin-dashboard-1280-dark.png](screenshots/admin-dashboard-1280-dark.png)       |
 | Component gallery: table  | 820, light      | [gallery-table-820-light.png](screenshots/gallery-table-820-light.png)           |
 | Component gallery: dialog | 1280, light     | [gallery-modal-1280-light.png](screenshots/gallery-modal-1280-light.png)         |
+
+### Phase 5: course catalogue, course detail, admin courses
+
+Reviewed at 1280, 820 and 390px in light and dark mode (two rounds of 36
+screenshots), plus a keyboard-only pass (23 checks) and end-to-end browser flows
+against the Docker stack.
+
+| Finding                                                                                                                                                                                                                                                                                                                                                      | Fix                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| The catalogue scrolled sideways at 1280px (1340px wide). The card's meta line held a `nowrap` department name plus padding for the status stamp, and its implicit `auto` grid track grew to fit.                                                                                                                                                             | The department moved to its own line, and the card header uses `grid-template-columns: minmax(0, 1fr)`                            |
+| The admin table widened the whole page (1484px) instead of scrolling inside its region. `DataTable`'s wrapper was a grid with an implicit `auto` column. Also, the `visually-hidden` text in row buttons is `position: absolute`, and with no positioned ancestor inside the scroll box it escaped the `overflow: auto` clip. This was latent since Phase 4. | `.table { grid-template-columns: minmax(0, 1fr) }` and `.scroll { position: relative }`                                           |
+| "0.0×" for 2 requests on 50 seats read as "no demand"                                                                                                                                                                                                                                                                                                        | Ratios under 0.05 read "<0.1×"                                                                                                    |
+| On phones the filter form filled the first screen, so no course was visible without scrolling                                                                                                                                                                                                                                                                | Below 40rem the selects and toggles fold into a native `<details>` ("Filters and sort · 2 set"), and the search box stays visible |
+| The detail page listed the rules ("Requires semester 5…") under a list of the same failed rules                                                                                                                                                                                                                                                              | The rules are named once: in the list when not eligible, in the "You meet every requirement" sentence when eligible               |
+| The "Oversubscribed" badge wrapped inside its explanation sentence                                                                                                                                                                                                                                                                                           | The badge sits on its own line above the sentence                                                                                 |
+| The capacity dialog's "Now: 20 seats" wrapped on phones, and "At least 0 (seats already allocated)" read oddly before any allocation                                                                                                                                                                                                                         | The ledger labels are Capacity / Allocated / Requests, and the hint names the lower limit only when seats are taken               |
+| With no results, the summary repeated the empty state's heading, giving two identical headings                                                                                                                                                                                                                                                               | The summary reads "0 courses"                                                                                                     |
+
+Checked against the banned list: no gradients, blur, emoji or hero banners.
+Cards are hairline index cards with 4px radii and no shadow, and the only
+shadow is on the capacity dialog. There are no stat-card rows: the admin
+summary is one line of text ("20 offerings · 4 oversubscribed"). Every status
+has an icon and words: Eligible / Not eligible plus the reason, the student's
+own status stamp, Oversubscribed, and Passed / Not passed yet. On an 820px
+tablet the admin table scrolls inside its own region, and the ochre left-edge
+rule still marks oversubscribed rows while the Status column is out of view. A
+seat change flashes an ochre wash for 2 seconds. Its fade uses the duration
+tokens, so reduced motion switches it off.
+
+Final screenshots:
+
+| Page                                   | Width, theme | File                                                                                     |
+| -------------------------------------- | ------------ | ---------------------------------------------------------------------------------------- |
+| Catalogue, cards                       | 1280, light  | [catalogue-cards-1280-light.png](screenshots/catalogue-cards-1280-light.png)             |
+| Catalogue, cards (rail)                | 820, dark    | [catalogue-cards-820-dark.png](screenshots/catalogue-cards-820-dark.png)                 |
+| Catalogue, table (phone)               | 390, light   | [catalogue-table-390-light.png](screenshots/catalogue-table-390-light.png)               |
+| Course detail, eligible                | 1280, light  | [detail-1280-light.png](screenshots/detail-1280-light.png)                               |
+| Course detail, not eligible            | 1280, dark   | [detail-ineligible-1280-dark.png](screenshots/detail-ineligible-1280-dark.png)           |
+| Course detail (phone)                  | 390, dark    | [detail-390-dark.png](screenshots/detail-390-dark.png)                                   |
+| Admin courses                          | 1280, light  | [admin-courses-1280-light.png](screenshots/admin-courses-1280-light.png)                 |
+| Edit capacity, validation (phone)      | 390, light   | [admin-dialog-390-light.png](screenshots/admin-dialog-390-light.png)                     |
+| Live update, changed seats highlighted | 1280, light  | [catalogue-live-update-1280-light.png](screenshots/catalogue-live-update-1280-light.png) |
