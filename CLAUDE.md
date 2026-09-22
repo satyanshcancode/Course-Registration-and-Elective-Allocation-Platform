@@ -103,6 +103,9 @@
 - `.env` (gitignored) is created from `.env.example`. Never commit secrets.
 - After changing dependencies, rebuild and refresh the node_modules volumes:
   `npm run docker:reset && npm run docker:up`.
+- Vitest runs at most 2 workers per workspace (`maxWorkers` in each Vitest
+  config), because this machine runs out of memory and fails with "Failed to
+  start forks worker" otherwise. Override with `VITEST_MAX_WORKERS=<n>`.
 
 ## Definition of done for every phase
 

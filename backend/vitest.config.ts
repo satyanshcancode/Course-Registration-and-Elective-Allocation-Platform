@@ -1,5 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
+// Low-memory machines fail to start more fork workers; override with
+// VITEST_MAX_WORKERS=<n> (or --maxWorkers) when there is memory to spare.
+const maxWorkers = Number(process.env.VITEST_MAX_WORKERS ?? 2);
+
 export default defineConfig({
   resolve: {
     // Resolve @course-reg/shared to its TypeScript source, like tsx does in dev.
@@ -12,6 +16,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    maxWorkers,
     env: {
       LOG_LEVEL: 'silent',
     },
