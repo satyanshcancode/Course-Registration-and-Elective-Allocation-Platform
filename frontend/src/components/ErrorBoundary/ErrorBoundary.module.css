@@ -1,0 +1,15 @@
+.fallback {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--layout-narrow);
+  padding-block: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}

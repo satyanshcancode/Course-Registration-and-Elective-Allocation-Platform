@@ -1,8 +1,14 @@
 import type { LoginRequest } from '@course-reg/shared';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { Navigate, useLocation } from 'react-router';
+import { Button } from '../../components/Button';
+import { FormField } from '../../components/FormField';
+import { Input } from '../../components/Input';
+import { ServiceStatus } from '../../components/ServiceStatus';
 import { useAuth } from '../../hooks/useAuth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../../hooks/useFocusOnMount';
 import type { LoginNotice } from '../../types/auth';
 import { postLoginPath, readLoginLocationState } from '../../utils/authRedirects';
 import {
@@ -23,6 +29,25 @@ const NOTICES: Record<LoginNotice, string> = {
 
 const INITIAL_VALUES: LoginRequest = { email: '', password: '' };
 
+const STEPS: readonly { title: string; text: string }[] = [
+  {
+    title: 'Check your eligibility',
+    text: 'Before the window opens, see which courses you can take and why.',
+  },
+  {
+    title: 'Rank up to five courses',
+    text: 'Your first choice carries the most weight in allocation.',
+  },
+  {
+    title: 'Submit once',
+    text: 'All of your choices are saved together. Submitting early gives no advantage.',
+  },
+  {
+    title: 'See your results',
+    text: 'Full courses go by preference and priority, not by speed. Everyone else joins a waitlist.',
+  },
+];
+
 export function LoginPage() {
   useDocumentTitle('Sign in');
   const { state, login } = useAuth();
@@ -34,8 +59,10 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  useFocusOnMount(headingRef);
 
   // Already signed in, or just signed in: go to the requested page or home.
   if (state.status === 'authenticated') {
@@ -98,94 +125,103 @@ export function LoginPage() {
     }
   };
 
-  const describedBy = (field: LoginField) => (errors[field] ? `${field}-error` : undefined);
-
   return (
-    <section className={styles.page} aria-labelledby="login-title">
-      <h1 id="login-title">Sign in</h1>
-      <p className={styles.lead}>Use your university e-mail address and password.</p>
+    <div className={styles.layout}>
+      <section className={styles.panel} aria-labelledby="login-title">
+        <p className={styles.kicker}>Students and registrar staff</p>
+        <h1 id="login-title" ref={headingRef} tabIndex={-1} className={styles.title}>
+          Sign in
+        </h1>
+        <p className={styles.lead}>Use your university e-mail address and password.</p>
 
-      {notice && (
-        <p className={styles.notice} role="status">
-          {NOTICES[notice]}
-        </p>
-      )}
+        {notice && (
+          <p className={styles.notice} role="status">
+            {NOTICES[notice]}
+          </p>
+        )}
 
-      <div className={styles.alert} role="alert">
-        {serverError && <p>{serverError}</p>}
-      </div>
-
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          void handleSubmit(event);
-        }}
-        noValidate
-      >
-        <div className={styles.field}>
-          <label htmlFor="email">E-mail address</label>
-          <input
-            ref={emailRef}
-            id="email"
-            name="email"
-            type="email"
-            inputMode="email"
-            autoComplete="username"
-            autoCapitalize="none"
-            spellCheck={false}
-            required
-            maxLength={254}
-            value={values.email}
-            onChange={handleChange}
-            aria-invalid={errors.email ? true : undefined}
-            aria-describedby={describedBy('email')}
-          />
-          {errors.email && (
-            <p id="email-error" className={styles.error}>
-              {errors.email}
-            </p>
-          )}
+        <div className={styles.alert} role="alert">
+          {serverError && <p>{serverError}</p>}
         </div>
 
-        <div className={styles.field}>
-          <label htmlFor="password">Password</label>
-          <div className={styles.passwordRow}>
-            <input
-              ref={passwordRef}
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              required
-              maxLength={PASSWORD_MAX_LENGTH}
-              value={values.password}
-              onChange={handleChange}
-              aria-invalid={errors.password ? true : undefined}
-              aria-describedby={describedBy('password')}
-            />
-            <button
-              type="button"
-              className={styles.toggle}
-              aria-controls="password"
-              aria-pressed={showPassword}
-              onClick={() => {
-                setShowPassword((shown) => !shown);
-              }}
-            >
-              {showPassword ? 'Hide password' : 'Show password'}
-            </button>
-          </div>
-          {errors.password && (
-            <p id="password-error" className={styles.error}>
-              {errors.password}
-            </p>
-          )}
-        </div>
+        <form
+          className={styles.form}
+          onSubmit={(event) => {
+            void handleSubmit(event);
+          }}
+          noValidate
+        >
+          <FormField label="E-mail address" id="email" error={errors.email} required>
+            {(control) => (
+              <Input
+                {...control}
+                ref={emailRef}
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={254}
+                value={values.email}
+                onChange={handleChange}
+              />
+            )}
+          </FormField>
 
-        <button type="submit" className={styles.submit} disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </section>
+          <FormField label="Password" id="password" error={errors.password} required>
+            {(control) => (
+              <div className={styles.passwordRow}>
+                <Input
+                  {...control}
+                  ref={passwordRef}
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  maxLength={PASSWORD_MAX_LENGTH}
+                  value={values.password}
+                  onChange={handleChange}
+                />
+                <Button
+                  variant="secondary"
+                  iconStart={showPassword ? EyeOff : Eye}
+                  aria-controls="password"
+                  aria-pressed={showPassword}
+                  onClick={() => {
+                    setShowPassword((shown) => !shown);
+                  }}
+                >
+                  {showPassword ? 'Hide password' : 'Show password'}
+                </Button>
+              </div>
+            )}
+          </FormField>
+
+          <Button type="submit" variant="primary" fullWidth iconStart={LogIn} loading={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </form>
+      </section>
+
+      <aside className={styles.aside} aria-labelledby="how-it-works">
+        <h2 id="how-it-works" className={styles.asideTitle}>
+          How registration works
+        </h2>
+        <ol className={styles.steps}>
+          {STEPS.map((step, index) => (
+            <li key={step.title} className={styles.step}>
+              <span className={styles.stepNumber} aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <div>
+                <p className={styles.stepTitle}>{step.title}</p>
+                <p className={styles.stepText}>{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <ServiceStatus />
+      </aside>
+    </div>
   );
 }

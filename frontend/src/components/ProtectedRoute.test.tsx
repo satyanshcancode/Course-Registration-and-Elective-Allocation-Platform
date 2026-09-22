@@ -30,13 +30,13 @@ const testRoutes: RouteObject[] = [
       {
         element: <ProtectedRoute role="STUDENT" />,
         children: [
-          { path: 'student', element: <h1>Student home</h1> },
+          { path: 'student/dashboard', element: <h1>Student home</h1> },
           { path: 'student/courses', element: <h1>Student courses</h1> },
         ],
       },
       {
         element: <ProtectedRoute role="ADMIN" />,
-        children: [{ path: 'admin', element: <h1>Admin home</h1> }],
+        children: [{ path: 'admin/dashboard', element: <h1>Admin home</h1> }],
       },
     ],
   },
@@ -55,7 +55,7 @@ beforeEach(() => {
 describe('ProtectedRoute', () => {
   it('shows a status while the session is being restored', () => {
     api.getCurrentUser.mockReturnValue(new Promise(() => undefined));
-    renderAt('/student');
+    renderAt('/student/dashboard');
 
     expect(screen.getByRole('status')).toHaveTextContent('Checking your session…');
   });
@@ -78,10 +78,10 @@ describe('ProtectedRoute', () => {
 
   it('sends a student who opens /admin to their own home', async () => {
     api.getCurrentUser.mockResolvedValue(ok(studentUser));
-    const router = renderAt('/admin');
+    const router = renderAt('/admin/dashboard');
 
     expect(await screen.findByRole('heading', { name: 'Student home' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/student');
+    expect(router.state.location.pathname).toBe('/student/dashboard');
   });
 
   it('sends an admin who opens a student page to the admin home', async () => {
@@ -89,14 +89,14 @@ describe('ProtectedRoute', () => {
     const router = renderAt('/student/courses');
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/admin');
+      expect(router.state.location.pathname).toBe('/admin/dashboard');
     });
     expect(screen.getByRole('heading', { name: 'Admin home' })).toBeInTheDocument();
   });
 
   it('lets the right role through', async () => {
     api.getCurrentUser.mockResolvedValue(ok(adminUser));
-    renderAt('/admin');
+    renderAt('/admin/dashboard');
 
     expect(await screen.findByRole('heading', { name: 'Admin home' })).toBeInTheDocument();
   });

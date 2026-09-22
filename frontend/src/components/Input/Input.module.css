@@ -1,0 +1,39 @@
+.input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-control);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.input:hover:not(:disabled, :focus) {
+  border-color: var(--color-ink-muted);
+}
+
+/* Focus: accent border plus the global outline, so it reads at any zoom. */
+.input:focus-visible {
+  border-color: var(--color-accent);
+  outline-offset: 1px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.input:disabled {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+}
+
+.input[data-mono='true'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

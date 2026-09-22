@@ -1,0 +1,68 @@
+.search {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: min(100%, 16rem);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--color-ink-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-6) var(--space-2) calc(var(--space-3) + 1.5rem);
+  border: var(--border-control);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--text-sm);
+  appearance: none;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+/* Our own clear button replaces the browser's. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.input:hover:not(:focus) {
+  border-color: var(--color-ink-muted);
+}
+
+.input:focus-visible {
+  border-color: var(--color-accent);
+  outline-offset: 1px;
+}
+
+.clear {
+  position: absolute;
+  right: var(--space-1);
+  display: grid;
+  place-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-ink-muted);
+}
+
+.clear:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink);
+}

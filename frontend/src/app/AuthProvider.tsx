@@ -16,11 +16,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // The latest location, read by the 401 handler without re-registering it.
+  // The latest location and status, read by the 401 handler without
+  // re-registering it.
   const currentPath = useRef(location.pathname + location.search);
+  const currentStatus = useRef(state.status);
   useEffect(() => {
     currentPath.current = location.pathname + location.search;
   }, [location]);
+  useEffect(() => {
+    currentStatus.current = state.status;
+  }, [state.status]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,6 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       setUnauthorizedHandler(() => {
+        // Only a signed-in session can expire. Without this, a stray 401 on
+        // the sign-in page would redirect again and forget the page the user
+        // originally asked for.
+        if (currentStatus.current !== 'authenticated') {
+          return;
+        }
         setState({ status: 'anonymous', notice: 'session-expired' });
         const loginState: LoginLocationState = {
           from: currentPath.current,

@@ -1,0 +1,151 @@
+.table {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.summary {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Scrolls on its own (both axes), so narrow screens never scroll the page
+ * sideways and the header row stays sticky inside the table.
+ */
+.scroll {
+  max-height: min(70vh, 44rem);
+  overflow: auto;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  overscroll-behavior-inline: contain;
+}
+
+/* As wide as its content needs (never narrower than the container), so on
+   phones the region scrolls instead of crushing columns into tall rows. */
+.grid {
+  width: max-content;
+  min-width: 100%;
+}
+
+.filter {
+  flex: 1 1 18rem;
+  max-width: 28rem;
+}
+
+.caption {
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+/* Header row: small uppercase labels on a sunken band, sticky while scrolling. */
+.headerCell {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-rule-strong);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cell {
+  max-width: 22rem;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-hairline);
+  vertical-align: middle;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+/* Timetable striping: every other row on a faint sunken tint. */
+.row:nth-child(even) .cell {
+  background-color: color-mix(in srgb, var(--color-surface-sunken) 55%, transparent);
+}
+
+.row:last-child .cell {
+  border-bottom: 0;
+}
+
+.row:hover .cell {
+  background-color: var(--color-accent-soft);
+}
+
+.headerCell[data-align='end'],
+.cell[data-align='end'] {
+  text-align: end;
+}
+
+.headerCell[data-align='center'],
+.cell[data-align='center'] {
+  text-align: center;
+}
+
+/* ---- Sort buttons: the whole header label is the target ----------------- */
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.sortButton:hover {
+  color: var(--color-ink);
+}
+
+/* Sort arrow. aria-sort on the <th> announces the state, so no alt text. */
+.sortButton::after {
+  content: '↕' / '';
+  color: var(--color-rule-strong);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0;
+}
+
+.sortButton[data-direction='ascending']::after {
+  content: '↑' / '';
+  color: var(--color-accent);
+}
+
+.sortButton[data-direction='descending']::after {
+  content: '↓' / '';
+  color: var(--color-accent);
+}
+
+.headerCell[data-align='end'] > .sortButton {
+  flex-direction: row-reverse;
+}
+
+.noMatch {
+  padding: var(--space-5) var(--space-3);
+}
+
+.noMatchText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: var(--space-3);
+  color: var(--color-ink-muted);
+}

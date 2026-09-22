@@ -1,0 +1,238 @@
+/*
+ * The app frame. One grid, three arrangements:
+ *   desktop (>= 64rem)  sidebar 15rem | content
+ *   tablet  (40–64rem)  icon rail 4rem | content
+ *   phone   (< 40rem)   content only, fixed bottom bar (MobileNav)
+ */
+.shell {
+  display: grid;
+  grid-template-areas:
+    'header header'
+    'nav    main'
+    'nav    footer';
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-rows: var(--app-header-height) 1fr auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ---- Skip link: off-screen until focused ------------------------------- */
+.skipLink {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-skip-link);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+/* ---- Top bar ------------------------------------------------------------ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-hairline);
+  background-color: var(--color-surface);
+}
+
+/* ---- Sidebar -------------------------------------------------------------- */
+.sidebar {
+  position: sticky;
+  top: var(--app-header-height);
+  grid-area: nav;
+  align-self: start;
+  height: calc(100dvh - var(--app-header-height));
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-3);
+  border-right: var(--border-hairline);
+}
+
+.area {
+  margin: 0 var(--space-3) var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.navList {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-0);
+}
+
+.navLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.navLink:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink);
+}
+
+/* Current page: tinted, heavier, and marked with a rule on the left edge. */
+.navLink[aria-current='page'] {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+}
+
+.navLink[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: calc(-1 * var(--space-3));
+  width: 3px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background-color: var(--color-accent);
+}
+
+/* ---- Content -------------------------------------------------------------- */
+.main {
+  grid-area: main;
+  min-width: 0;
+  padding: 0 var(--space-6) var(--space-7);
+}
+
+.main:focus {
+  outline: none;
+}
+
+.footer {
+  grid-area: footer;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-top: var(--border-hairline);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+/* ---- Tablet: icon rail, labels as tooltips on hover and focus ------------ */
+@media (40rem <= width < 64rem) {
+  .shell {
+    grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  }
+
+  .sidebar {
+    overflow: visible;
+    padding-inline: var(--space-2);
+  }
+
+  .area {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .navLink {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .navLink[aria-current='page']::before {
+    left: calc(-1 * var(--space-2));
+  }
+
+  /* The label stays in the accessibility tree; it is only faded out. */
+  .navLabel {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + var(--space-3));
+    z-index: var(--z-menu);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    box-shadow: var(--shadow-float);
+    opacity: 0;
+    transform: translate(-0.25rem, -50%);
+    pointer-events: none;
+    transition:
+      opacity var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+
+  .navLink:hover .navLabel,
+  .navLink:focus-visible .navLabel {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  .main {
+    padding-inline: var(--space-5);
+  }
+
+  .footer {
+    padding-inline: var(--space-5);
+  }
+}
+
+/* ---- Phone: no sidebar; the bottom bar takes over ------------------------ */
+@media (width < 40rem) {
+  .shell {
+    grid-template-areas:
+      'header'
+      'main'
+      'footer';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .header {
+    padding-inline: var(--space-3);
+  }
+
+  .main {
+    padding-inline: var(--space-4);
+  }
+
+  /* Nothing may hide behind the fixed bottom bar. */
+  .footer {
+    padding: var(--space-4) var(--space-4)
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+}

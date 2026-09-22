@@ -1,0 +1,71 @@
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pages {
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.step,
+.page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.step:hover:not(:disabled),
+.page:hover:not([aria-current='page']) {
+  background-color: var(--color-surface-sunken);
+}
+
+.step:disabled {
+  color: var(--color-ink-muted);
+  opacity: 0.6;
+}
+
+/* Current page: outlined like a ticked box on a form, plus aria-current. */
+.page[aria-current='page'] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+}
+
+.gap {
+  display: grid;
+  place-content: center;
+  min-width: 1.5rem;
+  color: var(--color-ink-muted);
+}
+
+/* Phones: icon-only steps. The words are clipped, not removed, so the
+   buttons keep their accessible names. */
+@media (width < 40rem) {
+  .stepLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

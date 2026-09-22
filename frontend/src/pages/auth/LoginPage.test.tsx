@@ -127,14 +127,17 @@ describe('LoginPage submission', () => {
     await user.type(screen.getByLabelText('Password'), 'Student@123');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(screen.getByRole('button', { name: 'Signing in…' })).toBeDisabled();
+    // Loading buttons stay focusable: aria-busy + aria-disabled, not `disabled`.
+    const busy = screen.getByRole('button', { name: 'Signing in…' });
+    expect(busy).toHaveAttribute('aria-busy', 'true');
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
     resolveLogin(invalidCredentials);
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 
   it.each([
-    { user: studentUser, path: '/student', heading: 'Welcome, Aarav Sharma' },
-    { user: adminUser, path: '/admin', heading: 'Welcome, Administrator' },
+    { user: studentUser, path: '/student/dashboard', heading: 'Dashboard' },
+    { user: adminUser, path: '/admin/dashboard', heading: 'Dashboard' },
   ])('sends a signed-in $user.role to $path', async ({ user: account, path, heading }) => {
     const user = userEvent.setup();
     api.login.mockResolvedValue(ok(account));
@@ -158,7 +161,7 @@ describe('LoginPage submission', () => {
     await user.type(screen.getByLabelText('Password'), 'Admin@123{Enter}');
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/admin');
+      expect(router.state.location.pathname).toBe('/admin/dashboard');
     });
   });
 
@@ -167,7 +170,7 @@ describe('LoginPage submission', () => {
     const router = renderAt('/login');
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/student');
+      expect(router.state.location.pathname).toBe('/student/dashboard');
     });
   });
 });
@@ -177,11 +180,13 @@ describe('leaving a session', () => {
     const user = userEvent.setup();
     api.getCurrentUser.mockResolvedValue(ok(studentUser));
     api.logout.mockResolvedValue(ok(null));
-    const router = renderAt('/student');
+    const router = renderAt('/student/dashboard');
 
-    await screen.findByRole('heading', { level: 1, name: 'Welcome, Aarav Sharma' });
-    const [pageSignOut] = screen.getAllByRole('button', { name: 'Sign out' }).slice(-1);
-    await user.click(pageSignOut ?? document.body);
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
+    expect(screen.getByText('Signed in as Aarav Sharma · CSE24901')).toBeInTheDocument();
+    // Sign out lives in the account menu in the header.
+    await user.click(screen.getByRole('button', { name: /account/i }));
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('You have been signed out.');
     expect(router.state.location.pathname).toBe('/login');
@@ -191,8 +196,8 @@ describe('leaving a session', () => {
   it('an expired session sends the user to /login and back afterwards', async () => {
     const user = userEvent.setup();
     api.getCurrentUser.mockResolvedValue(ok(studentUser));
-    const router = renderAt('/student');
-    await screen.findByRole('heading', { level: 1, name: 'Welcome, Aarav Sharma' });
+    const router = renderAt('/student/results');
+    await screen.findByRole('heading', { level: 1, name: 'Allocation results' });
 
     // Any ordinary API call that gets 401 means the session is gone.
     vi.stubGlobal(
@@ -218,8 +223,9 @@ describe('leaving a session', () => {
     api.login.mockResolvedValue(ok(studentUser));
     await user.type(screen.getByLabelText('E-mail address'), studentUser.email);
     await user.type(screen.getByLabelText('Password'), 'Student@123{Enter}');
+    // Back to the page the student was on when the session expired.
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/student');
+      expect(router.state.location.pathname).toBe('/student/results');
     });
   });
 });

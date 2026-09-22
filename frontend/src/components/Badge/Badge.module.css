@@ -1,0 +1,42 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.1875rem var(--space-2);
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    color var(--duration-base) var(--ease-standard),
+    background-color var(--duration-base) var(--ease-standard);
+}
+
+.badge[data-tone='accent'] {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.badge[data-tone='success'] {
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.badge[data-tone='warning'] {
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.badge[data-tone='danger'] {
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.badge[data-tone='info'] {
+  background-color: var(--color-info-soft);
+  color: var(--color-info);
+}
