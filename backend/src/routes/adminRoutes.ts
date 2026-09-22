@@ -9,5 +9,7 @@ export function createAdminRouter(
   const router = Router();
   router.use(requireAuth, requireRole('ADMIN'));
   router.get('/ping', controller.ping);
+  router.get('/courses', controller.listCourses);
+  router.patch('/courses/:code/capacity', controller.updateCapacity);
   return router;
 }

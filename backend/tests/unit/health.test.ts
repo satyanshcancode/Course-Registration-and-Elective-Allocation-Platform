@@ -31,6 +31,7 @@ function buildApp(repository: HealthRepository) {
         getCourse: notUsed,
         getSeats: notUsed,
       },
+      adminCourseService: { listOfferings: notUsed, updateCapacity: notUsed },
     },
   });
 }
