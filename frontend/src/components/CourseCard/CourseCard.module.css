@@ -1,0 +1,151 @@
+/*
+ * An index card: hairline border, no shadow. Position: relative anchors the
+ * status stamp in the top-right corner.
+ */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.stamp {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+}
+
+/* Code and credits on one line (Flexbox), with room left for the stamp. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-height: 1.75rem;
+  padding-right: 10rem;
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.department {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.link {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.summary {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+/* Seats and demand: the part that updates live. */
+.live {
+  display: grid;
+  gap: var(--space-2);
+  margin-inline: calc(-1 * var(--space-2));
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-base) var(--ease-standard);
+}
+
+/* A number just changed: a brief ochre wash, then back to paper. */
+.live[data-changed='true'] {
+  background-color: var(--color-warning-soft);
+}
+
+.demand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+}
+
+/* Label column + value column, aligned like a form. */
+.fact {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.fact dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.eligibility {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.reason {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.codes abbr {
+  text-decoration: none;
+}
+
+@media (width < 40rem) {
+  .meta {
+    padding-right: 0;
+    padding-top: var(--space-6);
+  }
+
+  .fact {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-0);
+  }
+}

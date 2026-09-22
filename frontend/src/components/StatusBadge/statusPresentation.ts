@@ -1,6 +1,7 @@
 import type {
   AllocationOutcome,
   EnrollmentStatus,
+  MyCourseStatusCode,
   RegistrationWindowStatus,
   SubmissionStatus,
   WaitlistStatus,
@@ -12,11 +13,14 @@ import {
   CircleDashed,
   CircleMinus,
   CircleX,
+  Circle,
   Clock,
   Hourglass,
   ListChecks,
   Lock,
   LockOpen,
+  Send,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 import type { BadgeTone } from '../Badge';
@@ -31,6 +35,8 @@ export interface StatusKinds {
   submission: SubmissionStatus;
   window: RegistrationWindowStatus;
   eligibility: EligibilityStatus;
+  /** The signed-in student's relationship to one course. */
+  courseStatus: MyCourseStatusCode;
 }
 
 export type StatusKind = keyof StatusKinds;
@@ -75,6 +81,13 @@ export const STATUS_PRESENTATION: {
   eligibility: {
     ELIGIBLE: { tone: 'success', icon: BadgeCheck, label: 'Eligible' },
     NOT_ELIGIBLE: { tone: 'danger', icon: Ban, label: 'Not eligible' },
+  },
+  courseStatus: {
+    NOT_SELECTED: { tone: 'neutral', icon: Circle, label: 'Not selected' },
+    IN_DRAFT_CART: { tone: 'info', icon: ShoppingCart, label: 'In draft cart' },
+    SUBMITTED: { tone: 'info', icon: Send, label: 'Submitted' },
+    ENROLLED: { tone: 'success', icon: CircleCheck, label: 'Enrolled' },
+    WAITLISTED: { tone: 'warning', icon: Hourglass, label: 'Waitlisted' },
   },
 };
 

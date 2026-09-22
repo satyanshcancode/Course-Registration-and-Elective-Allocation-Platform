@@ -31,7 +31,10 @@ describe('useAsync', () => {
     const { result } = renderHook(() => useAsync(task));
 
     await waitFor(() => {
-      expect(result.current.state).toEqual({ status: 'error', message: 'Could not load courses.' });
+      expect(result.current.state).toMatchObject({
+        status: 'error',
+        message: 'Could not load courses.',
+      });
     });
 
     act(() => {
@@ -101,5 +104,21 @@ describe('useAsync', () => {
       result.current.reset();
     });
     expect(result.current.state).toEqual({ status: 'idle' });
+  });
+
+  it('keeps the previous result available while a new key loads', async () => {
+    const { result, rerender } = renderHook(
+      ({ key }: { key: string }) => useAsync(() => Promise.resolve(`page ${key}`), { key }),
+      { initialProps: { key: '1' } },
+    );
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ status: 'success', data: 'page 1' });
+    });
+
+    rerender({ key: '2' });
+    expect(result.current.state).toEqual({ status: 'loading', previous: 'page 1' });
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ status: 'success', data: 'page 2' });
+    });
   });
 });

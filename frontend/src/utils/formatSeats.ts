@@ -30,13 +30,17 @@ export function formatAllocated(allocated: number, capacity: number): string {
 }
 
 /**
- * Demand relative to seats: "3.2×", "0.6×", "12×". Returns an em dash when
- * there are no seats to compare against.
+ * Demand relative to seats: "3.2×", "0.6×", "12×", and "<0.1×" rather than a
+ * misleading "0.0×" for a handful of requests. Returns an em dash when there
+ * are no seats to compare against.
  */
 export function formatDemandRatio(demand: number, capacity: number): string {
   if (capacity <= 0) {
     return '—';
   }
   const ratio = demand / capacity;
+  if (ratio > 0 && ratio < 0.05) {
+    return '<0.1×';
+  }
   return `${ratio >= 10 ? Math.round(ratio).toString() : ratio.toFixed(1)}×`;
 }

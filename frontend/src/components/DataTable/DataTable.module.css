@@ -1,5 +1,8 @@
 .table {
   display: grid;
+  /* One column that may shrink below the table's width, so wide tables
+     scroll inside .scroll instead of stretching the page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   min-width: 0;
 }
@@ -23,6 +26,9 @@
  * sideways and the header row stays sticky inside the table.
  */
 .scroll {
+  /* Positioned, so absolutely positioned content inside (e.g. visually-hidden
+     button text) is clipped by this box rather than widening the page. */
+  position: relative;
   max-height: min(70vh, 44rem);
   overflow: auto;
   border: var(--border-hairline);
@@ -148,4 +154,10 @@
   gap: var(--space-2);
   margin-right: var(--space-3);
   color: var(--color-ink-muted);
+}
+
+/* A marked row (e.g. oversubscribed): an ochre rule down its left edge. The
+   row always says why in words too. */
+.row[data-tone='warning'] .cell:first-child {
+  box-shadow: inset 3px 0 0 var(--color-warning);
 }

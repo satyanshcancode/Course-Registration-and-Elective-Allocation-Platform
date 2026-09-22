@@ -64,7 +64,7 @@ export function useAsync<T>(task: AsyncTask<T>, options: UseAsyncOptions = {}): 
       },
       (error: unknown) => {
         if (!controller.signal.aborted && !isAbortError(error)) {
-          setSettled({ token, state: { status: 'error', message: messageOf(error) } });
+          setSettled({ token, state: { status: 'error', message: messageOf(error), error } });
         }
       },
     );
@@ -87,6 +87,9 @@ export function useAsync<T>(task: AsyncTask<T>, options: UseAsyncOptions = {}): 
     state = { status: 'idle' };
   } else if (settled?.token === token) {
     state = settled.state;
+  } else if (settled?.state.status === 'success') {
+    // Keep showing the last result while a new key loads (e.g. a new filter).
+    state = { status: 'loading', previous: settled.state.data };
   } else {
     state = { status: 'loading' };
   }

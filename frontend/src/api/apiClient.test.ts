@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { apiClient, setUnauthorizedHandler } from './apiClient';
+import { apiClient, getConditional, setUnauthorizedHandler } from './apiClient';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -33,7 +33,8 @@ describe('apiClient', () => {
 
     const response = await apiClient.get('/students/me');
 
-    expect(response).toEqual(unauthorizedBody);
+    // The client adds the HTTP status, so callers can tell 404 from other failures.
+    expect(response).toEqual({ ...unauthorizedBody, httpStatus: 401 });
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
     unregister();
   });
@@ -51,5 +52,48 @@ describe('apiClient', () => {
 
     expect(onUnauthorized).not.toHaveBeenCalled();
     unregister();
+  });
+
+  describe('getConditional', () => {
+    it('sends If-None-Match, bypasses the HTTP cache and reports 304 as not modified', async () => {
+      const fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 304 })));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getConditional('/courses/seats', '"v1"');
+
+      expect(result).toEqual({ kind: 'not-modified' });
+      const init = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
+      expect(new Headers(init.headers).get('If-None-Match')).toBe('"v1"');
+      expect(init.cache).toBe('no-store');
+    });
+
+    it('returns new data with its ETag', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() =>
+          Promise.resolve(
+            new Response(JSON.stringify({ success: true, data: { version: 'v2' } }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', ETag: '"v2"' },
+            }),
+          ),
+        ),
+      );
+
+      expect(await getConditional('/courses/seats', null)).toEqual({
+        kind: 'modified',
+        data: { version: 'v2' },
+        etag: '"v2"',
+      });
+    });
+
+    it('reports failures without throwing', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+      );
+      const result = await getConditional('/courses/seats', '"v1"');
+      expect(result.kind).toBe('failed');
+    });
   });
 });
