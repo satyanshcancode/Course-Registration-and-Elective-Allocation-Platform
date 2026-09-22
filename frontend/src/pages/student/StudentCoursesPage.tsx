@@ -1,19 +1,221 @@
-import { BookOpen } from 'lucide-react';
-import { FeaturePlaceholder } from '../FeaturePlaceholder';
+import type { CatalogueCourse } from '@course-reg/shared';
+import { LayoutGrid, SearchX, Table2, type LucideIcon } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { Button } from '../../components/Button';
+import { CourseCard } from '../../components/CourseCard';
+import { EmptyState } from '../../components/EmptyState';
+import { ErrorMessage } from '../../components/ErrorMessage';
+import { Icon } from '../../components/Icon';
+import { LiveSeatsIndicator } from '../../components/LiveSeatsIndicator';
+import { PageHeader } from '../../components/PageHeader';
+import { Pagination } from '../../components/Pagination';
+import { Skeleton } from '../../components/Skeleton';
+import { WindowStatus } from '../../components/WindowStatus';
+import { CATALOGUE_PAGE, useCatalogue, type CatalogueData } from '../../hooks/useCatalogue';
+import { useCatalogueFilters } from '../../hooks/useCatalogueFilters';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useLiveSeats } from '../../hooks/useLiveSeats';
+import { hasActiveFilters, type CatalogueView } from '../../utils/catalogueFilters';
+import { scrollIntoViewIfNeeded } from '../../utils/domUtils';
+import { seatsNewerThan, withLiveSeats } from '../../utils/liveSeats';
+import { CatalogueFilterForm } from './catalogue/CatalogueFilterForm';
+import { CatalogueTable } from './catalogue/CatalogueTable';
+import styles from './StudentCoursesPage.module.css';
+
+/** Passed to the detail page, so its back link restores the catalogue's filters. */
+export interface CatalogueLinkState {
+  catalogueSearch: string;
+}
+
+const VIEWS: readonly { id: CatalogueView; label: string; icon: LucideIcon }[] = [
+  { id: 'cards', label: 'Cards', icon: LayoutGrid },
+  { id: 'table', label: 'Table', icon: Table2 },
+];
+
+export function detailPath(code: string): string {
+  return `/student/courses/${encodeURIComponent(code)}`;
+}
+
+function resultSummary(data: CatalogueData): string {
+  const { page, pageSize, totalItems } = data.page;
+  if (totalItems === 0) {
+    return '0 courses';
+  }
+  const first = (page - 1) * pageSize + 1;
+  const last = Math.min(page * pageSize, totalItems);
+  return `Showing ${first}–${last} of ${totalItems} ${totalItems === 1 ? 'course' : 'courses'}`;
+}
 
 export function StudentCoursesPage() {
+  useDocumentTitle('Course catalogue');
+  const { filters, setFilters, clear } = useCatalogueFilters();
+  const { state, retry } = useCatalogue(filters);
+  const live = useLiveSeats();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const resultsRef = useRef<HTMLElement>(null);
+  // Bumped to remount the form, which resets its search box.
+  const [formKey, setFormKey] = useState(0);
+
+  // While new filters load, keep showing the previous results (dimmed).
+  const data =
+    state.status === 'success'
+      ? state.data
+      : state.status === 'loading'
+        ? state.previous
+        : undefined;
+  const refreshing = state.status === 'loading' && data !== undefined;
+  const filtered = hasActiveFilters(filters);
+  const linkState: CatalogueLinkState = { catalogueSearch: location.search };
+
+  // Newer polled numbers replace the loaded ones; unchanged courses keep identity.
+  const seats = data ? seatsNewerThan(live.snapshot, live.seats, data.page.serverTime) : null;
+  const courses: CatalogueCourse[] = data
+    ? data.page.items.map((course) => withLiveSeats(course, seats))
+    : [];
+
+  const clearAll = () => {
+    setFormKey((key) => key + 1);
+    clear();
+  };
+  const goToPage = (page: number) => {
+    setFilters({ page });
+    scrollIntoViewIfNeeded(resultsRef);
+  };
+
   return (
-    <FeaturePlaceholder
-      title="Course catalogue"
-      kicker="Fall 2026 · Catalogue"
-      description="Every course offered this term, with live seat counts and demand."
-      icon={BookOpen}
-      emptyTitle="The catalogue isn’t available yet"
-    >
-      <p>
-        Course listings — codes, credits, prerequisites and live seat counts — arrive in the next
-        phase.
-      </p>
-    </FeaturePlaceholder>
+    <>
+      <PageHeader
+        title="Course catalogue"
+        kicker={data?.window ? `${data.window.name} · Registration` : 'Registration'}
+        description="Every course offered this term, with live seat counts, demand and whether you can take it."
+      >
+        <div className={styles.statusLine}>
+          {data?.window && <WindowStatus window={data.window} clockOffsetMs={data.clockOffsetMs} />}
+          <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
+        </div>
+      </PageHeader>
+
+      <div className={styles.body}>
+        <CatalogueFilterForm
+          key={formKey}
+          filters={filters}
+          options={data?.page.filterOptions ?? { departments: [], credits: [] }}
+          onChange={setFilters}
+          onClear={clearAll}
+        />
+
+        <section
+          ref={resultsRef}
+          className={styles.results}
+          aria-labelledby="catalogue-results-heading"
+          aria-busy={state.status === 'loading' || undefined}
+        >
+          <div className={styles.toolbar}>
+            <h2 id="catalogue-results-heading" className={styles.summary} aria-live="polite">
+              {data ? resultSummary(data) : 'Loading courses…'}
+            </h2>
+            <div className={styles.views} role="group" aria-label="View">
+              {VIEWS.map((view) => (
+                <button
+                  key={view.id}
+                  type="button"
+                  className={styles.viewButton}
+                  aria-pressed={filters.view === view.id}
+                  onClick={() => {
+                    setFilters({ view: view.id });
+                  }}
+                >
+                  <Icon icon={view.icon} />
+                  {view.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {state.status === 'error' && (
+            <ErrorMessage
+              title="The catalogue couldn’t be loaded"
+              message={state.message}
+              onRetry={retry}
+            />
+          )}
+
+          {!data && state.status !== 'error' && <CatalogueSkeleton />}
+
+          {data && courses.length === 0 && (
+            <EmptyState
+              title={filtered ? 'No courses match these filters' : 'No courses offered yet'}
+              icon={SearchX}
+              action={
+                filtered && (
+                  <Button variant="secondary" onClick={clearAll}>
+                    Clear filters
+                  </Button>
+                )
+              }
+            >
+              {filtered
+                ? 'Try a shorter search, or turn off some filters.'
+                : 'Courses appear here once the registrar publishes this term’s offerings.'}
+            </EmptyState>
+          )}
+
+          {data && courses.length > 0 && (
+            <div className={styles.list} data-refreshing={refreshing ? 'true' : undefined}>
+              {filters.view === 'cards' ? (
+                <ul className={styles.grid}>
+                  {courses.map((course) => (
+                    <li key={course.code} className={styles.cell}>
+                      <CourseCard
+                        course={course}
+                        to={detailPath(course.code)}
+                        linkState={linkState}
+                        seatsChanged={live.changed.has(course.code)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <CatalogueTable
+                  caption={`Course catalogue: ${resultSummary(data)}`}
+                  courses={courses}
+                  changed={live.changed}
+                  actions={{
+                    view: (code) => {
+                      void navigate(detailPath(code), { state: linkState });
+                    },
+                  }}
+                />
+              )}
+              <Pagination
+                page={data.page.page}
+                pageCount={data.page.totalPages}
+                onPageChange={goToPage}
+                label="Catalogue pages"
+              />
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+/** Card-shaped placeholders while the first page loads. */
+function CatalogueSkeleton() {
+  return (
+    <ul className={styles.grid} aria-hidden="true">
+      {Array.from({ length: Math.min(CATALOGUE_PAGE, 6) }, (_, index) => (
+        <li key={index} className={styles.skeletonCard}>
+          <Skeleton width="45%" />
+          <Skeleton height="1.4rem" width="75%" />
+          <Skeleton lines={2} />
+          <Skeleton height="6px" />
+          <Skeleton width="55%" />
+        </li>
+      ))}
+    </ul>
   );
 }

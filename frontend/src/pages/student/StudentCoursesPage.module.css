@@ -1,0 +1,111 @@
+.statusLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+}
+
+.results {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  scroll-margin-top: calc(var(--app-header-height) + var(--space-4));
+}
+
+/* Result count on the left, view switch on the right (Flexbox). */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.summary {
+  color: var(--color-ink-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Two joined buttons; the pressed one is filled like a stamped tab. */
+.views {
+  display: inline-flex;
+  border: var(--border-control);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.viewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--color-ink-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.viewButton + .viewButton {
+  border-left: var(--border-control);
+}
+
+.viewButton:hover {
+  color: var(--color-ink);
+}
+
+.viewButton[aria-pressed='true'] {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+/* New filters are loading: the old results stay, slightly faded. */
+.list[data-refreshing='true'] {
+  opacity: 0.6;
+}
+
+/* The catalogue grid: as many 18rem-plus columns as fit. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell {
+  display: grid;
+  min-width: 0;
+}
+
+.skeletonCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}

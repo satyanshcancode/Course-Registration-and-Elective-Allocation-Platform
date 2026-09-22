@@ -34,5 +34,7 @@ describe('formatSeats', () => {
     expect(formatDemandRatio(25, 40)).toBe('0.6×');
     expect(formatDemandRatio(240, 20)).toBe('12×');
     expect(formatDemandRatio(5, 0)).toBe('—');
+    expect(formatDemandRatio(2, 50)).toBe('<0.1×');
+    expect(formatDemandRatio(0, 50)).toBe('0.0×');
   });
 });

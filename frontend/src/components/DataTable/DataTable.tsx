@@ -1,5 +1,5 @@
 import { SearchX } from 'lucide-react';
-import { useId, useMemo, useState, type ReactNode } from 'react';
+import { useId, useMemo, useState, type MouseEventHandler, type ReactNode } from 'react';
 import { Button } from '../Button';
 import { EmptyState } from '../EmptyState';
 import { ErrorMessage } from '../ErrorMessage';
@@ -43,6 +43,18 @@ export interface DataTableProps<T> {
   itemName?: { one: string; other: string };
   emptyTitle?: string;
   emptyMessage?: ReactNode;
+  /**
+   * Page the rows here (default true). Pass false when the rows are already
+   * one page from the server, which then also owns sorting and paging.
+   */
+  paginated?: boolean;
+  /** Marks a row, e.g. 'warning' for an oversubscribed course (pair with text). */
+  getRowTone?: (row: T) => 'warning' | undefined;
+  /**
+   * ONE click handler on <tbody> for every row's buttons (event delegation):
+   * read event.target and find the button with closest().
+   */
+  onBodyClick?: MouseEventHandler<HTMLTableSectionElement>;
 }
 
 const SKELETON_ROWS = 5;
@@ -67,6 +79,9 @@ export function DataTable<T>({
   itemName = { one: 'row', other: 'rows' },
   emptyTitle = 'Nothing to show yet',
   emptyMessage,
+  paginated = true,
+  getRowTone,
+  onBodyClick,
 }: DataTableProps<T>) {
   const captionId = useId();
   const [sort, setSort] = useState<SortState | null>(initialSort ?? null);
@@ -79,7 +94,7 @@ export function DataTable<T>({
     () => sortRows(filterRows(rows, columns, query), columns, sort),
     [rows, columns, query, sort],
   );
-  const slice = paginate(visible, page, pageSize);
+  const slice = paginate(visible, page, paginated ? pageSize : Math.max(1, visible.length));
   const noun = (count: number) => (count === 1 ? itemName.one : itemName.other);
 
   const changeSort = (columnId: string) => {
@@ -172,7 +187,9 @@ export function DataTable<T>({
               })}
             </tr>
           </thead>
-          <tbody>
+          {/* Clicks from any row's buttons bubble up to this one listener. */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: the clicks come from real <button>s, which handle the keyboard themselves */}
+          <tbody onClick={onBodyClick}>
             {loading &&
               Array.from({ length: SKELETON_ROWS }, (_, index) => (
                 <tr key={`skeleton-${index}`} className={styles.row} aria-hidden="true">
@@ -185,7 +202,7 @@ export function DataTable<T>({
               ))}
             {!loading &&
               slice.rows.map((row) => (
-                <tr key={getRowId(row)} className={styles.row}>
+                <tr key={getRowId(row)} className={styles.row} data-tone={getRowTone?.(row)}>
                   {columns.map((column) => (
                     <td
                       key={column.id}
@@ -221,7 +238,7 @@ export function DataTable<T>({
         </table>
       </div>
 
-      {!loading && (
+      {!loading && paginated && (
         <Pagination
           page={slice.page}
           pageCount={slice.pageCount}
