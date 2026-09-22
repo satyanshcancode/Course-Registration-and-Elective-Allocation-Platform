@@ -173,6 +173,7 @@ export interface CourseDetail extends Omit<CatalogueCourse, 'prerequisites'> {
   minCredits: number;
   prerequisites: PrerequisiteStatus[];
   window: RegistrationWindowSummary;
+  serverTime: IsoDateTime;
 }
 
 // ---------------------------------------------------------------------------
