@@ -31,30 +31,26 @@ function fakeBackend(input: RequestInfo | URL): Promise<Response> {
 }
 
 describe('App', () => {
-  it('renders the layout and shows backend and database health', async () => {
+  it('sends anonymous visitors from / to the sign-in page, which shows service status', async () => {
     const fetchMock = vi.fn(fakeBackend);
     vi.stubGlobal('fetch', fetchMock);
 
     render(<App />);
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: /course registration and elective/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
-    expect(screen.getByText('Checking services…')).toBeInTheDocument();
-    // Anonymous visitors are offered the sign-in link once the session probe answers.
-    expect(await screen.findByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'How registration works' })).toBeVisible();
 
-    const databaseRow = (await screen.findByText('Database')).closest('div');
-    expect(databaseRow).not.toBeNull();
-    expect(within(databaseRow as HTMLElement).getByText('Operational')).toBeInTheDocument();
+    const status = screen.getByRole('region', { name: 'Service status' });
+    const database = (await within(status).findByText('Database')).closest('div');
+    expect(within(database as HTMLElement).getByText('Operational')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/health',
-      expect.objectContaining({ method: 'GET' }),
+      expect.objectContaining({ method: 'GET', credentials: 'include' }),
     );
   });
 
-  it('shows an error with a retry button when the API is unreachable', async () => {
+  it('says so (and offers a retry) when the server is unreachable', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
@@ -62,7 +58,7 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/could not reach the server/i);
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
+    expect(await screen.findByText('Server unreachable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check again' })).toBeEnabled();
   });
 });

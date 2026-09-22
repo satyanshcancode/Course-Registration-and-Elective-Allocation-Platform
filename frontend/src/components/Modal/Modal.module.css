@@ -1,0 +1,83 @@
+.dialog {
+  /* The global reset removes margins; a modal dialog is centred by auto margins. */
+  margin: auto;
+  width: min(100% - 2 * var(--space-4), 32rem);
+  max-height: min(100% - 2 * var(--space-6), 44rem);
+  padding: 0;
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-overlay);
+}
+
+.dialog[data-size='sm'] {
+  width: min(100% - 2 * var(--space-4), 26rem);
+}
+
+/* Short, functional opening: a slight rise, no bounce. */
+.dialog[open] {
+  animation: rise var(--duration-base) var(--ease-standard);
+}
+
+.dialog::backdrop {
+  background-color: var(--color-backdrop);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+.panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-lg);
+}
+
+.close {
+  display: grid;
+  place-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2)) 0 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-ink-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.close:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink);
+}
+
+.description {
+  color: var(--color-ink-muted);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}

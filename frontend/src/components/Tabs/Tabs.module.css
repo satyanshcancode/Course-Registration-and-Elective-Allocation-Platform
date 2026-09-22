@@ -1,0 +1,68 @@
+.tabs {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Tabs sit on a hairline like section dividers in a printed catalogue. */
+.list {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  border-bottom: var(--border-hairline);
+  scrollbar-width: thin;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.tab:hover {
+  color: var(--color-ink);
+}
+
+/* The selected tab is marked by an underline rule and weight, not colour alone. */
+.tab::after {
+  content: '';
+  position: absolute;
+  right: var(--space-2);
+  bottom: -1px;
+  left: var(--space-2);
+  height: 2px;
+  background-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}
+
+.tab[aria-selected='true']::after {
+  background-color: var(--color-accent);
+}
+
+.tab:focus-visible {
+  outline-offset: -2px;
+}
+
+.meta {
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel:focus-visible {
+  outline-offset: 4px;
+}

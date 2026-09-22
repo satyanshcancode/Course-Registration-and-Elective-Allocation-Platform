@@ -1,0 +1,111 @@
+/* Fixed region: top-right below the app header on wide screens. */
+.region {
+  position: fixed;
+  top: calc(var(--app-header-height) + var(--space-3));
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  width: min(24rem, 100% - 2 * var(--space-4));
+  pointer-events: none;
+}
+
+/* Phones: sit just above the fixed bottom navigation, never over it. */
+@media (width < 40rem) {
+  .region {
+    top: auto;
+    right: var(--space-3);
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-3));
+    left: var(--space-3);
+    width: auto;
+  }
+}
+
+.list {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-info);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-float);
+  pointer-events: auto;
+  animation: slide-in var(--duration-base) var(--ease-standard);
+}
+
+.toast[data-tone='success'] {
+  border-left-color: var(--color-success);
+}
+
+.toast[data-tone='warning'] {
+  border-left-color: var(--color-warning);
+}
+
+.toast[data-tone='danger'] {
+  border-left-color: var(--color-danger);
+}
+
+.icon {
+  margin-top: 0.05rem;
+  color: var(--color-info);
+}
+
+.toast[data-tone='success'] .icon {
+  color: var(--color-success);
+}
+
+.toast[data-tone='warning'] .icon {
+  color: var(--color-warning);
+}
+
+.toast[data-tone='danger'] .icon {
+  color: var(--color-danger);
+}
+
+.text {
+  display: grid;
+  gap: var(--space-0);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.message {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+.dismiss {
+  display: grid;
+  place-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-ink-muted);
+}
+
+.dismiss:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}

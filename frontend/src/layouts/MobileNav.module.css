@@ -1,0 +1,115 @@
+/* Hidden until the phone breakpoint. */
+.mobileNav {
+  display: none;
+}
+
+@media (width < 40rem) {
+  .mobileNav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-nav);
+    display: block;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: var(--border-hairline);
+    background-color: var(--color-surface);
+  }
+}
+
+.bar {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  height: var(--bottom-nav-height);
+}
+
+.barLink {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+/* Active: accent colour, heavier label and a rule on top (not colour alone). */
+.barLink[aria-current='page'],
+.barLink[data-current='true'] {
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+}
+
+.barLink[aria-current='page']::before,
+.barLink[data-current='true']::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 25%;
+  left: 25%;
+  height: 2px;
+  background-color: var(--color-accent);
+}
+
+.barLink[aria-expanded='true'] {
+  color: var(--color-ink);
+}
+
+.barLink:focus-visible {
+  outline-offset: -4px;
+}
+
+.barLabel {
+  line-height: 1;
+}
+
+/* "More" sheet: floats above the bar, so it may cast a shadow. */
+.sheet {
+  list-style: none;
+  position: absolute;
+  right: var(--space-2);
+  bottom: calc(100% + var(--space-2));
+  left: var(--space-2);
+  display: grid;
+  padding: var(--space-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-float);
+}
+
+.sheet[hidden] {
+  display: none;
+}
+
+.sheetLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.sheetLink:hover {
+  background-color: var(--color-surface-sunken);
+}
+
+.sheetLink[aria-current='page'] {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+}

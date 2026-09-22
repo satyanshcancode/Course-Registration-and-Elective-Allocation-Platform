@@ -2,24 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { homePathFor, postLoginPath, readLoginLocationState } from './authRedirects';
 
 describe('postLoginPath', () => {
-  it('sends each role to its own home by default', () => {
-    expect(homePathFor('STUDENT')).toBe('/student');
-    expect(postLoginPath('STUDENT', undefined)).toBe('/student');
-    expect(postLoginPath('ADMIN', undefined)).toBe('/admin');
+  it('sends each role to its own dashboard by default', () => {
+    expect(homePathFor('STUDENT')).toBe('/student/dashboard');
+    expect(postLoginPath('STUDENT', undefined)).toBe('/student/dashboard');
+    expect(postLoginPath('ADMIN', undefined)).toBe('/admin/dashboard');
   });
 
   it('returns to the requested page inside the role’s area', () => {
     expect(postLoginPath('STUDENT', '/student/courses?term=2026-FALL')).toBe(
       '/student/courses?term=2026-FALL',
     );
-    expect(postLoginPath('ADMIN', '/admin')).toBe('/admin');
+    expect(postLoginPath('ADMIN', '/admin/allocation-runs')).toBe('/admin/allocation-runs');
   });
 
   it('ignores pages outside the role’s area and external or malformed targets', () => {
-    expect(postLoginPath('STUDENT', '/admin')).toBe('/student');
-    expect(postLoginPath('STUDENT', '/studentevil')).toBe('/student');
-    expect(postLoginPath('ADMIN', '//evil.example/admin')).toBe('/admin');
-    expect(postLoginPath('ADMIN', 'https://evil.example/admin')).toBe('/admin');
+    expect(postLoginPath('STUDENT', '/admin/dashboard')).toBe('/student/dashboard');
+    expect(postLoginPath('STUDENT', '/studentevil')).toBe('/student/dashboard');
+    expect(postLoginPath('ADMIN', '//evil.example/admin/x')).toBe('/admin/dashboard');
+    expect(postLoginPath('ADMIN', 'https://evil.example/admin/x')).toBe('/admin/dashboard');
   });
 });
 

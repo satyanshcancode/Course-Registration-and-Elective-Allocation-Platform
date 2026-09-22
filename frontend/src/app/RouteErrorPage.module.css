@@ -1,0 +1,5 @@
+.page {
+  max-width: var(--layout-narrow);
+  margin-inline: auto;
+  padding: var(--space-7) var(--space-4);
+}

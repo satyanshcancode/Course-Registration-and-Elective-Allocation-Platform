@@ -1,23 +1,53 @@
-.details {
+/* Dashboard: main column and a narrower record column, like a registrar form. */
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  align-items: start;
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+}
+
+.primary {
+  min-width: 0;
+}
+
+@media (width < 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.record {
+  display: grid;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
 }
 
-.details div {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-muted);
+.record div {
+  display: grid;
+  gap: var(--space-0);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-hairline);
 }
 
-.details dt {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+.record div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
-.details dd {
+.record dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.record dd {
   margin: 0;
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }

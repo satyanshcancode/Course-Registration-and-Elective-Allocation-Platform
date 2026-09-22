@@ -1,6 +1,7 @@
 import type { UserRole } from '@course-reg/shared';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
+import { PageLoading } from './PageLoading';
 import type { LoginLocationState } from '../types/auth';
 import { homePathFor } from '../utils/authRedirects';
 
@@ -18,7 +19,7 @@ export function ProtectedRoute({ role }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (state.status === 'loading') {
-    return <p role="status">Checking your session…</p>;
+    return <PageLoading label="Checking your session…" />;
   }
   if (state.status === 'anonymous') {
     // After an explicit sign-out, don't send the next person back to this page.

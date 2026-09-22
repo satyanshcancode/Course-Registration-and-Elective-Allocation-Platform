@@ -1,0 +1,26 @@
+.lines {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.line,
+.block {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-sunken);
+  animation: pulse var(--duration-pulse) ease-in-out infinite;
+}
+
+.line {
+  height: 0.75em;
+}
+
+/* A slow, low-contrast pulse: signals "loading", doesn't demand attention.
+   With reduced motion the duration token is 0, so the shape stays still. */
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

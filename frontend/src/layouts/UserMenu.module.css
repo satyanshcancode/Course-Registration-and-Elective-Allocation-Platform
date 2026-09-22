@@ -1,0 +1,106 @@
+.menu {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  text-align: start;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  border-color: var(--color-rule);
+  background-color: var(--color-surface-sunken);
+}
+
+.initials {
+  display: grid;
+  place-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-paper);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-code);
+}
+
+.who {
+  display: grid;
+  line-height: 1.2;
+}
+
+.name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.detail {
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-code);
+}
+
+.chevron {
+  color: var(--color-ink-muted);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.trigger[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Floating panel: one of the few things allowed a shadow. */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: var(--z-menu);
+  display: grid;
+  gap: var(--space-1);
+  width: 15rem;
+  padding: var(--space-3);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-float);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.signedInAs {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.email {
+  margin-bottom: var(--space-2);
+  overflow-wrap: anywhere;
+  font-size: var(--text-sm);
+}
+
+/* Phones: initials only; the name is still announced from the panel. */
+@media (width < 40rem) {
+  .who,
+  .chevron {
+    display: none;
+  }
+}

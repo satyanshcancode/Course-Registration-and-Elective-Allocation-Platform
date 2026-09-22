@@ -1,0 +1,49 @@
+.wrapper {
+  position: relative;
+  display: block;
+}
+
+/* Chevron drawn with borders, so it follows the text colour in both themes. */
+.wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.5px solid var(--color-ink-muted);
+  border-bottom: 1.5px solid var(--color-ink-muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-7) var(--space-2) var(--space-3);
+  border: var(--border-control);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-size: var(--text-base);
+  appearance: none;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--color-ink-muted);
+}
+
+.select:focus-visible {
+  border-color: var(--color-accent);
+  outline-offset: 1px;
+}
+
+.select[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.select:disabled {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+}

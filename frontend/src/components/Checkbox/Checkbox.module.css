@@ -1,0 +1,70 @@
+.option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-2);
+  align-items: start;
+}
+
+.box {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.2em;
+  border: var(--border-control);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  appearance: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+/* The tick: an L-shaped border rotated, drawn only when checked. */
+.box::after {
+  content: '';
+  width: 0.35rem;
+  height: 0.6rem;
+  margin-top: -0.15rem;
+  border-right: 2px solid var(--color-on-accent);
+  border-bottom: 2px solid var(--color-on-accent);
+  transform: rotate(45deg) scale(0);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.box:checked {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+}
+
+.box:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.box:hover:not(:disabled, :checked) {
+  border-color: var(--color-ink-muted);
+}
+
+.box:disabled {
+  background-color: var(--color-surface-sunken);
+  cursor: not-allowed;
+}
+
+.label {
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+}
+
+.box:disabled + .label {
+  color: var(--color-ink-muted);
+  cursor: not-allowed;
+}
+
+.description {
+  grid-column: 2;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}

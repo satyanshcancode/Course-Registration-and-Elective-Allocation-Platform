@@ -1,0 +1,34 @@
+.error {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  border-left-width: 3px;
+  border-left-color: var(--color-danger);
+  border-radius: var(--radius-md);
+  background-color: var(--color-danger-soft);
+}
+
+.icon {
+  color: var(--color-danger);
+}
+
+.text {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.title {
+  color: var(--color-danger);
+  font-weight: var(--weight-semibold);
+}
+
+.message {
+  color: var(--color-ink);
+}
+
+.retry {
+  justify-self: start;
+  margin-top: var(--space-2);
+}

@@ -1,0 +1,63 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding-block: var(--space-5) var(--space-4);
+  border-bottom: var(--border-hairline);
+  background-color: var(--color-paper);
+}
+
+/* Sticks just below the app header while the page scrolls. */
+.header[data-sticky='true'] {
+  position: sticky;
+  top: var(--app-header-height);
+  z-index: var(--z-sticky);
+}
+
+/* Phones: a sticky header would take a fifth of the screen, so it scrolls. */
+@media (width < 40rem) {
+  .header[data-sticky='true'] {
+    position: static;
+  }
+}
+
+.titles {
+  display: grid;
+  gap: var(--space-1);
+  min-width: min(100%, 20rem);
+  flex: 1 1 24rem;
+}
+
+.kicker {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+/* The heading takes focus only programmatically; no ring for that. */
+.title:focus {
+  outline: none;
+}
+
+.description {
+  max-width: 65ch;
+  color: var(--color-ink-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.status {
+  flex-basis: 100%;
+}

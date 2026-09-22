@@ -1,0 +1,37 @@
+.field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+}
+
+/* Required marker; the control's `required` attribute is what AT announces,
+   so the asterisk is given empty alternative text. */
+.label[data-required='true']::after {
+  content: ' *' / '';
+  color: var(--color-danger);
+}
+
+.hint {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+.error svg {
+  margin-top: 0.1em;
+}

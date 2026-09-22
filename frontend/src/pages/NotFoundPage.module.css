@@ -1,0 +1,7 @@
+.page {
+  max-width: var(--layout-narrow);
+}
+
+.body {
+  padding-top: var(--space-5);
+}
