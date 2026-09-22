@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  compareValues,
-  filterRows,
-  nextSort,
-  paginate,
-  sortRows,
-  type Column,
-} from './tableLogic';
+import { compareValues, filterRows, nextSort, paginate, sortRows, type Column } from './tableLogic';
 
 interface Course {
   code: string;
@@ -59,7 +52,12 @@ describe('table logic', () => {
   it('paginates and clamps out-of-range pages', () => {
     const many = Array.from({ length: 23 }, (_, index) => index + 1);
 
-    expect(paginate(many, 2, 10)).toMatchObject({ page: 2, pageCount: 3, firstRow: 11, lastRow: 20 });
+    expect(paginate(many, 2, 10)).toMatchObject({
+      page: 2,
+      pageCount: 3,
+      firstRow: 11,
+      lastRow: 20,
+    });
     expect(paginate(many, 9, 10)).toMatchObject({ page: 3, firstRow: 21, lastRow: 23 });
     expect(paginate([], 1, 10)).toMatchObject({ page: 1, pageCount: 1, firstRow: 0, lastRow: 0 });
   });
