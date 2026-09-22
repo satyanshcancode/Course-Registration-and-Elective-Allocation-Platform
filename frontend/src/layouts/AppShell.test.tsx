@@ -45,11 +45,11 @@ describe('layouts', { timeout: 20_000 }, () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
 
     const nav = screen.getAllByRole('navigation', { name: 'Student' })[0];
-    const labels = within(nav as HTMLElement)
+    const labels = within(nav!)
       .getAllByRole('link')
       .map((link) => link.textContent);
     expect(labels).toEqual(STUDENT_NAV.map((item) => item.label));
-    expect(within(nav as HTMLElement).getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+    expect(within(nav!).getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -62,13 +62,14 @@ describe('layouts', { timeout: 20_000 }, () => {
     await renderAt('/admin/allocation-runs');
 
     const nav = screen.getAllByRole('navigation', { name: 'Administration' })[0];
-    const labels = within(nav as HTMLElement)
+    const labels = within(nav!)
       .getAllByRole('link')
       .map((link) => link.textContent);
     expect(labels).toEqual(ADMIN_NAV.map((item) => item.label));
-    expect(
-      within(nav as HTMLElement).getByRole('link', { name: 'Allocation Runs' }),
-    ).toHaveAttribute('aria-current', 'page');
+    expect(within(nav!).getByRole('link', { name: 'Allocation Runs' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
     expect(screen.queryByRole('link', { name: 'My Cart' })).not.toBeInTheDocument();
   });
 
