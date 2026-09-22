@@ -41,12 +41,15 @@ function toLetters(n: number): string {
   return letters;
 }
 
-export function createDepartment(pool: Pool): Promise<string> {
+export function createDepartment(
+  pool: Pool,
+  overrides: { code?: string; name?: string } = {},
+): Promise<string> {
   const n = nextId();
   return insertReturningId(
     pool,
     'INSERT INTO departments (code, name) VALUES ($1, $2) RETURNING id',
-    [`DEP${toLetters(n)}`, `Department ${n}`],
+    [overrides.code ?? `DEP${toLetters(n)}`, overrides.name ?? `Department ${n}`],
   );
 }
 
@@ -96,13 +99,85 @@ export async function createStudent(
   );
 }
 
-export function createCourse(pool: Pool, departmentId: string): Promise<string> {
+export interface CourseOverrides {
+  code?: string;
+  name?: string;
+  credits?: number;
+  description?: string;
+  minSemester?: number;
+  minCredits?: number;
+}
+
+export function createCourse(
+  pool: Pool,
+  departmentId: string,
+  overrides: CourseOverrides = {},
+): Promise<string> {
   const n = nextId();
   return insertReturningId(
     pool,
-    `INSERT INTO courses (code, name, department_id, credits)
-     VALUES ($1, $2, $3, 4) RETURNING id`,
-    [`TST${String(n % 1000).padStart(3, '0')}`, `Course ${n}`, departmentId],
+    `INSERT INTO courses (code, name, department_id, credits, description, min_semester, min_credits)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    [
+      overrides.code ?? `TST${String(n % 1000).padStart(3, '0')}`,
+      overrides.name ?? `Course ${n}`,
+      departmentId,
+      overrides.credits ?? 4,
+      overrides.description ?? '',
+      overrides.minSemester ?? 1,
+      overrides.minCredits ?? 0,
+    ],
+  );
+}
+
+export async function addPrerequisite(
+  pool: Pool,
+  courseId: string,
+  prerequisiteCourseId: string,
+): Promise<void> {
+  await pool.query(
+    'INSERT INTO course_prerequisites (course_id, prerequisite_course_id) VALUES ($1, $2)',
+    [courseId, prerequisiteCourseId],
+  );
+}
+
+export async function restrictToProgram(
+  pool: Pool,
+  courseId: string,
+  programId: string,
+): Promise<void> {
+  await pool.query('INSERT INTO course_eligible_programs (course_id, program_id) VALUES ($1, $2)', [
+    courseId,
+    programId,
+  ]);
+}
+
+export async function markCompleted(
+  pool: Pool,
+  studentId: string,
+  courseId: string,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO student_completed_courses (student_id, course_id, completed_term)
+     VALUES ($1, $2, '2025-FALL')`,
+    [studentId, courseId],
+  );
+}
+
+export async function createWaitlistEntry(
+  pool: Pool,
+  studentId: string,
+  windowId: string,
+  courseId: string,
+  position: number,
+  status: 'WAITING' | 'PROMOTED' | 'REMOVED' = 'WAITING',
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO waitlist_entries (student_id, window_id, course_id, position, status, promoted_at, removed_at)
+     VALUES ($1, $2, $3, $4, $5,
+             CASE WHEN $5 = 'PROMOTED' THEN now() END,
+             CASE WHEN $5 = 'REMOVED' THEN now() END)`,
+    [studentId, windowId, courseId, position, status],
   );
 }
 
