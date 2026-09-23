@@ -1,0 +1,85 @@
+.side {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.window {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.windowLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.windowName {
+  font-weight: 500;
+}
+
+.countdown {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 0;
+}
+
+.schedule dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.schedule dd {
+  margin: var(--space-1) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.eligibility {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.link,
+.notifications {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.linkIcon {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 1.5px;
+}
+
+.steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}

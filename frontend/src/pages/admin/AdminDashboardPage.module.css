@@ -1,0 +1,24 @@
+.status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One line of text, not a row of stat cards (see docs/DESIGN.md). */
+.counts {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.counts strong {
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
