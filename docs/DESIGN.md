@@ -227,3 +227,39 @@ Final screenshots:
 | Admin courses                          | 1280, light  | [admin-courses-1280-light.png](screenshots/admin-courses-1280-light.png)                 |
 | Edit capacity, validation (phone)      | 390, light   | [admin-dialog-390-light.png](screenshots/admin-dialog-390-light.png)                     |
 | Live update, changed seats highlighted | 1280, light  | [catalogue-live-update-1280-light.png](screenshots/catalogue-live-update-1280-light.png) |
+
+### Phase 6: eligibility pre-check, registration window, dashboards
+
+Reviewed at 1280, 820 and 390px in light and dark mode (24 screenshots per
+round, two rounds), with a measured horizontal-overflow check on every
+combination, plus end-to-end browser flows against the Docker stack: 22 admin
+checks (edit, method switch, both validation failures, save, open, freeze,
+close) and 14 student checks in a DRAFT window and 13 in an OPEN one.
+
+| Finding                                                                                                                                                                     | Fix                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| The pre-check opened onto a wall of red: "Not eligible" is 19 of 20 courses for a first-year, and at 390px the page ran to 3,900px before the eligible course was reachable | "Not eligible" starts collapsed, "Eligible" starts open. Both are still `<details>`, so either can be opened |
+| The search box and the department select stacked instead of sitting side by side, because `SearchBar` is `width: 100%` inside a flex row                                    | The filter row is a two-column grid (`22rem` + `14rem`) that collapses to one column below 48rem             |
+| The dashboard said the same thing three times: the status banner, then the card's badge, then "Registration closes in 21d 1h" again                                         | The card keeps the badge and the Opens/Closes schedule; the countdown is the banner's job                    |
+| "Close registration" was a red button, but closing is the normal next step, not a destructive one — and red is reserved for problems                                        | The page button is primary; the confirm dialog stays `tone="danger"`, so focus still starts on Cancel        |
+
+Checked against the banned list: no gradients, blur, emoji or hero banners.
+The counts are one line of text ("20 courses offered · 286 of 300 students
+eligible for at least one · 150 submissions so far"), not a row of stat cards.
+Every status carries an icon and words: the window badge, Eligible / Not
+eligible on each group, and "Policy frozen" with a lock. Each ineligibility
+reason is a sentence with its own icon, never colour alone. In the final round
+no page scrolls sideways at any width or theme.
+
+Final screenshots:
+
+| Page                               | Width, theme | File                                                                             |
+| ---------------------------------- | ------------ | -------------------------------------------------------------------------------- |
+| Eligibility pre-check              | 1280, light  | [eligibility-1280-light.png](screenshots/eligibility-1280-light.png)             |
+| Eligibility pre-check (phone)      | 390, dark    | [eligibility-390-dark.png](screenshots/eligibility-390-dark.png)                 |
+| Student dashboard                  | 1280, light  | [student-dashboard-1280-light.png](screenshots/student-dashboard-1280-light.png) |
+| Student dashboard (rail)           | 820, dark    | [student-dashboard-820-dark.png](screenshots/student-dashboard-820-dark.png)     |
+| Registration window, draft form    | 1280, light  | [admin-window-1280-light.png](screenshots/admin-window-1280-light.png)           |
+| Registration window, policy frozen | 1280, dark   | [admin-window-1280-dark.png](screenshots/admin-window-1280-dark.png)             |
+| Admin dashboard                    | 1280, light  | [admin-dashboard-1280-light.png](screenshots/admin-dashboard-1280-light.png)     |
+| Admin dashboard (phone)            | 390, light   | [admin-dashboard-390-light.png](screenshots/admin-dashboard-390-light.png)       |

@@ -8,6 +8,7 @@
  */
 import type { Pool, PoolClient } from 'pg';
 import { evaluateEligibility, type EligibilityCourse } from '../../services/eligibilityRules.js';
+import { createNotificationRepository } from '../../repositories/notificationRepository.js';
 import type { Logger } from '../../utils/logger.js';
 import { createSeededRandom } from '../../utils/random.js';
 import { withTransaction } from '../transaction.js';
@@ -155,6 +156,8 @@ async function loadPlanStudents(
 async function resetAndOpenWindow(pool: Pool, windowId: string, openedAt: Date): Promise<void> {
   await withTransaction(pool, async (client) => {
     await client.query('DELETE FROM preference_submissions WHERE window_id = $1', [windowId]);
+    // Opening through the API notifies every student, so the demo does too.
+    await client.query("DELETE FROM notifications WHERE type = 'WINDOW_STATUS'");
     await client.query(
       "DELETE FROM registration_history WHERE window_id = $1 AND event_type = 'SUBMITTED'",
       [windowId],
@@ -171,6 +174,14 @@ async function resetAndOpenWindow(pool: Pool, windowId: string, openedAt: Date):
        WHERE id = $1`,
       [windowId, openedAt],
     );
+    await createNotificationRepository(client).broadcast({
+      userIds: (await client.query<{ user_id: string }>('SELECT user_id FROM students')).rows.map(
+        (row) => row.user_id,
+      ),
+      type: 'WINDOW_STATUS',
+      title: `Registration for ${SEED_WINDOW_NAME} is open`,
+      body: 'Rank up to five courses and submit before the window closes.',
+    });
   });
 }
 

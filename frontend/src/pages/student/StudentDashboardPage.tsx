@@ -20,22 +20,14 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { useCurrentStudent } from '../../hooks/useAuth';
 import { useDashboardSections } from '../../hooks/useDashboardSections';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { useServerClock } from '../../hooks/useServerClock';
 import type { AsyncState } from '../../types/asyncState';
-import { describeCountdown } from '../../utils/countdown';
 import { describeEligibilityCount } from '../../utils/eligibilityText';
 import { formatDateTime } from '../../utils/formatDate';
 import styles from '../DashboardPage.module.css';
 import dashboard from './StudentDashboardPage.module.css';
 
-/** The window plus the clock offset measured when it arrived. */
-interface RegistrationSection {
-  window: CurrentWindowResponse['window'];
-  clockOffsetMs: number;
-}
-
 interface DashboardData extends Record<string, unknown> {
-  registration: RegistrationSection;
+  registration: CurrentWindowResponse;
   eligibility: EligibilityOverview;
   notifications: UnreadNotificationCount;
 }
@@ -75,12 +67,7 @@ export function StudentDashboardPage() {
   const user = useCurrentStudent();
   // Three independent requests, together: one failure must not blank the page.
   const { sections, retry } = useDashboardSections<DashboardData>({
-    registration: async (signal) => {
-      const current = unwrap(await getCurrentWindow(signal));
-      // Measured once, where reading the device clock is a side effect of the
-      // request rather than something that happens during render.
-      return { window: current.window, clockOffsetMs: Date.parse(current.serverTime) - Date.now() };
-    },
+    registration: async (signal) => unwrap(await getCurrentWindow(signal)),
     eligibility: async (signal) => unwrap(await getEligibility(signal)),
     notifications: async (signal) =>
       unwrap(
@@ -92,14 +79,12 @@ export function StudentDashboardPage() {
 
   const registration =
     sections.registration.status === 'success' ? sections.registration.data : undefined;
-  const clock = useServerClock(registration?.clockOffsetMs ?? 0, registration !== undefined);
 
   if (!user) {
     return null;
   }
   const { student } = user;
   const windowSummary = registration?.window ?? null;
-  const countdown = windowSummary ? describeCountdown(windowSummary, clock) : null;
 
   return (
     <>
@@ -133,7 +118,6 @@ export function StudentDashboardPage() {
                     <StatusBadge kind="window" status={data.window.status} />
                     <span className={dashboard.windowName}>{data.window.name}</span>
                   </p>
-                  {countdown && <p className={dashboard.countdown}>{countdown.text}</p>}
                   <dl className={dashboard.schedule}>
                     <div>
                       <dt>Opens</dt>
