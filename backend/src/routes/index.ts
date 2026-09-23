@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createAdminController } from '../controllers/adminController.js';
 import { createAuthController } from '../controllers/authController.js';
 import { createCourseController } from '../controllers/courseController.js';
+import { createEligibilityController } from '../controllers/eligibilityController.js';
 import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
 import { createLoginRateLimiter, type RateLimitOptions } from '../middleware/loginRateLimiter.js';
@@ -9,11 +10,14 @@ import { createRequireAuth } from '../middleware/requireAuth.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AuthService } from '../services/authService.js';
 import type { CatalogueService } from '../services/catalogueService.js';
+import type { EligibilityService } from '../services/eligibilityService.js';
 import type { HealthService } from '../services/healthService.js';
+import type { RegistrationWindowService } from '../services/registrationWindowService.js';
 import type { StudentService } from '../services/studentService.js';
 import { createAdminRouter } from './adminRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createCourseRouter } from './courseRoutes.js';
+import { createEligibilityRouter } from './eligibilityRoutes.js';
 import { createHealthRouter } from './healthRoutes.js';
 import { createRegistrationWindowRouter } from './registrationWindowRoutes.js';
 import { createStudentRouter } from './studentRoutes.js';
@@ -24,7 +28,9 @@ export interface ApiServices {
   authService: AuthService;
   studentService: StudentService;
   catalogueService: CatalogueService;
+  eligibilityService: EligibilityService;
   adminCourseService: AdminCourseService;
+  registrationWindowService: RegistrationWindowService;
 }
 
 export interface ApiRouterOptions {
@@ -56,8 +62,18 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
   );
   router.use('/courses', createCourseRouter(courseController, requireAuth));
   router.use(
+    '/eligibility',
+    createEligibilityRouter(createEligibilityController(services.eligibilityService), requireAuth),
+  );
+  router.use(
     '/admin',
-    createAdminRouter(createAdminController(services.adminCourseService), requireAuth),
+    createAdminRouter(
+      createAdminController({
+        adminCourseService: services.adminCourseService,
+        registrationWindowService: services.registrationWindowService,
+      }),
+      requireAuth,
+    ),
   );
   return router;
 }

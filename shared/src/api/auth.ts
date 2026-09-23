@@ -46,3 +46,8 @@ export interface AdminPing {
   status: 'ok';
   adminId: string;
 }
+
+/** GET /api/students/me/notifications/unread-count. */
+export interface UnreadNotificationCount {
+  unread: number;
+}

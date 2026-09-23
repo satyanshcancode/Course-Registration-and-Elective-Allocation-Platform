@@ -24,14 +24,21 @@ function buildApp(repository: HealthRepository) {
         resolveSession: () => Promise.resolve(null),
         getCurrentUser: notUsed,
       },
-      studentService: { getOwnProfile: notUsed },
+      studentService: { getOwnProfile: notUsed, countUnreadNotifications: notUsed },
       catalogueService: {
         getCurrentWindow: notUsed,
         listCatalogue: notUsed,
         getCourse: notUsed,
         getSeats: notUsed,
       },
+      eligibilityService: { getOverview: notUsed, getCourse: notUsed },
       adminCourseService: { listOfferings: notUsed, updateCapacity: notUsed },
+      registrationWindowService: {
+        getDetail: notUsed,
+        updateWindow: notUsed,
+        open: notUsed,
+        close: notUsed,
+      },
     },
   });
 }

@@ -5,6 +5,7 @@ import { sendSuccess } from '../utils/apiResponse.js';
 
 export interface StudentController {
   getMyProfile: RequestHandler;
+  getUnreadNotificationCount: RequestHandler;
 }
 
 export function createStudentController(studentService: StudentService): StudentController {
@@ -13,6 +14,10 @@ export function createStudentController(studentService: StudentService): Student
       // Identity comes from the verified session only (see CLAUDE.md).
       const profile = await studentService.getOwnProfile(requireStudentId(req));
       sendSuccess(res, profile);
+    },
+
+    async getUnreadNotificationCount(req, res) {
+      sendSuccess(res, await studentService.countUnreadNotifications(requireStudentId(req)));
     },
   };
 }
