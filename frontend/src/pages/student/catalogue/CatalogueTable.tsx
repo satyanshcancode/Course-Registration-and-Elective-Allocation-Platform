@@ -7,7 +7,8 @@ import { DataTable } from '../../../components/DataTable';
 import type { Column } from '../../../components/DataTable/tableLogic';
 import { Icon } from '../../../components/Icon';
 import { SeatMeter } from '../../../components/SeatMeter';
-import { describeDemand, describeReason } from '../../../utils/courseText';
+import { describeDemand } from '../../../utils/courseText';
+import { describeReason } from '../../../utils/eligibilityText';
 import { findRowAction } from '../../../utils/tableActions';
 import styles from './CatalogueTable.module.css';
 

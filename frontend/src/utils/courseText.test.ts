@@ -1,38 +1,6 @@
-import type { CourseIneligibilityReason, RegistrationWindowSummary } from '@course-reg/shared';
+import type { RegistrationWindowSummary } from '@course-reg/shared';
 import { describe, expect, it } from 'vitest';
-import {
-  describeDemand,
-  describeMyStatus,
-  describeReason,
-  describeWindow,
-  formatUpdatedAgo,
-} from './courseText';
-
-describe('describeReason', () => {
-  const cases: [CourseIneligibilityReason, string][] = [
-    [{ code: 'PROGRAM_NOT_ELIGIBLE' }, 'Not open to your programme.'],
-    [
-      { code: 'SEMESTER_TOO_LOW', requiredSemester: 5, currentSemester: 3 },
-      'Needs semester 5 or later (you’re in semester 3).',
-    ],
-    [
-      { code: 'INSUFFICIENT_CREDITS', requiredCredits: 80, completedCredits: 44 },
-      'Needs 80 completed credits (you have 44).',
-    ],
-    [
-      {
-        code: 'MISSING_PREREQUISITES',
-        missingCourses: [{ code: 'CS201', name: 'Data Structures' }],
-      },
-      'Missing prerequisite: CS201 Data Structures.',
-    ],
-    [{ code: 'ALREADY_COMPLETED' }, 'You’ve already passed this course.'],
-  ];
-
-  it.each(cases)('%o', (reason, text) => {
-    expect(describeReason(reason)).toBe(text);
-  });
-});
+import { describeDemand, describeMyStatus, describeWindow, formatUpdatedAgo } from './courseText';
 
 describe('describeMyStatus', () => {
   it('says where the course stands for the student', () => {

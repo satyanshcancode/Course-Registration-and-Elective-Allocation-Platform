@@ -6,9 +6,10 @@
  * never leave the server.
  */
 import type { AcademicTerm } from '../domain/academicTerm.js';
-import type { IneligibilityReason } from '../domain/eligibility.js';
+import type { EligibilityResult } from '../domain/eligibility.js';
 import type { PreferenceRank, RegistrationWindowStatus } from '../domain/enums.js';
 import type { IsoDateTime } from '../domain/models.js';
+import type { CourseRef, DepartmentRef, ProgramRef } from '../domain/refs.js';
 
 // ---------------------------------------------------------------------------
 // Registration window
@@ -73,21 +74,6 @@ export interface CatalogueQuery {
 // Catalogue items
 // ---------------------------------------------------------------------------
 
-export interface CourseRef {
-  code: string;
-  name: string;
-}
-
-export interface DepartmentRef {
-  code: string;
-  name: string;
-}
-
-export interface ProgramRef {
-  code: string;
-  name: string;
-}
-
 /** The live numbers of one offering; also the item type of the seats endpoint. */
 export interface CourseSeats {
   code: string;
@@ -98,14 +84,6 @@ export interface CourseSeats {
   /** SUBMITTED preference items for this course in the window. */
   demand: number;
 }
-
-/** Eligibility as sent to the UI: missing prerequisites by code and name. */
-export type CourseIneligibilityReason =
-  | Exclude<IneligibilityReason, { code: 'MISSING_PREREQUISITES' }>
-  | { code: 'MISSING_PREREQUISITES'; missingCourses: CourseRef[] };
-
-export type CourseEligibility =
-  { eligible: true } | { eligible: false; reasons: CourseIneligibilityReason[] };
 
 /** The signed-in student's relationship to a course. */
 export type MyCourseStatus =
@@ -120,7 +98,7 @@ export type MyCourseStatusCode = MyCourseStatus['code'];
 
 /** Fields computed for the calling student only. */
 export interface StudentCourseContext {
-  eligibility: CourseEligibility;
+  eligibility: EligibilityResult;
   myStatus: MyCourseStatus;
 }
 

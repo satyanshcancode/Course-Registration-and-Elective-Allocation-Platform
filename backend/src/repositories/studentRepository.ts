@@ -1,9 +1,14 @@
-import type { StudentProfile } from '@course-reg/shared';
+import type { CourseRef, StudentProfile } from '@course-reg/shared';
 import type { Pool } from 'pg';
 import type { EligibilityStudent } from '../services/eligibilityRules.js';
 import type { CourseStatusRecord } from '../types/catalogue.js';
 import { mapCourseStatusRow, mapStudentProfileRow } from './mappers.js';
-import type { CourseStatusRow, EligibilityFactsRow, StudentProfileRow } from './rows.js';
+import type {
+  CourseRefRow,
+  CourseStatusRow,
+  EligibilityFactsRow,
+  StudentProfileRow,
+} from './rows.js';
 
 export interface StudentRepository {
   findProfile(studentId: string): Promise<StudentProfile | null>;
@@ -15,6 +20,8 @@ export interface StudentRepository {
    * position is a count, so no other student's data leaves the database.
    */
   findCourseStatuses(studentId: string, windowId: string): Promise<CourseStatusRecord[]>;
+  /** The courses the student has passed, for the "Your record" section. */
+  findCompletedCourses(studentId: string): Promise<CourseRef[]>;
 }
 
 export function createStudentRepository(pool: Pick<Pool, 'query'>): StudentRepository {
@@ -35,13 +42,15 @@ export function createStudentRepository(pool: Pick<Pool, 'query'>): StudentRepos
 
     async findEligibilityFacts(studentId) {
       const result = await pool.query<EligibilityFactsRow>(
-        `SELECT s.program_id, s.semester, s.credits_completed,
+        `SELECT s.program_id, p.code AS program_code, p.name AS program_name,
+                s.semester, s.credits_completed,
                 COALESCE(array_agg(scc.course_id) FILTER (WHERE scc.course_id IS NOT NULL),
                          '{}') AS completed_course_ids
          FROM students s
+         JOIN programs p ON p.id = s.program_id
          LEFT JOIN student_completed_courses scc ON scc.student_id = s.user_id
          WHERE s.user_id = $1
-         GROUP BY s.user_id`,
+         GROUP BY s.user_id, p.code, p.name`,
         [studentId],
       );
       const row = result.rows[0];
@@ -50,6 +59,7 @@ export function createStudentRepository(pool: Pick<Pool, 'query'>): StudentRepos
       }
       return {
         programId: row.program_id,
+        program: { code: row.program_code, name: row.program_name },
         semester: row.semester,
         creditsCompleted: row.credits_completed,
         completedCourseIds: new Set(row.completed_course_ids),
@@ -79,6 +89,18 @@ export function createStudentRepository(pool: Pick<Pool, 'query'>): StudentRepos
         [studentId, windowId],
       );
       return result.rows.map(mapCourseStatusRow);
+    },
+
+    async findCompletedCourses(studentId) {
+      const result = await pool.query<CourseRefRow>(
+        `SELECT c.code, c.name
+         FROM student_completed_courses scc
+         JOIN courses c ON c.id = scc.course_id
+         WHERE scc.student_id = $1
+         ORDER BY c.code`,
+        [studentId],
+      );
+      return result.rows.map((row) => ({ code: row.code, name: row.name }));
     },
   };
 }

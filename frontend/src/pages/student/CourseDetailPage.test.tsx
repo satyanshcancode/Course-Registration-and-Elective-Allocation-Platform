@@ -32,10 +32,10 @@ describe('CourseDetailPage', () => {
             eligibility: {
               eligible: false,
               reasons: [
-                { code: 'SEMESTER_TOO_LOW', requiredSemester: 5, currentSemester: 3 },
+                { type: 'SEMESTER_TOO_LOW', required: 5, actual: 3 },
                 {
-                  code: 'MISSING_PREREQUISITES',
-                  missingCourses: [{ code: 'MA201', name: 'Probability and Statistics' }],
+                  type: 'PREREQUISITE_MISSING',
+                  course: { code: 'MA201', name: 'Probability and Statistics' },
                 },
               ],
             },
@@ -60,10 +60,8 @@ describe('CourseDetailPage', () => {
       .getByRole('heading', { name: 'Your eligibility' })
       .closest('section')!;
     expect(eligibility).toHaveTextContent('Not eligible');
-    expect(eligibility).toHaveTextContent('Needs semester 5 or later (you’re in semester 3).');
-    expect(eligibility).toHaveTextContent(
-      'Missing prerequisite: MA201 Probability and Statistics.',
-    );
+    expect(eligibility).toHaveTextContent('Needs semester 5 — you’re in semester 3');
+    expect(eligibility).toHaveTextContent('Complete MA201 Probability and Statistics first');
 
     const prerequisites = within(article)
       .getByRole('heading', { name: 'Prerequisites' })

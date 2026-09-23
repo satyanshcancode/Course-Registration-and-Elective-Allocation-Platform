@@ -25,7 +25,6 @@ import {
   paginate,
   resolveMyStatus,
   shortDescription,
-  toCourseEligibility,
   toEligibilityCourse,
 } from './catalogueRules.js';
 import { evaluateEligibility, type EligibilityStudent } from './eligibilityRules.js';
@@ -84,9 +83,8 @@ export function createCatalogueService({
     if (!context) {
       return null;
     }
-    const result = evaluateEligibility(context.facts, toEligibilityCourse(offering));
     return {
-      eligibility: toCourseEligibility(result, offering),
+      eligibility: evaluateEligibility(context.facts, toEligibilityCourse(offering)),
       myStatus: resolveMyStatus(context.statuses.get(offering.courseId) ?? []),
     };
   }

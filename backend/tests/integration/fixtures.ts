@@ -53,12 +53,16 @@ export function createDepartment(
   );
 }
 
-export function createProgram(pool: Pool, departmentId: string): Promise<string> {
+export function createProgram(
+  pool: Pool,
+  departmentId: string,
+  overrides: { code?: string; name?: string } = {},
+): Promise<string> {
   const n = nextId();
   return insertReturningId(
     pool,
     'INSERT INTO programs (code, name, department_id) VALUES ($1, $2, $3) RETURNING id',
-    [`PROG-${n}`, `Program ${n}`, departmentId],
+    [overrides.code ?? `PROG-${n}`, overrides.name ?? `Program ${n}`, departmentId],
   );
 }
 
@@ -183,21 +187,40 @@ export async function createWaitlistEntry(
 
 export function createWindow(
   pool: Pool,
-  overrides: { name?: string; status?: string } = {},
+  overrides: {
+    name?: string;
+    status?: string;
+    startsAt?: string;
+    endsAt?: string;
+    config?: unknown;
+    method?: string;
+  } = {},
 ): Promise<string> {
   const n = nextId();
   return insertReturningId(
     pool,
     `INSERT INTO registration_windows
        (name, term, starts_at, ends_at, status, allocation_method, config, random_seed)
-     VALUES ($1, '2026-FALL', now(), now() + interval '14 days', $2, 'PREFERENCE_PRIORITY', $3, 42)
+     VALUES ($1, '2026-FALL', $4::timestamptz, $5::timestamptz, $2, $6, $3, 42)
      RETURNING id`,
     [
       overrides.name ?? `Window ${n}`,
       overrides.status ?? 'DRAFT',
-      DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+      overrides.config ?? DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+      overrides.startsAt ?? new Date().toISOString(),
+      overrides.endsAt ?? new Date(Date.now() + 14 * 86_400_000).toISOString(),
+      overrides.method ?? 'PREFERENCE_PRIORITY',
     ],
   );
+}
+
+/**
+ * Moves a window to a later status. Offerings must already exist: the freeze
+ * trigger (migration 0008) rejects adding or removing them afterwards, which
+ * is exactly what an admin faces.
+ */
+export async function setWindowStatus(pool: Pool, windowId: string, status: string): Promise<void> {
+  await pool.query('UPDATE registration_windows SET status = $2 WHERE id = $1', [windowId, status]);
 }
 
 export async function createOffering(

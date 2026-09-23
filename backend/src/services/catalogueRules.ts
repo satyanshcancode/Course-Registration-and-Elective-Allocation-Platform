@@ -7,11 +7,8 @@ import {
   type CatalogueCourse,
   type CatalogueFilterOptions,
   type CatalogueQuery,
-  type CourseEligibility,
-  type CourseRef,
   type CourseSortKey,
   type DepartmentRef,
-  type EligibilityResult,
   type MyCourseStatus,
   type SortOrder,
 } from '@course-reg/shared';
@@ -39,29 +36,9 @@ export function toEligibilityCourse(offering: OfferingRecord): EligibilityCourse
     id: offering.courseId,
     minSemester: offering.minSemester,
     minCredits: offering.minCredits,
-    eligibleProgramIds: offering.eligiblePrograms.map((program) => program.id),
-    prerequisiteCourseIds: offering.prerequisites.map((course) => course.id),
+    eligiblePrograms: offering.eligiblePrograms,
+    prerequisites: offering.prerequisites,
   };
-}
-
-/** Replaces internal course ids in the rule's result with codes and names. */
-export function toCourseEligibility(
-  result: EligibilityResult,
-  offering: OfferingRecord,
-): CourseEligibility {
-  if (result.eligible) {
-    return { eligible: true };
-  }
-  const reasons = result.reasons.map((reason) => {
-    if (reason.code !== 'MISSING_PREREQUISITES') {
-      return reason;
-    }
-    const missingCourses: CourseRef[] = offering.prerequisites
-      .filter((course) => reason.missingCourseIds.includes(course.id))
-      .map(({ code, name }) => ({ code, name }));
-    return { code: reason.code, missingCourses };
-  });
-  return { eligible: false, reasons };
 }
 
 /** Most definite first: a held seat beats a waitlist place beats a cart rank. */

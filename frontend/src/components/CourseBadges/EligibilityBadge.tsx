@@ -1,8 +1,8 @@
-import type { CourseEligibility } from '@course-reg/shared';
+import type { EligibilityResult } from '@course-reg/shared';
 import { StatusBadge } from '../StatusBadge';
 
 export interface EligibilityBadgeProps {
-  eligibility: CourseEligibility;
+  eligibility: EligibilityResult;
 }
 
 /** "Eligible" / "Not eligible", with icon and colour. Reasons are shown next to it. */
