@@ -97,7 +97,6 @@ export function RegistrationWindowPage() {
               )}
               {detail.window.status === 'OPEN' && (
                 <Button
-                  variant="danger"
                   iconStart={Lock}
                   onClick={() => {
                     setActionError(null);

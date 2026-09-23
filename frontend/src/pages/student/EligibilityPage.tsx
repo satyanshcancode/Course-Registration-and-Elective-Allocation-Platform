@@ -160,6 +160,7 @@ export function EligibilityPage() {
                     status="ELIGIBLE"
                     courses={eligible}
                     emptyText="No offered course matches your record yet."
+                    open
                   />
                   <CourseGroup
                     id="not-eligible"
@@ -193,15 +194,17 @@ interface CourseGroupProps {
   status: 'ELIGIBLE' | 'NOT_ELIGIBLE';
   courses: readonly CourseEligibility[];
   emptyText: string;
+  /** Start expanded. "Not eligible" starts closed: it is usually the long one. */
+  open?: boolean;
 }
 
 /**
  * One collapsible group. A native <details> keeps the disclosure keyboard
  * accessible and searchable without any JavaScript.
  */
-function CourseGroup({ id, title, status, courses, emptyText }: CourseGroupProps) {
+function CourseGroup({ id, title, status, courses, emptyText, open }: CourseGroupProps) {
   return (
-    <details className={styles.group} open data-status={status}>
+    <details className={styles.group} open={open} data-status={status}>
       <summary className={styles.groupSummary}>
         <StatusBadge kind="eligibility" status={status} />
         <span className={styles.groupTitle}>

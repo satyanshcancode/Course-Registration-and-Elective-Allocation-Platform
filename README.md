@@ -21,15 +21,15 @@ add/drop, and a personal registration history.
 
 ## Features
 
-| #   | Feature (from the brief)                      | Status                                          |
-| --- | --------------------------------------------- | ----------------------------------------------- |
-| 1   | Course catalogue with live seat counts        | **Done** (see below)                            |
-| 2   | Eligibility pre-check before the window opens | Shown per course in the catalogue; page to come |
-| 3   | Registration cart with atomic submit          | Planned                                         |
-| 4   | Fair allocation for oversubscribed electives  | Planned                                         |
-| 5   | Waitlist with automatic promotion             | Planned                                         |
-| 6   | Add/drop                                      | Planned                                         |
-| 7   | Registration status and history               | Planned                                         |
+| #   | Feature (from the brief)                      | Status               |
+| --- | --------------------------------------------- | -------------------- |
+| 1   | Course catalogue with live seat counts        | **Done** (see below) |
+| 2   | Eligibility pre-check before the window opens | **Done** (see below) |
+| 3   | Registration cart with atomic submit          | Planned              |
+| 4   | Fair allocation for oversubscribed electives  | Planned              |
+| 5   | Waitlist with automatic promotion             | Planned              |
+| 6   | Add/drop                                      | Planned              |
+| 7   | Registration status and history               | Planned              |
 
 **Course catalogue** (`/student/courses`):
 
@@ -49,7 +49,39 @@ add/drop, and a personal registration history.
   oversubscribed rows marked, and "Edit capacity" (reason required, never below
   the allocated seats, written to `audit_logs`).
 
-How the JavaScript concepts are used is written up in
+**Eligibility pre-check** (`/student/eligibility`):
+
+- Every offered course checked against the student's own record — programme,
+  semester, credits and passed courses — with the record shown beside it, so
+  they can see what the check judged them on.
+- Courses are grouped into Eligible and Not eligible (collapsible), and each
+  ineligible course lists **every** reason in plain English ("Needs semester 5
+  — you're in semester 4", "Complete CS201 Data Structures first").
+- It works while the window is still a draft. That is the point: check before
+  registration opens, not after it closes.
+- A registration banner on every student page counts down to the opening or
+  closing, measured against the **server's** clock, so a wrong device clock
+  can't mislead anyone.
+
+**Registration window** (`/admin/registration-window`):
+
+- Schedule the window, choose the offered courses, and pick the allocation
+  method. The method-specific settings render from the `AllocationConfig`
+  union, so Preference + Priority shows the P1–P5 weights, the priority points
+  and the tie-break seed, while FCFS shows why it rewards fast connections.
+- Opening registration **freezes the policy**: method, weights, priority
+  points, seed and the set of offered courses can no longer change. The service
+  answers `409`, and a database trigger rejects the change even if it is
+  attempted directly. Seats per course stay editable.
+- Opening also notifies every student, in the same transaction. Every change,
+  open and close is written to `audit_logs` with old and new values.
+
+**Dashboards** — the student dashboard loads the window, the eligibility
+summary and the notification count together with `Promise.allSettled`, so one
+failing section shows its own Retry while the rest of the page still works. The
+admin dashboard shows the window, its counts and the five most demanded courses.
+
+How the JavaScript and TypeScript concepts are used is written up in
 [docs/javascript-concepts.md](docs/javascript-concepts.md).
 
 ## Stack
@@ -150,6 +182,16 @@ on `/student`, administrators on `/admin`.
 | `GET /api/courses/seats`                  | signed in | Seat numbers only, with `ETag`; `If-None-Match` → `304`                                                                                                      |
 | `GET /api/admin/courses`                  | admin     | Every offering with seats, demand and an oversubscribed flag                                                                                                 |
 | `PATCH /api/admin/courses/:code/capacity` | admin     | `{ capacity, reason }`; `409` below the allocated seats; audited                                                                                             |
+
+| Eligibility and window endpoint                   | Access  | Purpose                                                                                      |
+| ------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `GET /api/eligibility`                            | student | Every offered course checked against the caller, plus their record and a summary. Any status |
+| `GET /api/eligibility/:code`                      | student | The same for one course                                                                      |
+| `GET /api/students/me/notifications/unread-count` | student | Unread notifications, for the dashboard                                                      |
+| `GET /api/admin/registration-window`              | admin   | The window with its policy, counts and every course                                          |
+| `PATCH /api/admin/registration-window`            | admin   | Schedule, offered courses and policy. `DRAFT` only: `409` once frozen                        |
+| `POST /api/admin/registration-window/open`        | admin   | `DRAFT → OPEN`. Freezes the policy and notifies every student                                |
+| `POST /api/admin/registration-window/close`       | admin   | `OPEN → CLOSED`                                                                              |
 
 `JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
 The server refuses to start in production with the example value.

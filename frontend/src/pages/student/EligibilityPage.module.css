@@ -80,10 +80,16 @@
 }
 
 .filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 14rem);
   align-items: end;
   gap: var(--space-3);
+}
+
+@media (width < 48rem) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .group {

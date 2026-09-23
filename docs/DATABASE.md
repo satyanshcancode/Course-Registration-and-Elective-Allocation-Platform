@@ -13,6 +13,7 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
 | 0005      | `enrollments`, `waitlist_entries` (and the seat-count trigger)                                                                                                         |
 | 0006      | `allocation_runs`, `allocation_results`                                                                                                                                |
 | 0007      | `registration_history`, `notifications`, `audit_logs`                                                                                                                  |
+| 0008      | The registration-policy freeze triggers                                                                                                                                |
 
 **Conventions**
 
@@ -261,6 +262,24 @@ application code has a bug or two requests race.
 | One result per student and course per run, ranks unique | `UNIQUE (run_id, student_id, course_id)` and `UNIQUE (run_id, course_id, final_rank)`                                                                                                         |
 | One open registration window at a time                  | Partial unique index `registration_windows_single_open_idx` `WHERE status = 'OPEN'`                                                                                                           |
 | One account per e-mail, case-insensitively              | `users_email_key` on a `CITEXT` column                                                                                                                                                        |
+
+### The frozen registration policy
+
+Students rank courses against a published policy, so the rules that decide who
+gets a seat must not change underneath them. Once a window leaves `DRAFT`,
+migration 0008 makes the database refuse a change even if application code is
+wrong, a script is run by hand, or two requests race:
+
+| Rule                                                                                                                     | Mechanism                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| The allocation method, `config` (weights and priority points) and `random_seed` are fixed once the window is not `DRAFT` | Trigger `registration_windows_freeze_policy` (SQLSTATE `55000`)                                                      |
+| The **set** of offered courses is fixed too                                                                              | Trigger `registration_window_courses_freeze_offerings` rejects `INSERT` and `DELETE` while the window is not `DRAFT` |
+| Deliberately still allowed                                                                                               | The status transitions themselves, the window's name, term and schedule, and a course's `capacity`                   |
+
+The service refuses the same change first, with a `409` and a message the admin
+can act on ([`services/registrationWindowService.ts`](../backend/src/services/registrationWindowService.ts));
+the triggers are the backstop. An integration test drives both paths: a `PATCH`
+after opening returns 409, and a direct `UPDATE` of a frozen column raises.
 
 ### Other integrity rules
 

@@ -152,3 +152,139 @@ are a pipeline of pure array methods:
 - `reduce` groups a student's status rows by course.
 - `some` / `every` / `find` appear in the ETag matcher, the filters and the
   form parsers.
+
+## `Promise.allSettled` — a dashboard that survives one failure
+
+[`frontend/src/hooks/useDashboardSections.ts`](../frontend/src/hooks/useDashboardSections.ts),
+used by [`StudentDashboardPage.tsx`](../frontend/src/pages/student/StudentDashboardPage.tsx).
+
+The student dashboard needs three unrelated things: the registration window,
+the eligibility summary and the unread notification count. None depends on
+another, so all three start together — but unlike the catalogue, a failure in
+one of them must **not** blank the page:
+
+```ts
+const settled = await Promise.allSettled(running.map((key) => loaders[key](signal)));
+```
+
+- `Promise.all` **rejects as soon as any one promise does**, and the other
+  results are lost. The whole dashboard would become a single error page
+  because the notification count was briefly unavailable.
+- `Promise.allSettled` always fulfils, with one
+  `{ status: 'fulfilled', value }` or `{ status: 'rejected', reason }` per
+  input, in input order. Each section is then set from its own result.
+
+So the failing card shows its own message and a Retry button while its
+neighbours render normally. Retry re-runs **only that loader** — the healthy
+sections are never refetched. The RTL test proves both halves: one rejected
+loader leaves the others on screen, and retrying it calls one API function a
+second time while the other two stay at one call each.
+
+## The countdown, and whose clock it uses
+
+[`frontend/src/utils/countdown.ts`](../frontend/src/utils/countdown.ts),
+[`useServerClock.ts`](../frontend/src/hooks/useServerClock.ts) and
+[`RegistrationStatusBanner`](../frontend/src/components/RegistrationStatusBanner/RegistrationStatusBanner.tsx).
+
+"Closes in 3h 12m" is only true if it is measured against the right clock. A
+device whose date is two days behind would tell a student they still have
+plenty of time.
+
+- **The offset is measured once.** `/api/registration-windows/current`
+  returns `serverTime`; the moment the response arrives the client stores
+  `Date.parse(serverTime) - Date.now()`. Every later comparison uses
+  `deviceNow + offset`, so only the _rate_ of the device clock matters, not
+  what it is set to.
+- **Reading the clock is a side effect**, so it happens where the data is
+  loaded, never during render. (React's lint rules make this explicit: calling
+  `Date.now()` in a component body is flagged as impure.)
+- **One tick per second, only while visible.** `useServerClock` reuses
+  `usePolling`, so a hidden tab stops ticking entirely and catches up the
+  instant it is shown again.
+- **Nothing is announced.** The countdown sits in no live region: a screen
+  reader reading "3h 11m 59s" every second would make the page unusable. The
+  text is read normally when the user reaches it.
+
+`describeCountdown` is pure — window plus `now` in, words out — so the whole
+matrix (draft, open, closed, allocated, and each one past its date) is unit
+tested without a browser.
+
+# TypeScript highlights
+
+Where the syllabus's TypeScript topics do real work in this app.
+
+## Discriminated unions and exhaustive `never` checks — eligibility reasons
+
+[`shared/src/domain/eligibility.ts`](../shared/src/domain/eligibility.ts) and
+[`frontend/src/utils/eligibilityText.ts`](../frontend/src/utils/eligibilityText.ts).
+
+A reason is not a string. It is a union discriminated on `type`, and each
+member carries exactly the values its sentence needs:
+
+```ts
+export type IneligibilityReason =
+  | { type: 'PROGRAM_NOT_ALLOWED'; program: ProgramRef; allowedPrograms: ProgramRef[] }
+  | { type: 'SEMESTER_TOO_LOW'; required: number; actual: number }
+  | { type: 'CREDITS_TOO_LOW'; required: number; actual: number }
+  | { type: 'PREREQUISITE_MISSING'; course: CourseRef }
+  | { type: 'ALREADY_COMPLETED' };
+```
+
+Switching on `type` narrows the object, so `reason.required` exists in one
+branch and is a compile error in another. The default branch is the interesting
+part:
+
+```ts
+function unhandledReason(value: never): string {
+  throw new Error(`Unhandled eligibility reason: ${JSON.stringify(value)}`);
+}
+```
+
+`value` can only be assigned `never`, and the union is only `never` once every
+member has been handled above. **Adding a sixth reason type breaks the build
+here** until someone writes its sentence — the compiler, not a code review,
+catches the missing case. The same idea guards `describeMyStatus` and
+`describeWindow`.
+
+Because each reason carries names rather than database ids, there is exactly
+one formatter for the whole app: the catalogue card, the course detail page and
+the pre-check all call `describeReason`, so the wording cannot drift.
+
+## A union that drives a form — `AllocationConfig`
+
+[`shared/src/domain/allocationConfig.ts`](../shared/src/domain/allocationConfig.ts),
+[`PolicyFields.tsx`](../frontend/src/pages/admin/window/PolicyFields.tsx) and
+[`utils/windowForm.ts`](../frontend/src/utils/windowForm.ts).
+
+The allocation policy is a union too:
+
+```ts
+type AllocationConfig =
+  | { method: 'FCFS' }
+  | {
+      method: 'PREFERENCE_PRIORITY';
+      preferenceWeights: PreferenceWeights;
+      priorityPoints: PriorityPoints;
+    };
+```
+
+The admin form holds **that union itself** as React state, so the shape of the
+data decides the shape of the form:
+
+```tsx
+if (policy.method === 'FCFS') {
+  return <p>Seats go to whoever submits first…</p>;
+}
+// Past this line TypeScript knows preferenceWeights and priorityPoints exist.
+return <>{PREFERENCE_RANKS.map((rank) => <input value={policy.preferenceWeights[rank]} … />)}</>;
+```
+
+There is no `weights?: …` that is "only there sometimes", no `as` cast and no
+runtime guard to remember: choosing FCFS makes the weight fields _impossible_
+to reference, not merely hidden. `PreferenceWeights` is
+`Record<PreferenceRank, number>`, so a missing rank is a type error.
+
+The same union crosses the wire and the database. Zod validates it with
+`z.discriminatedUnion('method', …)`, so weights sent with `method: 'FCFS'` are
+rejected as a bad request, and a `CHECK` constraint makes the JSONB column
+agree with the `allocation_method` column.

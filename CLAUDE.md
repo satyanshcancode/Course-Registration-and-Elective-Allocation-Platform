@@ -128,6 +128,30 @@
   `useAsync`'s error state keeps the thrown `error`. Use `isNotFound(error)`
   for proper 404 states.
 
+## Registration window conventions (Phase 6)
+
+- The window lifecycle is `DRAFT -> OPEN -> CLOSED` (ALLOCATED comes later,
+  from the allocation run). Transitions are decided by the pure rules in
+  `backend/src/services/registrationWindowRules.ts` and applied by
+  `registrationWindowService.ts` — never in a controller.
+- **The policy freezes when the window opens.** The allocation method, the
+  weights, the priority points, the seed and the SET of offered courses cannot
+  change afterwards. The service answers 409; migration 0008's triggers reject
+  the write even if application code is wrong. A course's capacity and the
+  schedule stay editable on purpose.
+- Whether a student may submit is `canSubmitNow(window, now)` in the same
+  rules file — one place, already tested. Never re-check it inline.
+- `AllocationConfig` is a discriminated union on `method`. Validate it with
+  `z.discriminatedUnion`, hold it directly in React state, and narrow on
+  `method` to decide what to render. No optional "sometimes" fields, no casts.
+- Eligibility reasons are a union on `type` carrying codes and names, never
+  ids. The frontend formats them in exactly one place
+  (`utils/eligibilityText.ts`), whose `default` branch takes a `never` so a new
+  reason type fails to compile until it is handled.
+- Countdowns use the server's clock: measure `serverTime - Date.now()` where
+  the response arrives (never during render) and add that offset. The ticking
+  value sits in no live region.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one
