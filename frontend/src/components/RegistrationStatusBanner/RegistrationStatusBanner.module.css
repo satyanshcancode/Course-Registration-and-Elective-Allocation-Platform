@@ -1,0 +1,37 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.countdown {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* The exact time is context, not the headline: it wraps away on phones. */
+.at {
+  color: var(--color-ink-muted);
+}
+
+@media (width < 30rem) {
+  .at {
+    display: none;
+  }
+}
