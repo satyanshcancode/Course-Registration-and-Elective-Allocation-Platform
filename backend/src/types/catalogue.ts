@@ -1,4 +1,10 @@
-import type { DepartmentRef, PreferenceRank, RegistrationWindowSummary } from '@course-reg/shared';
+import type {
+  AllocationConfig,
+  DepartmentRef,
+  PreferenceRank,
+  ProgramRef,
+  RegistrationWindowSummary,
+} from '@course-reg/shared';
 
 /** The current window with its internal id (never sent to clients). */
 export interface WindowRecord {
@@ -35,3 +41,30 @@ export type CourseStatusRecord =
   | { courseId: string; kind: 'DRAFT' | 'SUBMITTED'; rank: PreferenceRank }
   | { courseId: string; kind: 'ENROLLED' }
   | { courseId: string; kind: 'WAITLISTED'; position: number };
+
+/** The current window with its full policy, for admin management. */
+export interface WindowDetailRecord extends WindowRecord {
+  policy: AllocationConfig;
+  randomSeed: number;
+}
+
+/** Everything an admin needs to decide what the window offers. */
+export interface WindowCourseOptionRecord {
+  code: string;
+  name: string;
+  credits: number;
+  department: DepartmentRef;
+  offered: boolean;
+  capacity: number | null;
+  demand: number;
+}
+
+/** The eligibility inputs of one student, for bulk checks (admin counts). */
+export interface StudentEligibilityFactsRecord {
+  studentId: string;
+  programId: string;
+  program: ProgramRef;
+  semester: number;
+  creditsCompleted: number;
+  completedCourseIds: ReadonlySet<string>;
+}
