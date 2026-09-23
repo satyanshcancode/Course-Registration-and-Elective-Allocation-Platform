@@ -1,7 +1,8 @@
 import type { CatalogueCourse } from '@course-reg/shared';
 import { TrendingUp, Users } from 'lucide-react';
 import { Link, type To } from 'react-router';
-import { describeDemand, describeReason, isOversubscribed } from '../../utils/courseText';
+import { describeDemand, isOversubscribed } from '../../utils/courseText';
+import { describeReason } from '../../utils/eligibilityText';
 import { Badge } from '../Badge';
 import { EligibilityBadge, MyStatusBadge } from '../CourseBadges';
 import { CourseCode } from '../CourseCode';

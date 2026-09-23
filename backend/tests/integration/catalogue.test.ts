@@ -14,7 +14,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createCourseCatalogueRepository } from '../../src/repositories/courseCatalogueRepository.js';
 import { createStudentRepository } from '../../src/repositories/studentRepository.js';
-import { toCourseEligibility, toEligibilityCourse } from '../../src/services/catalogueRules.js';
+import { toEligibilityCourse } from '../../src/services/catalogueRules.js';
 import { evaluateEligibility } from '../../src/services/eligibilityRules.js';
 import {
   addPreference,
@@ -32,6 +32,7 @@ import {
   markCompleted,
   markSubmitted,
   restrictToProgram,
+  setWindowStatus,
 } from './fixtures.js';
 import { buildApp, countingPool, dataOf, sessionFor } from './http.js';
 import { getTestPool } from './testDatabase.js';
@@ -50,9 +51,9 @@ async function buildCatalogue() {
   const pool = getTestPool();
   const cse = await createDepartment(pool, { code: 'CSE', name: 'Computer Science' });
   const mgmt = await createDepartment(pool, { code: 'MGMT', name: 'Management' });
-  const csProgram = await createProgram(pool, cse);
-  const bbaProgram = await createProgram(pool, mgmt);
-  const windowId = await createWindow(pool, { name: 'Fall 2026', status: 'OPEN' });
+  const csProgram = await createProgram(pool, cse, { code: 'CSE', name: 'Computer Science' });
+  const bbaProgram = await createProgram(pool, mgmt, { code: 'BBA', name: 'Business' });
+  const windowId = await createWindow(pool, { name: 'Fall 2026' });
 
   const basics = await createCourse(pool, cse, {
     code: 'CS101',
@@ -89,6 +90,8 @@ async function buildCatalogue() {
   await createOffering(pool, windowId, ai, 2);
   await createOffering(pool, windowId, venture, 1);
   await createOffering(pool, windowId, seminar, 0);
+  // Offerings are fixed once registration opens, so they are added first.
+  await setWindowStatus(pool, windowId, 'OPEN');
 
   // "me": CS, semester 6, passed CS101. Draft cart AI #1, DB #2; holds a DB
   // seat; waiting for MG302 behind one other student.
@@ -319,22 +322,23 @@ describe('GET /api/courses — personal fields', () => {
     const facts = await createStudentRepository(pool).findEligibilityFacts(newcomer);
     const offerings = await createCourseCatalogueRepository(pool).listOfferings(windowId);
     for (const offering of offerings) {
-      const expected = toCourseEligibility(
-        evaluateEligibility(facts!, toEligibilityCourse(offering)),
-        offering,
-      );
+      const expected = evaluateEligibility(facts!, toEligibilityCourse(offering));
       expect(byCode(page, offering.code).personal?.eligibility).toEqual(expected);
     }
 
     expect(byCode(page, 'CS401').personal?.eligibility).toEqual({
       eligible: false,
       reasons: [
-        { code: 'PROGRAM_NOT_ELIGIBLE' },
-        { code: 'SEMESTER_TOO_LOW', requiredSemester: 5, currentSemester: 2 },
-        { code: 'INSUFFICIENT_CREDITS', requiredCredits: 80, completedCredits: 20 },
         {
-          code: 'MISSING_PREREQUISITES',
-          missingCourses: [{ code: 'CS101', name: 'Programming Basics' }],
+          type: 'PROGRAM_NOT_ALLOWED',
+          program: { code: 'BBA', name: 'Business' },
+          allowedPrograms: [{ code: 'CSE', name: 'Computer Science' }],
+        },
+        { type: 'SEMESTER_TOO_LOW', required: 5, actual: 2 },
+        { type: 'CREDITS_TOO_LOW', required: 80, actual: 20 },
+        {
+          type: 'PREREQUISITE_MISSING',
+          course: { code: 'CS101', name: 'Programming Basics' },
         },
       ],
     });
@@ -479,12 +483,16 @@ describe('GET /api/registration-windows/current', () => {
 describe('query count (no N+1)', () => {
   async function addCourses(catalogue: Catalogue, count: number) {
     const { pool, windowId, cse, csProgram, ids } = catalogue;
+    // Offerings are frozen while a window is open, so this reopens the draft,
+    // adds them and opens it again — the same route an admin would take.
+    await setWindowStatus(pool, windowId, 'DRAFT');
     for (let i = 0; i < count; i += 1) {
       const courseId = await createCourse(pool, cse, { code: `CS5${String(i).padStart(2, '0')}` });
       await addPrerequisite(pool, courseId, ids.basics);
       await restrictToProgram(pool, courseId, csProgram);
       await createOffering(pool, windowId, courseId, 3);
     }
+    await setWindowStatus(pool, windowId, 'OPEN');
   }
 
   it('runs the same number of queries for 5 courses as for 25', async () => {

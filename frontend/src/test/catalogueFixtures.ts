@@ -61,7 +61,7 @@ export const catalogueCourses: CatalogueCourse[] = [
     personal: {
       eligibility: {
         eligible: false,
-        reasons: [{ code: 'SEMESTER_TOO_LOW', requiredSemester: 7, currentSemester: 6 }],
+        reasons: [{ type: 'SEMESTER_TOO_LOW', required: 7, actual: 6 }],
       },
       myStatus: { code: 'NOT_SELECTED' },
     },

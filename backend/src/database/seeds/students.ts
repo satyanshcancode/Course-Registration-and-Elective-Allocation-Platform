@@ -219,10 +219,23 @@ export function generateStudents(random: SeededRandom): StudentSeed[] {
   );
 }
 
+/** A seed reference: codes stand in for database ids before the rows exist. */
+function seedProgramRef(code: ProgramCode) {
+  const program = PROGRAMS.find((candidate) => candidate.code === code);
+  return { id: code, code, name: program?.name ?? code };
+}
+
+function seedCourseRef(code: string) {
+  const course = findCourseSeed(code);
+  return { id: code, code, name: course.name };
+}
+
 /** Adapts seed data to the eligibility rule, using codes as identifiers. */
 export function toEligibilityStudent(student: StudentSeed): EligibilityStudent {
+  const { code, name } = seedProgramRef(student.programCode);
   return {
     programId: student.programCode,
+    program: { code, name },
     semester: student.semester,
     creditsCompleted: student.creditsCompleted,
     completedCourseIds: new Set(student.completedCourses.map((course) => course.code)),
@@ -235,7 +248,7 @@ export function toEligibilityCourse(code: string): EligibilityCourse {
     id: course.code,
     minSemester: course.minSemester,
     minCredits: course.minCredits,
-    eligibleProgramIds: course.eligiblePrograms,
-    prerequisiteCourseIds: course.prerequisites,
+    eligiblePrograms: course.eligiblePrograms.map(seedProgramRef),
+    prerequisites: course.prerequisites.map(seedCourseRef),
   };
 }

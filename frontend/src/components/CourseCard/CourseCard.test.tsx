@@ -43,7 +43,7 @@ describe('CourseCard', () => {
     renderCard(catalogueCourses[1]);
     const card = screen.getByRole('article');
     expect(card).toHaveTextContent('Not eligible');
-    expect(card).toHaveTextContent('Needs semester 7 or later (you’re in semester 6).');
+    expect(card).toHaveTextContent('Needs semester 7 — you’re in semester 6');
     expect(card).toHaveTextContent('Not selected');
     // 71 requests for 30 seats.
     expect(card).toHaveTextContent('Oversubscribed');

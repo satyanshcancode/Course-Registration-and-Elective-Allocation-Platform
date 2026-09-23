@@ -261,6 +261,8 @@ export interface SeatRow {
 
 export interface EligibilityFactsRow {
   program_id: string;
+  program_code: string;
+  program_name: string;
   semester: number;
   credits_completed: number;
   completed_course_ids: string[];
@@ -280,4 +282,39 @@ export interface LockedOfferingRow {
   code: string;
   capacity: number;
   allocated_count: number;
+}
+
+/** A course addressed by its public code. */
+export interface CourseRefRow {
+  code: string;
+  name: string;
+}
+
+// ---------------------------------------------------------------------------
+// Registration window management
+// ---------------------------------------------------------------------------
+
+/** The window with its full policy, for the admin page. */
+export interface WindowDetailRow extends WindowSummaryRow {
+  allocation_method: string;
+  config: unknown;
+  random_seed: string | number;
+}
+
+/** Every course, marked with whether this window offers it. */
+export interface WindowCourseOptionRow {
+  code: string;
+  name: string;
+  credits: number;
+  department_code: string;
+  department_name: string;
+  offered: boolean;
+  capacity: number | null;
+  demand: number;
+}
+
+export interface WindowCountsRow {
+  offered_courses: number;
+  submissions: number;
+  total_students: number;
 }

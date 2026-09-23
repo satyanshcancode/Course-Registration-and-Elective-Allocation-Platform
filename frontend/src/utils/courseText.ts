@@ -1,29 +1,7 @@
 /** Plain-language wording for catalogue data: reasons, statuses, demand and the window. */
-import type {
-  CourseIneligibilityReason,
-  MyCourseStatus,
-  RegistrationWindowSummary,
-} from '@course-reg/shared';
+import type { MyCourseStatus, RegistrationWindowSummary } from '@course-reg/shared';
 import { formatDateTime, formatRelative } from './formatDate';
 import { formatDemandRatio } from './formatSeats';
-
-/** One sentence per reason, saying what is missing. */
-export function describeReason(reason: CourseIneligibilityReason): string {
-  switch (reason.code) {
-    case 'PROGRAM_NOT_ELIGIBLE':
-      return 'Not open to your programme.';
-    case 'SEMESTER_TOO_LOW':
-      return `Needs semester ${reason.requiredSemester} or later (you’re in semester ${reason.currentSemester}).`;
-    case 'INSUFFICIENT_CREDITS':
-      return `Needs ${reason.requiredCredits} completed credits (you have ${reason.completedCredits}).`;
-    case 'MISSING_PREREQUISITES': {
-      const courses = reason.missingCourses.map((course) => `${course.code} ${course.name}`);
-      return `${courses.length === 1 ? 'Missing prerequisite' : 'Missing prerequisites'}: ${courses.join(', ')}.`;
-    }
-    case 'ALREADY_COMPLETED':
-      return 'You’ve already passed this course.';
-  }
-}
 
 /** Short status wording for tags and table cells: "Choice 2 · draft", "Waitlisted · #7". */
 export function describeMyStatus(status: MyCourseStatus): string {

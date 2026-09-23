@@ -112,19 +112,23 @@ async function loadPlanStudents(
     (r) => r.program_id,
   );
 
+  // Only the ids matter to the rule here; codes and names exist so a reason
+  // could be displayed, which the planner never does.
+  const ref = (id: string) => ({ id, code: id, name: id });
   const rules: (EligibilityCourse & { code: string })[] = courses.rows.map((row) => ({
     id: row.id,
     code: row.code,
     minSemester: row.min_semester,
     minCredits: row.min_credits,
-    eligibleProgramIds: programsByCourse.get(row.id) ?? [],
-    prerequisiteCourseIds: prerequisitesByCourse.get(row.id) ?? [],
+    eligiblePrograms: (programsByCourse.get(row.id) ?? []).map(ref),
+    prerequisites: (prerequisitesByCourse.get(row.id) ?? []).map(ref),
   }));
   const fixedByRoll = new Map(DEMO_STUDENTS.map((s) => [s.rollNumber, s.preferences]));
 
   const planStudents = students.rows.map((row): PlanStudent => {
     const facts = {
       programId: row.program_id,
+      program: { code: row.program_id, name: row.program_id },
       semester: row.semester,
       creditsCompleted: row.credits_completed,
       completedCourseIds: new Set(completedByStudent.get(row.user_id) ?? []),

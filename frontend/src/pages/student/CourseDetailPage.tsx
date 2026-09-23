@@ -11,12 +11,14 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { Icon } from '../../components/Icon';
 import { LiveSeatsIndicator } from '../../components/LiveSeatsIndicator';
 import { PageHeader } from '../../components/PageHeader';
+import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { SeatMeter } from '../../components/SeatMeter';
 import { Skeleton } from '../../components/Skeleton';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useLiveSeats } from '../../hooks/useLiveSeats';
-import { describeDemand, describeReason, isOversubscribed } from '../../utils/courseText';
+import { describeDemand, isOversubscribed } from '../../utils/courseText';
+import { describeReason } from '../../utils/eligibilityText';
 import { seatsNewerThan, withLiveSeats } from '../../utils/liveSeats';
 import styles from './CourseDetailPage.module.css';
 
@@ -69,6 +71,7 @@ export function CourseDetailPage() {
         }
         actions={backLink}
       >
+        <RegistrationStatusBanner />
         {course && <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />}
       </PageHeader>
 
@@ -131,7 +134,7 @@ function CourseDetailBody({
             ) : (
               <ul className={styles.checklist}>
                 {personal.eligibility.reasons.map((reason) => (
-                  <li key={reason.code} className={styles.check} data-met="false">
+                  <li key={describeReason(reason)} className={styles.check} data-met="false">
                     <Icon icon={CircleX} />
                     <span>{describeReason(reason)}</span>
                   </li>

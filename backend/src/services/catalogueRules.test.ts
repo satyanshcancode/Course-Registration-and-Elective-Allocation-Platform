@@ -10,7 +10,6 @@ import {
   paginate,
   resolveMyStatus,
   shortDescription,
-  toCourseEligibility,
 } from './catalogueRules.js';
 
 function course(overrides: Partial<CatalogueCourse> = {}): CatalogueCourse {
@@ -77,32 +76,6 @@ describe('shortDescription', () => {
   });
 });
 
-describe('toCourseEligibility', () => {
-  it('names the missing prerequisites by code instead of internal id', () => {
-    const result = toCourseEligibility(
-      {
-        eligible: false,
-        reasons: [
-          { code: 'SEMESTER_TOO_LOW', requiredSemester: 5, currentSemester: 3 },
-          { code: 'MISSING_PREREQUISITES', missingCourseIds: ['c-ps'] },
-        ],
-      },
-      offering(),
-    );
-    expect(result).toEqual({
-      eligible: false,
-      reasons: [
-        { code: 'SEMESTER_TOO_LOW', requiredSemester: 5, currentSemester: 3 },
-        { code: 'MISSING_PREREQUISITES', missingCourses: [{ code: 'MA201', name: 'Probability' }] },
-      ],
-    });
-  });
-
-  it('passes an eligible result through', () => {
-    expect(toCourseEligibility({ eligible: true }, offering())).toEqual({ eligible: true });
-  });
-});
-
 describe('resolveMyStatus', () => {
   it('is NOT_SELECTED without records', () => {
     expect(resolveMyStatus([])).toEqual({ code: 'NOT_SELECTED' });
@@ -150,7 +123,16 @@ describe('matchesFilters', () => {
   it('applies the eligibility filter to students only', () => {
     const ineligible = course({
       personal: {
-        eligibility: { eligible: false, reasons: [{ code: 'PROGRAM_NOT_ELIGIBLE' }] },
+        eligibility: {
+          eligible: false,
+          reasons: [
+            {
+              type: 'PROGRAM_NOT_ALLOWED',
+              program: { code: 'ME', name: 'Mechanical' },
+              allowedPrograms: [{ code: 'CSE', name: 'Computer Science' }],
+            },
+          ],
+        },
         myStatus: { code: 'NOT_SELECTED' },
       },
     });
