@@ -11,7 +11,7 @@ import { LiveSeatsIndicator } from '../../components/LiveSeatsIndicator';
 import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { Skeleton } from '../../components/Skeleton';
-import { WindowStatus } from '../../components/WindowStatus';
+import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { CATALOGUE_PAGE, useCatalogue, type CatalogueData } from '../../hooks/useCatalogue';
 import { useCatalogueFilters } from '../../hooks/useCatalogueFilters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -92,7 +92,7 @@ export function StudentCoursesPage() {
         description="Every course offered this term, with live seat counts, demand and whether you can take it."
       >
         <div className={styles.statusLine}>
-          {data?.window && <WindowStatus window={data.window} clockOffsetMs={data.clockOffsetMs} />}
+          <RegistrationStatusBanner />
           <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
         </div>
       </PageHeader>
