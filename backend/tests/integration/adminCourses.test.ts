@@ -17,6 +17,7 @@ import {
   createUser,
   createWindow,
   markSubmitted,
+  setWindowStatus,
 } from './fixtures.js';
 import { ALLOWED_ORIGIN, buildApp, dataOf, sessionFor } from './http.js';
 import { getTestPool } from './testDatabase.js';
@@ -26,7 +27,7 @@ async function buildOfferings() {
   const pool = getTestPool();
   const departmentId = await createDepartment(pool, { code: 'CSE', name: 'Computer Science' });
   const programId = await createProgram(pool, departmentId);
-  const windowId = await createWindow(pool, { name: 'Fall 2026', status: 'OPEN' });
+  const windowId = await createWindow(pool, { name: 'Fall 2026' });
   const ai = await createCourse(pool, departmentId, {
     code: 'CS401',
     name: 'Artificial Intelligence',
@@ -37,6 +38,8 @@ async function buildOfferings() {
   });
   await createOffering(pool, windowId, ai, 4);
   await createOffering(pool, windowId, databases, 10);
+  // Offerings are fixed once registration opens, so they are added first.
+  await setWindowStatus(pool, windowId, 'OPEN');
 
   for (let i = 0; i < 6; i += 1) {
     const student = await createStudent(pool, programId);

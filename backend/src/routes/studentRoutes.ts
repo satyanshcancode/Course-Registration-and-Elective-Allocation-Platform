@@ -13,5 +13,6 @@ export function createStudentRouter(
   const router = Router();
   router.use(requireAuth, requireRole('STUDENT'));
   router.get('/me', controller.getMyProfile);
+  router.get('/me/notifications/unread-count', controller.getUnreadNotificationCount);
   return router;
 }
