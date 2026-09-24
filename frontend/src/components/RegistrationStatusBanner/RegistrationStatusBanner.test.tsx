@@ -110,6 +110,14 @@ describe('RegistrationStatusBanner', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders nothing outside the student area, where there is no provider', () => {
+    // FeaturePlaceholder puts the banner on every page, including admin ones.
+    const { container } = renderRoute(<RegistrationStatusBanner />, { path: '/admin/students' });
+
+    expect(container).toHaveTextContent('');
+    expect(api.getCurrentWindow).not.toHaveBeenCalled();
+  });
+
   it('has no accessibility violations', async () => {
     api.getCurrentWindow.mockResolvedValue(
       ok({ window: { ...fallWindow, status: 'OPEN' }, serverTime: SERVER_NOW }),

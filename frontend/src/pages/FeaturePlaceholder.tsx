@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
+import { RegistrationStatusBanner } from '../components/RegistrationStatusBanner';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import styles from './FeaturePlaceholder.module.css';
 
@@ -32,7 +33,10 @@ export function FeaturePlaceholder({
   useDocumentTitle(title);
   return (
     <>
-      <PageHeader title={title} kicker={kicker} description={description} actions={actions} />
+      <PageHeader title={title} kicker={kicker} description={description} actions={actions}>
+        {/* Renders nothing outside the student area, which has no window. */}
+        <RegistrationStatusBanner />
+      </PageHeader>
       <div className={styles.body}>
         <EmptyState title={emptyTitle} icon={icon}>
           {children}
