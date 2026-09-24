@@ -127,7 +127,12 @@ export function createPreferenceRepository(
         `INSERT INTO preference_items (submission_id, window_id, course_id, rank)
          SELECT $1, $2, course_id, rank
          FROM unnest($3::uuid[], $4::smallint[]) AS t(course_id, rank)`,
-        [submissionId, windowId, items.map((item) => item.courseId), items.map((item) => item.rank)],
+        [
+          submissionId,
+          windowId,
+          items.map((item) => item.courseId),
+          items.map((item) => item.rank),
+        ],
       );
     },
 
@@ -159,11 +164,7 @@ export function createPreferenceRepository(
       const row = result.rows[0];
       return row
         ? {
-            status: oneOf(
-              REGISTRATION_WINDOW_STATUSES,
-              row.status,
-              'registration_windows.status',
-            ),
+            status: oneOf(REGISTRATION_WINDOW_STATUSES, row.status, 'registration_windows.status'),
             startsAt: row.starts_at,
             endsAt: row.ends_at,
           }

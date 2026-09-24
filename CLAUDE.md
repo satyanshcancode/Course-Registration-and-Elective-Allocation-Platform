@@ -180,6 +180,12 @@
 - Vitest runs at most 2 workers per workspace (`maxWorkers` in each Vitest
   config), because this machine runs out of memory and fails with "Failed to
   start forks worker" otherwise. Override with `VITEST_MAX_WORKERS=<n>`.
+- **Node:** `engines` is `>=20.12.0`. The dependency pins were chosen for Node
+  20.17 and also run on 22 and 24 (verified on 24.21). Do not raise a pin to
+  suit a newer Node; the pins stay as they are.
+- npm 11 gates package install scripts. If `esbuild` fails to find its binary
+  after `npm install`, approve it with `npm install-scripts approve esbuild`
+  rather than changing any version.
 
 ## Definition of done for every phase
 

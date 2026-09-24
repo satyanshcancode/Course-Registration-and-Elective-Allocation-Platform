@@ -113,7 +113,9 @@ export function createSubmitService({
       if (!offering || !facts) {
         return [];
       }
-      return [toCartItem(offering, evaluateEligibility(facts, toEligibilityCourse(offering)), item.rank)];
+      return [
+        toCartItem(offering, evaluateEligibility(facts, toEligibilityCourse(offering)), item.rank),
+      ];
     });
 
     return {
@@ -190,11 +192,7 @@ export function createSubmitService({
 
         // 6. Mark it submitted: the server's clock and the next sequence value.
         const submittedAt = now();
-        const sequence = await repository.markSubmitted(
-          submission.id,
-          idempotencyKey,
-          submittedAt,
-        );
+        const sequence = await repository.markSubmitted(submission.id, idempotencyKey, submittedAt);
 
         // Test-only: proves the rollback below leaves nothing behind.
         injectFault(FAULT_AFTER_MARK_SUBMITTED);
@@ -236,7 +234,7 @@ export function createSubmitService({
         return null;
       }
       const submission = await preferences.findSubmission(studentId, window.id);
-      if (!submission || submission.status !== 'SUBMITTED' || !submission.submittedAt) {
+      if (submission?.status !== 'SUBMITTED' || !submission.submittedAt) {
         return null;
       }
       return buildReceipt(
