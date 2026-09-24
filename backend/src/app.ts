@@ -2,7 +2,11 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler.js';
-import { DEFAULT_LOGIN_RATE_LIMIT, type RateLimitOptions } from './middleware/loginRateLimiter.js';
+import {
+  DEFAULT_LOGIN_RATE_LIMIT,
+  DEFAULT_SUBMIT_RATE_LIMIT,
+  type RateLimitOptions,
+} from './middleware/loginRateLimiter.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { rejectCrossOriginWrites } from './middleware/rejectCrossOriginWrites.js';
 import { requestLogger } from './middleware/requestLogger.js';
@@ -14,6 +18,7 @@ export interface AppOptions {
   /** Adds the Secure flag to the session cookie (true in production). */
   cookieSecure: boolean;
   loginRateLimit?: RateLimitOptions;
+  submitRateLimit?: RateLimitOptions;
   services: ApiServices;
 }
 
@@ -26,6 +31,7 @@ export function createApp({
   jsonBodyLimit,
   cookieSecure,
   loginRateLimit = DEFAULT_LOGIN_RATE_LIMIT,
+  submitRateLimit = DEFAULT_SUBMIT_RATE_LIMIT,
   services,
 }: AppOptions): Express {
   const app = express();
@@ -40,7 +46,7 @@ export function createApp({
   app.use(express.json({ limit: jsonBodyLimit }));
   app.use(requestLogger);
 
-  app.use('/api', createApiRouter(services, { cookieSecure, loginRateLimit }));
+  app.use('/api', createApiRouter(services, { cookieSecure, loginRateLimit, submitRateLimit }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -1,21 +1,29 @@
 import { Router } from 'express';
 import { createAdminController } from '../controllers/adminController.js';
 import { createAuthController } from '../controllers/authController.js';
+import { createCartController } from '../controllers/cartController.js';
 import { createCourseController } from '../controllers/courseController.js';
 import { createEligibilityController } from '../controllers/eligibilityController.js';
 import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
-import { createLoginRateLimiter, type RateLimitOptions } from '../middleware/loginRateLimiter.js';
+import {
+  createLoginRateLimiter,
+  createSubmitRateLimiter,
+  type RateLimitOptions,
+} from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AuthService } from '../services/authService.js';
+import type { CartService } from '../services/cartService.js';
 import type { CatalogueService } from '../services/catalogueService.js';
 import type { EligibilityService } from '../services/eligibilityService.js';
 import type { HealthService } from '../services/healthService.js';
 import type { RegistrationWindowService } from '../services/registrationWindowService.js';
+import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
 import { createAdminRouter } from './adminRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
+import { createCartRouter, createRegistrationRouter } from './cartRoutes.js';
 import { createCourseRouter } from './courseRoutes.js';
 import { createEligibilityRouter } from './eligibilityRoutes.js';
 import { createHealthRouter } from './healthRoutes.js';
@@ -28,6 +36,8 @@ export interface ApiServices {
   authService: AuthService;
   studentService: StudentService;
   catalogueService: CatalogueService;
+  cartService: CartService;
+  submitService: SubmitService;
   eligibilityService: EligibilityService;
   adminCourseService: AdminCourseService;
   registrationWindowService: RegistrationWindowService;
@@ -36,6 +46,7 @@ export interface ApiServices {
 export interface ApiRouterOptions {
   cookieSecure: boolean;
   loginRateLimit: RateLimitOptions;
+  submitRateLimit: RateLimitOptions;
 }
 
 /** Mounts every feature router under /api. */
@@ -61,6 +72,19 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     createRegistrationWindowRouter(courseController, requireAuth),
   );
   router.use('/courses', createCourseRouter(courseController, requireAuth));
+  const cartController = createCartController({
+    cartService: services.cartService,
+    submitService: services.submitService,
+  });
+  router.use('/preferences', createCartRouter(cartController, requireAuth));
+  router.use(
+    '/registration',
+    createRegistrationRouter(
+      cartController,
+      requireAuth,
+      createSubmitRateLimiter(options.submitRateLimit),
+    ),
+  );
   router.use(
     '/eligibility',
     createEligibilityRouter(createEligibilityController(services.eligibilityService), requireAuth),

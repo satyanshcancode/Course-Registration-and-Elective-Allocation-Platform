@@ -318,3 +318,23 @@ export interface WindowCountsRow {
   submissions: number;
   total_students: number;
 }
+
+// ---------------------------------------------------------------------------
+// Registration cart
+// ---------------------------------------------------------------------------
+
+export interface SubmissionRow {
+  id: string;
+  student_id: string;
+  window_id: string;
+  status: string;
+  idempotency_key: string | null;
+  submitted_at: Date | null;
+  submission_sequence: string | number | null;
+}
+
+export interface PreferenceItemRow {
+  course_id: string;
+  code: string;
+  rank: number;
+}

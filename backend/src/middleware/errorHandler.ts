@@ -41,7 +41,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, next
   }
 
   if (error instanceof AppError) {
-    sendFailure(res, error.statusCode, error.message, error.errors);
+    sendFailure(res, error.statusCode, error.message, error.errors, error.details);
     return;
   }
 

@@ -18,10 +18,14 @@ export function sendFailure(
   statusCode: number,
   message: string,
   errors?: ApiFieldError[],
+  details?: unknown,
 ): void {
   const body: ApiFailure = { success: false, data: null, message };
   if (errors !== undefined && errors.length > 0) {
     body.errors = errors;
+  }
+  if (details !== undefined) {
+    body.details = details;
   }
   res.status(statusCode).json(body);
 }

@@ -20,6 +20,11 @@ export interface ApiFailure {
   data: null;
   message: string;
   errors?: ApiFieldError[];
+  /**
+   * Endpoint-specific failure detail, typed by that endpoint's contract the
+   * way `data` is (e.g. the cart's CartProblem[], read with readCartProblems).
+   */
+  details?: unknown;
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
