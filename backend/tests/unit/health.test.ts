@@ -31,6 +31,8 @@ function buildApp(repository: HealthRepository) {
         getCourse: notUsed,
         getSeats: notUsed,
       },
+      cartService: { getCart: notUsed, saveCart: notUsed },
+      submitService: { submit: notUsed, getStatus: notUsed },
       eligibilityService: { getOverview: notUsed, getCourse: notUsed },
       adminCourseService: { listOfferings: notUsed, updateCapacity: notUsed },
       registrationWindowService: {

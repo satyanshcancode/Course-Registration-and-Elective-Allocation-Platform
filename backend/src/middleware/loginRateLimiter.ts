@@ -47,3 +47,31 @@ export function createLoginRateLimiter(options: RateLimitOptions): RequestHandle
     },
   });
 }
+
+export const DEFAULT_SUBMIT_RATE_LIMIT: RateLimitOptions = {
+  windowMs: 60 * 1000,
+  limit: 10,
+};
+
+/**
+ * Limits submits per signed-in student. Keyed on the session's user id, not
+ * the IP: students on one campus network must not throttle each other, and a
+ * retry with the same idempotency key is harmless anyway.
+ */
+export function createSubmitRateLimiter(options: RateLimitOptions): RequestHandler {
+  const seconds = Math.ceil(options.windowMs / 1000);
+  return rateLimit({
+    windowMs: options.windowMs,
+    limit: options.limit,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    keyGenerator: (req) => req.auth?.userId ?? ipKeyGenerator(req.ip ?? 'unknown'),
+    handler: (_req, res: Response<ApiFailure>) => {
+      sendFailure(
+        res,
+        429,
+        `Too many submissions. Please wait ${seconds} seconds and try again.`,
+      );
+    },
+  });
+}

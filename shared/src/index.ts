@@ -40,6 +40,20 @@ export {
   SORT_ORDERS,
 } from './api/courses.js';
 export type {
+  CartItem,
+  CartProblem,
+  CartProblemType,
+  PreferenceCart,
+  SaveCartRequest,
+  SubmissionReceipt,
+  SubmitRequest,
+} from './api/preferences.js';
+export {
+  CART_PROBLEM_TYPES,
+  IDEMPOTENCY_KEY_HEADER,
+  readCartProblems,
+} from './api/preferences.js';
+export type {
   CourseEligibility,
   CourseEligibilityDetail,
   EligibilityOverview,

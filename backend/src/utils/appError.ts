@@ -7,12 +7,15 @@ import type { ApiFieldError } from '@course-reg/shared';
 export class AppError extends Error {
   readonly statusCode: number;
   readonly errors: ApiFieldError[] | undefined;
+  /** Endpoint-specific detail for the client, e.g. the cart's CartProblem[]. */
+  readonly details: unknown;
 
-  constructor(statusCode: number, message: string, errors?: ApiFieldError[]) {
+  constructor(statusCode: number, message: string, errors?: ApiFieldError[], details?: unknown) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;
     this.errors = errors;
+    this.details = details;
   }
 
   static badRequest(message: string, errors?: ApiFieldError[]): AppError {

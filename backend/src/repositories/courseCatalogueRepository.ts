@@ -13,6 +13,11 @@ export interface CourseCatalogueRepository {
   listOfferings(windowId: string, courseCode?: string): Promise<OfferingRecord[]>;
   /** The live numbers only, for polling. */
   listSeats(windowId: string): Promise<CourseSeats[]>;
+  /**
+   * Which of `codes` name a real course, so the cart can tell "no such
+   * course" from "not offered this term".
+   */
+  findExistingCodes(codes: readonly string[]): Promise<Set<string>>;
 }
 
 /**
@@ -70,6 +75,17 @@ export function createCourseCatalogueRepository(
         [windowId, courseCode ?? null],
       );
       return result.rows.map(mapCatalogueOfferingRow);
+    },
+
+    async findExistingCodes(codes) {
+      if (codes.length === 0) {
+        return new Set<string>();
+      }
+      const result = await pool.query<{ code: string }>(
+        'SELECT code FROM courses WHERE code = ANY ($1::text[])',
+        [[...codes]],
+      );
+      return new Set(result.rows.map((row) => row.code));
     },
 
     async listSeats(windowId) {
