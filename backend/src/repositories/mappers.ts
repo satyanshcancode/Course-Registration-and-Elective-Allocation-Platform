@@ -78,7 +78,11 @@ export class RowMappingError extends Error {
   }
 }
 
-export function oneOf<const T extends readonly unknown[]>(values: T, value: unknown, column: string) {
+export function oneOf<const T extends readonly unknown[]>(
+  values: T,
+  value: unknown,
+  column: string,
+) {
   if (!isOneOf(values, value)) {
     throw new RowMappingError(column, value);
   }

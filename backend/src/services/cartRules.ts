@@ -65,7 +65,9 @@ export function validateCart(
     const candidate = offered.get(code);
     if (!candidate) {
       problems.push(
-        knownCourseCodes.has(code) ? { type: 'NOT_OFFERED', code } : { type: 'UNKNOWN_COURSE', code },
+        knownCourseCodes.has(code)
+          ? { type: 'NOT_OFFERED', code }
+          : { type: 'UNKNOWN_COURSE', code },
       );
       continue;
     }
@@ -97,10 +99,7 @@ export function validateCart(
  * True when the student is submitting exactly the cart that was saved, in the
  * same order. A mismatch means the cart changed in another tab or device.
  */
-export function matchesSavedCart(
-  submitted: readonly string[],
-  saved: readonly string[],
-): boolean {
+export function matchesSavedCart(submitted: readonly string[], saved: readonly string[]): boolean {
   const left = submitted.map(normaliseCode);
   return left.length === saved.length && left.every((code, index) => code === saved[index]);
 }

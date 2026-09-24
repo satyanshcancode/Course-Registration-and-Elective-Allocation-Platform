@@ -67,11 +67,7 @@ export function createSubmitRateLimiter(options: RateLimitOptions): RequestHandl
     legacyHeaders: false,
     keyGenerator: (req) => req.auth?.userId ?? ipKeyGenerator(req.ip ?? 'unknown'),
     handler: (_req, res: Response<ApiFailure>) => {
-      sendFailure(
-        res,
-        429,
-        `Too many submissions. Please wait ${seconds} seconds and try again.`,
-      );
+      sendFailure(res, 429, `Too many submissions. Please wait ${seconds} seconds and try again.`);
     },
   });
 }

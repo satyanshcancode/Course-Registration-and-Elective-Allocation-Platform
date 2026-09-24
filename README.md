@@ -86,13 +86,13 @@ How the JavaScript and TypeScript concepts are used is written up in
 
 ## Stack
 
-| Layer    | Technology                                                              |
-| -------- | ----------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript, Vite 6, React Router 7, CSS Modules               |
-| Backend  | Node 20, Express 5, TypeScript, `pg` (PostgreSQL 16), zod               |
-| Shared   | `@course-reg/shared` — typed API contracts (`ApiResponse<T>`, …)        |
-| Tooling  | ESLint (type-aware), Prettier, Vitest, React Testing Library, supertest |
-| Runtime  | Docker, Docker Compose                                                  |
+| Layer    | Technology                                                                             |
+| -------- | -------------------------------------------------------------------------------------- |
+| Frontend | React 19, TypeScript, Vite 6, React Router 7, CSS Modules                              |
+| Backend  | Node 20.12+ (developed on 20 and 24), Express 5, TypeScript, `pg` (PostgreSQL 16), zod |
+| Shared   | `@course-reg/shared` — typed API contracts (`ApiResponse<T>`, …)                       |
+| Tooling  | ESLint (type-aware), Prettier, Vitest, React Testing Library, supertest                |
+| Runtime  | Docker, Docker Compose                                                                 |
 
 ```text
 .

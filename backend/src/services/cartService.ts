@@ -1,7 +1,4 @@
-import {
-  canSubmitNow,
-  type SubmissionWindow,
-} from './registrationWindowRules.js';
+import { canSubmitNow, type SubmissionWindow } from './registrationWindowRules.js';
 import type { CartProblem, PreferenceCart, SubmissionStatus } from '@course-reg/shared';
 import type { PoolClient } from 'pg';
 import { withTransaction, type TransactionPool } from '../database/transaction.js';
