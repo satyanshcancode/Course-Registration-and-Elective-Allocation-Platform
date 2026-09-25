@@ -33,7 +33,13 @@ export const ENROLLMENT_SOURCES = ['ALLOCATION', 'WAITLIST_PROMOTION', 'ADD'] as
 export type EnrollmentSource = (typeof ENROLLMENT_SOURCES)[number];
 
 /** Why an ACTIVE seat was released. Mirrors enrollments_drop_reason_check. */
-export const ENROLLMENT_DROP_REASONS = ['UPGRADED', 'ADMIN_WITHDRAWAL', 'STUDENT_DROP'] as const;
+export const ENROLLMENT_DROP_REASONS = [
+  'UPGRADED',
+  'ADMIN_WITHDRAWAL',
+  'STUDENT_DROP',
+  /** Released to take another course in the same add/drop action. */
+  'SWAPPED',
+] as const;
 export type EnrollmentDropReason = (typeof ENROLLMENT_DROP_REASONS)[number];
 
 export const WAITLIST_STATUSES = ['WAITING', 'PROMOTED', 'REMOVED'] as const;
@@ -41,9 +47,17 @@ export type WaitlistStatus = (typeof WAITLIST_STATUSES)[number];
 
 /**
  * Why a waiting entry ended without a promotion: the student no longer met the
- * course's requirements, or they were promoted somewhere they ranked higher.
+ * course's requirements, they were promoted somewhere they ranked higher, they
+ * left the queue themselves, or they took a seat elsewhere while waiting on a
+ * queue they joined during add/drop rather than ranked (so "would this be an
+ * upgrade?" has no answer).
  */
-export const WAITLIST_REMOVAL_REASONS = ['INELIGIBLE', 'RANKED_BELOW_SEAT'] as const;
+export const WAITLIST_REMOVAL_REASONS = [
+  'INELIGIBLE',
+  'RANKED_BELOW_SEAT',
+  'STUDENT_LEFT',
+  'SEAT_ELSEWHERE',
+] as const;
 export type WaitlistRemovalReason = (typeof WAITLIST_REMOVAL_REASONS)[number];
 
 export const ALLOCATION_RUN_STATUSES = ['RUNNING', 'COMPLETED', 'FAILED'] as const;
@@ -61,6 +75,9 @@ export const HISTORY_EVENT_TYPES = [
   'PROMOTED',
   'ADDED',
   'DROPPED',
+  'SWAPPED',
+  'WAITLIST_JOINED',
+  'WAITLIST_LEFT',
   'WAITLIST_REMOVED',
 ] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];

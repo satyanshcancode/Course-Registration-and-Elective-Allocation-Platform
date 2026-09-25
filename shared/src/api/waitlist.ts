@@ -21,7 +21,8 @@ import type { RegistrationWindowSummary } from './courses.js';
 /** One entry on the student's own waitlist page. */
 export interface StudentWaitlistEntry {
   course: CourseRef;
-  preferenceRank: PreferenceRank;
+  /** Null for a queue joined during add/drop: the course was never ranked. */
+  preferenceRank: PreferenceRank | null;
   status: WaitlistStatus;
   /** Rank among those still waiting, 1-based; null once the entry has ended. */
   position: number | null;
@@ -69,7 +70,8 @@ export interface WaitingStudentRow {
   position: number | null;
   storedPosition: number;
   score: number;
-  preferenceRank: PreferenceRank;
+  /** Null for a queue joined during add/drop: the course was never ranked. */
+  preferenceRank: PreferenceRank | null;
   reason: WaitlistRemovalReason | null;
 }
 

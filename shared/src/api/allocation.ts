@@ -11,6 +11,7 @@ import type {
   AllocationMethod,
   AllocationOutcome,
   AllocationRunStatus,
+  EnrollmentSource,
   PreferenceRank,
 } from '../domain/enums.js';
 import type { IsoDateTime } from '../domain/models.js';
@@ -67,6 +68,14 @@ export type AllocationExplanation =
   | ({
       /** The seat was held and then released by an administrator. */
       type: 'SEAT_WITHDRAWN';
+    } & AllocationFacts)
+  | ({
+      /** Taken during add/drop, not by the run. */
+      type: 'ADDED';
+    } & AllocationFacts)
+  | ({
+      /** The student released the seat themselves during add/drop. */
+      type: 'SEAT_DROPPED';
     } & AllocationFacts);
 
 export type AllocationExplanationType = AllocationExplanation['type'];
@@ -80,6 +89,8 @@ export const ALLOCATION_EXPLANATION_TYPES = [
   'NOT_ALLOCATED_INELIGIBLE',
   'PROMOTED',
   'SEAT_WITHDRAWN',
+  'ADDED',
+  'SEAT_DROPPED',
 ] as const satisfies readonly AllocationExplanationType[];
 
 /** How one course fared in a run. */
@@ -191,6 +202,11 @@ export interface StudentAllocationResults {
   method: AllocationMethod | null;
   /** The course they hold a seat in, if any. */
   allocated: AllocationExplanation | null;
+  /**
+   * The seat they hold now, even when the run never decided it — a course
+   * added during add/drop is not part of the run's results at all.
+   */
+  held: { course: CourseRef; source: EnrollmentSource } | null;
   /** Every course they ranked, in rank order (includes the allocated one). */
   results: StudentAllocationResult[];
   serverTime: IsoDateTime;

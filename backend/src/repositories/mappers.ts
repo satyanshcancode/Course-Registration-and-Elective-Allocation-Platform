@@ -406,6 +406,8 @@ export function mapWindowSummaryRow(row: WindowSummaryRow): WindowRecord {
       status: oneOf(REGISTRATION_WINDOW_STATUSES, row.status, 'registration_windows.status'),
       startsAt: iso(row.starts_at),
       endsAt: iso(row.ends_at),
+      addDropOpensAt: row.add_drop_opens_at === null ? null : iso(row.add_drop_opens_at),
+      addDropClosesAt: row.add_drop_closes_at === null ? null : iso(row.add_drop_closes_at),
     },
   };
 }

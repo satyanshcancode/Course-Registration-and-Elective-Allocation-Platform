@@ -29,7 +29,11 @@ import type {
   RegistrationHistoryRepository,
 } from '../repositories/registrationHistoryRepository.js';
 import type { StudentRepository } from '../repositories/studentRepository.js';
-import type { WaitlistRepository } from '../repositories/waitlistRepository.js';
+import type {
+  HeldSeat,
+  WaitingCandidate,
+  WaitlistRepository,
+} from '../repositories/waitlistRepository.js';
 import { toEligibilityCourse } from './catalogueRules.js';
 import { evaluateEligibility, type EligibilityStudent } from './eligibilityRules.js';
 import { injectFault } from '../utils/faultInjection.js';
@@ -154,22 +158,23 @@ export function createWaitlistPromotionService({
           }
 
           const held = await waitlists.findHeldSeat(windowId, candidate.studentId);
-          // A promotion is only ever an upgrade. An entry for a course they
-          // already hold, or rank no better than what they hold, is stale.
-          if (
-            held &&
-            (held.courseId === courseId ||
-              held.preferenceRank === null ||
-              held.preferenceRank <= candidate.preferenceRank)
-          ) {
-            await waitlists.markRemoved(candidate.entryId, 'RANKED_BELOW_SEAT');
-            removed.push({ student: candidate.student, course, reason: 'RANKED_BELOW_SEAT' });
-            history.push(
-              removalHistory(windowId, candidate.studentId, courseId, 'RANKED_BELOW_SEAT'),
-            );
+          // A promotion is only ever an upgrade. An entry the student joined
+          // during add/drop carries no rank, so once they hold ANY seat there
+          // is nothing to compare and the entry stops being offered.
+          const staleReason = staleEntryReason(held, candidate, courseId);
+          if (staleReason) {
+            await waitlists.markRemoved(candidate.entryId, staleReason);
+            removed.push({ student: candidate.student, course, reason: staleReason });
+            history.push(removalHistory(windowId, candidate.studentId, courseId, staleReason));
             continue;
           }
 
+          // Release first, then take: `enrollments_one_active_per_student_window_idx`
+          // allows exactly one ACTIVE seat per student, so the other order
+          // would be rejected by the index mid-promotion.
+          if (held) {
+            await waitlists.dropEnrollment(held.enrollmentId, 'UPGRADED');
+          }
           await waitlists.enroll(windowId, candidate.studentId, courseId, 'WAITLIST_PROMOTION');
           await waitlists.markPromoted(candidate.entryId);
 
@@ -180,7 +185,6 @@ export function createWaitlistPromotionService({
           };
 
           if (held) {
-            await waitlists.dropEnrollment(held.enrollmentId, 'UPGRADED');
             history.push({
               studentId: candidate.studentId,
               windowId,
@@ -194,22 +198,34 @@ export function createWaitlistPromotionService({
           }
 
           // Anything they ranked below their new seat is no longer worth
-          // waiting for: being promoted there would be a downgrade.
-          const stale = await waitlists.removeEntriesRankedBelow(
-            windowId,
-            candidate.studentId,
-            candidate.preferenceRank,
-            'RANKED_BELOW_SEAT',
-          );
-          for (const entry of stale) {
+          // waiting for: being promoted there would be a downgrade. Queues
+          // they joined during add/drop go too — they now hold a seat, and an
+          // unranked queue cannot be shown to be an improvement on it.
+          const stale = [
+            ...(candidate.preferenceRank === null
+              ? []
+              : await waitlists.removeEntriesRankedBelow(
+                  windowId,
+                  candidate.studentId,
+                  candidate.preferenceRank,
+                  'RANKED_BELOW_SEAT',
+                )
+            ).map((entry) => ({ entry, reason: 'RANKED_BELOW_SEAT' as const })),
+            ...(
+              await waitlists.removeUnrankedEntries(
+                windowId,
+                candidate.studentId,
+                'SEAT_ELSEWHERE',
+              )
+            ).map((entry) => ({ entry, reason: 'SEAT_ELSEWHERE' as const })),
+          ];
+          for (const { entry, reason } of stale) {
             removed.push({
               student: candidate.student,
               course: { code: entry.code, name: entry.name },
-              reason: 'RANKED_BELOW_SEAT',
+              reason,
             });
-            history.push(
-              removalHistory(windowId, candidate.studentId, entry.courseId, 'RANKED_BELOW_SEAT'),
-            );
+            history.push(removalHistory(windowId, candidate.studentId, entry.courseId, reason));
           }
 
           history.push({
@@ -255,6 +271,31 @@ export function createWaitlistPromotionService({
       return { promoted, removed };
     },
   };
+}
+
+/**
+ * Why this entry can no longer become a promotion, or null when it can.
+ *
+ * A student holding a seat is only ever moved UP: to a course they ranked
+ * strictly higher. An entry with no rank behind it — joined during add/drop —
+ * can never satisfy that, so it ends as soon as they hold anything.
+ */
+function staleEntryReason(
+  held: HeldSeat | null,
+  candidate: WaitingCandidate,
+  courseId: string,
+): WaitlistRemovalReason | null {
+  if (!held) {
+    return null;
+  }
+  if (candidate.preferenceRank === null) {
+    return 'SEAT_ELSEWHERE';
+  }
+  return held.courseId === courseId ||
+    held.preferenceRank === null ||
+    held.preferenceRank <= candidate.preferenceRank
+    ? 'RANKED_BELOW_SEAT'
+    : null;
 }
 
 function removalHistory(

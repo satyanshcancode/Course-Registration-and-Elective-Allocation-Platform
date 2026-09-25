@@ -41,6 +41,12 @@ export interface RegistrationWindowRepository {
   /** Replaces the offered courses, keeping the seats of courses that stay. */
   replaceOfferings(windowId: string, courseCodes: readonly string[]): Promise<void>;
   setStatus(windowId: string, status: string): Promise<void>;
+  /**
+   * The add/drop period. Deliberately separate from `updatePolicy`: the policy
+   * freezes when the window opens, while the period is scheduled afterwards,
+   * on a window that is already ALLOCATED.
+   */
+  setAddDropPeriod(windowId: string, opensAt: Date | null, closesAt: Date | null): Promise<void>;
   /** User ids of every student, for the "registration is open" notifications. */
   findAllStudentUserIds(): Promise<string[]>;
 }
@@ -48,8 +54,10 @@ export interface RegistrationWindowRepository {
 /** Seats a newly offered course starts with; the admin edits it on /admin/courses. */
 export const DEFAULT_OFFERING_CAPACITY = 30;
 
-const DETAIL_COLUMNS = `id, name, term, status, starts_at, ends_at,
-                        allocation_method, config, random_seed`;
+const SUMMARY_COLUMNS = `id, name, term, status, starts_at, ends_at,
+                         add_drop_opens_at, add_drop_closes_at`;
+
+const DETAIL_COLUMNS = `${SUMMARY_COLUMNS}, allocation_method, config, random_seed`;
 
 /** The stored JSONB is validated, not trusted: a bad row is a bug worth seeing. */
 function readPolicy(value: unknown, windowId: string): AllocationConfig {
@@ -76,8 +84,7 @@ export function createRegistrationWindowRepository(
   return {
     async findCurrent() {
       const result = await pool.query<WindowSummaryRow>(
-        `SELECT id, name, term, status, starts_at, ends_at
-         FROM registration_windows ${CURRENT_ORDER}`,
+        `SELECT ${SUMMARY_COLUMNS} FROM registration_windows ${CURRENT_ORDER}`,
       );
       const row = result.rows[0];
       return row ? mapWindowSummaryRow(row) : null;
@@ -208,6 +215,15 @@ export function createRegistrationWindowRepository(
          WHERE c.code = ANY ($2::text[])
          ON CONFLICT (window_id, course_id) DO NOTHING`,
         [windowId, courseCodes, DEFAULT_OFFERING_CAPACITY],
+      );
+    },
+
+    async setAddDropPeriod(windowId, opensAt, closesAt) {
+      await pool.query(
+        `UPDATE registration_windows
+         SET add_drop_opens_at = $2, add_drop_closes_at = $3
+         WHERE id = $1`,
+        [windowId, opensAt, closesAt],
       );
     },
 

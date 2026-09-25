@@ -91,11 +91,15 @@ function sentenceFor(explanation: AllocationExplanation): string {
       return `Not allocated ${explanation.course.code}: all ${explanation.capacity} seats went to higher-scoring applicants.`;
     case 'NOT_ALLOCATED_INELIGIBLE':
       return `Not allocated ${explanation.course.code}: no longer eligible at allocation time.`;
-    // Neither can come out of a run; both exist only after seats start moving.
+    // None of these come out of a run; they exist only after seats start moving.
     case 'PROMOTED':
       return `Promoted into ${explanation.course.code} (choice ${explanation.preferenceRank}).`;
     case 'SEAT_WITHDRAWN':
       return `The seat in ${explanation.course.code} was withdrawn.`;
+    case 'ADDED':
+      return `Added ${explanation.course.code} during add/drop.`;
+    case 'SEAT_DROPPED':
+      return `The seat in ${explanation.course.code} was dropped.`;
   }
 }
 
@@ -423,6 +427,7 @@ export function createAllocationService({
           ranAt: null,
           method: null,
           allocated: null,
+          held: null,
           results: [],
           serverTime,
         };
@@ -435,15 +440,17 @@ export function createAllocationService({
           ranAt: null,
           method: null,
           allocated: null,
+          held: null,
           results: [],
           serverTime,
         };
       }
 
-      const [stored, held, entries] = await Promise.all([
+      const [stored, held, entries, released] = await Promise.all([
         allocations.findStudentResults(run.id, studentId),
         waitlists.findHeldSeat(window.id, studentId),
         waitlists.listStudentEntries(window.id, studentId),
+        waitlists.listReleasedSeats(window.id, studentId),
       ]);
       const recorded: StudentAllocationResult[] = stored.flatMap((row) => {
         const explanation = row.explanationDetail as AllocationExplanation | null;
@@ -468,6 +475,7 @@ export function createAllocationService({
             { status: entry.status, position: entry.position, reason: entry.reason },
           ]),
         ),
+        released: new Map(released.map((seat) => [seat.code, seat.dropReason])),
       };
       const results = applyLiveStanding(recorded, live);
 
@@ -476,6 +484,9 @@ export function createAllocationService({
         ranAt: run.finishedAt?.toISOString() ?? null,
         method: run.method,
         allocated: results.find((result) => result.outcome === 'ALLOCATED')?.explanation ?? null,
+        // A course added during add/drop was never part of the run, so it has
+        // no stored result to overlay: name the seat separately.
+        held: held ? { course: { code: held.code, name: held.name }, source: held.source } : null,
         results,
         serverTime,
       };

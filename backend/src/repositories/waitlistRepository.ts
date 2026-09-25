@@ -8,6 +8,7 @@
  * and each one has to see what the step before it did.
  */
 import {
+  ENROLLMENT_DROP_REASONS,
   ENROLLMENT_SOURCES,
   WAITLIST_REMOVAL_REASONS,
   WAITLIST_STATUSES,
@@ -37,7 +38,12 @@ export interface WaitingCandidate {
   student: WaitlistStudentRef;
   position: number;
   score: number;
-  preferenceRank: PreferenceRank;
+  /**
+   * Null when the student never ranked this course: an entry they joined
+   * during add/drop. There is then no rank to compare a seat against, which is
+   * why promotion only offers it to a student holding nothing.
+   */
+  preferenceRank: PreferenceRank | null;
 }
 
 /** The seat a student holds in this window right now. */
@@ -74,7 +80,7 @@ export interface StudentWaitlistRow extends CourseRefRow {
   capacity: number;
   allocated: number;
   score: number;
-  preferenceRank: PreferenceRank;
+  preferenceRank: PreferenceRank | null;
   reason: WaitlistRemovalReason | null;
   endedAt: Date | null;
 }
@@ -93,7 +99,7 @@ export interface WaitlistRow {
   position: number | null;
   storedPosition: number;
   score: number;
-  preferenceRank: PreferenceRank;
+  preferenceRank: PreferenceRank | null;
   reason: WaitlistRemovalReason | null;
 }
 
@@ -120,7 +126,42 @@ export interface WaitlistRepository {
     rank: PreferenceRank,
     reason: WaitlistRemovalReason,
   ): Promise<CourseRefRow[]>;
+  /**
+   * Removes the student's WAITING entries for courses they never ranked —
+   * queues joined during add/drop. Once they hold a seat, "would this be an
+   * upgrade?" cannot be answered for those, so they stop being offered.
+   */
+  removeUnrankedEntries(
+    windowId: string,
+    studentId: string,
+    reason: WaitlistRemovalReason,
+  ): Promise<CourseRefRow[]>;
   findHeldSeat(windowId: string, studentId: string): Promise<HeldSeat | null>;
+  /**
+   * Seats the student held and no longer does, with why. Their results page
+   * has to tell "an administrator withdrew you" from "you dropped it".
+   */
+  listReleasedSeats(
+    windowId: string,
+    studentId: string,
+  ): Promise<{ code: string; dropReason: EnrollmentDropReason }[]>;
+  /** The student's own WAITING entry for one course, for "leave the queue". */
+  findWaitingEntry(
+    windowId: string,
+    studentId: string,
+    courseId: string,
+  ): Promise<{ entryId: string; position: number } | null>;
+  /**
+   * Appends a WAITING entry at the end of the course's queue and returns its
+   * stored position. Positions are never renumbered, so "the end" is
+   * `max(position) + 1` over every entry the course has ever had: a late
+   * joiner cannot land above somebody the allocation run placed.
+   */
+  joinWaitlist(
+    windowId: string,
+    studentId: string,
+    courseId: string,
+  ): Promise<{ entryId: string; position: number }>;
   findEnrollment(enrollmentId: string): Promise<EnrollmentRecord | null>;
   enroll(
     windowId: string,
@@ -243,18 +284,20 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
           student_id: string;
           position: number;
           score: number;
-          rank: number;
+          rank: number | null;
         }
       >(
+        // LEFT JOIN: an entry joined during add/drop has no ranked preference
+        // behind it, and must still be offered the seat in its turn.
         `SELECT w.id, w.student_id, w.position, w.score, pi.rank, ${STUDENT_COLUMNS}
          FROM waitlist_entries w
          ${studentJoins('w')}
-         JOIN preference_items pi
-           ON pi.window_id = w.window_id AND pi.course_id = w.course_id
-         JOIN preference_submissions ps
-           ON ps.id = pi.submission_id AND ps.student_id = w.student_id
+         LEFT JOIN preference_submissions ps
+           ON ps.window_id = w.window_id AND ps.student_id = w.student_id
+          AND ps.status = 'SUBMITTED'
+         LEFT JOIN preference_items pi
+           ON pi.submission_id = ps.id AND pi.course_id = w.course_id
          WHERE w.window_id = $1 AND w.course_id = $2 AND w.status = 'WAITING'
-           AND ps.status = 'SUBMITTED'
          ORDER BY w.position
          LIMIT 1`,
         [windowId, courseId],
@@ -267,7 +310,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
             student: toStudentRef(row),
             position: row.position,
             score: row.score,
-            preferenceRank: row.rank as PreferenceRank,
+            preferenceRank: asRank(row.rank),
           }
         : null;
     },
@@ -315,6 +358,60 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
       }));
     },
 
+    async removeUnrankedEntries(windowId, studentId, reason) {
+      const result = await db.query<{ course_id: string; code: string; name: string }>(
+        `WITH removed AS (
+           UPDATE waitlist_entries w
+           SET status = 'REMOVED', removed_at = now(), removal_reason = $3
+           WHERE w.window_id = $1 AND w.student_id = $2 AND w.status = 'WAITING'
+             AND NOT EXISTS (
+               SELECT 1 FROM preference_items pi
+               JOIN preference_submissions ps ON ps.id = pi.submission_id
+               WHERE pi.window_id = w.window_id AND pi.course_id = w.course_id
+                 AND ps.student_id = w.student_id AND ps.status = 'SUBMITTED'
+             )
+           RETURNING w.course_id
+         )
+         SELECT removed.course_id, c.code, c.name
+         FROM removed JOIN courses c ON c.id = removed.course_id`,
+        [windowId, studentId, reason],
+      );
+      return result.rows.map((row) => ({
+        courseId: row.course_id,
+        code: row.code,
+        name: row.name,
+      }));
+    },
+
+    async findWaitingEntry(windowId, studentId, courseId) {
+      const result = await db.query<{ id: string; position: number }>(
+        `SELECT id, position FROM waitlist_entries
+         WHERE window_id = $1 AND student_id = $2 AND course_id = $3 AND status = 'WAITING'`,
+        [windowId, studentId, courseId],
+      );
+      const row = result.rows[0];
+      return row ? { entryId: row.id, position: row.position } : null;
+    },
+
+    async joinWaitlist(windowId, studentId, courseId) {
+      // max() over EVERY entry the course has had, not just the waiting ones:
+      // a PROMOTED or REMOVED entry keeps its position, and reusing it would
+      // put the newcomer ahead of people the run placed below it.
+      const result = await db.query<{ id: string; position: number }>(
+        `INSERT INTO waitlist_entries (student_id, window_id, course_id, position)
+         SELECT $2, $1, $3,
+                coalesce((SELECT max(position) FROM waitlist_entries
+                          WHERE window_id = $1 AND course_id = $3), 0) + 1
+         RETURNING id, position`,
+        [windowId, studentId, courseId],
+      );
+      const row = result.rows[0];
+      if (!row) {
+        throw new Error('Joining the waitlist returned no row');
+      }
+      return { entryId: row.id, position: row.position };
+    },
+
     async findHeldSeat(windowId, studentId) {
       const result = await db.query<{
         id: string;
@@ -346,6 +443,22 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
             preferenceRank: asRank(row.rank),
           }
         : null;
+    },
+
+    async listReleasedSeats(windowId, studentId) {
+      const result = await db.query<{ code: string; drop_reason: string }>(
+        `SELECT c.code, e.drop_reason
+         FROM enrollments e
+         JOIN courses c ON c.id = e.course_id
+         WHERE e.window_id = $1 AND e.student_id = $2 AND e.status = 'DROPPED'
+           AND e.drop_reason IS NOT NULL
+         ORDER BY e.dropped_at`,
+        [windowId, studentId],
+      );
+      return result.rows.map((row) => ({
+        code: row.code,
+        dropReason: oneOf(ENROLLMENT_DROP_REASONS, row.drop_reason, 'enrollments.drop_reason'),
+      }));
     },
 
     async findEnrollment(enrollmentId) {
@@ -459,7 +572,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
         capacity: number;
         allocated_count: number;
         score: number;
-        rank: number;
+        rank: number | null;
         removal_reason: string | null;
         ended_at: Date | null;
       }>(
@@ -478,13 +591,15 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
          JOIN courses c ON c.id = w.course_id
          JOIN registration_window_courses o
            ON o.window_id = w.window_id AND o.course_id = w.course_id
-         JOIN preference_submissions ps
+         LEFT JOIN preference_submissions ps
            ON ps.window_id = w.window_id AND ps.student_id = w.student_id
           AND ps.status = 'SUBMITTED'
-         JOIN preference_items pi ON pi.submission_id = ps.id AND pi.course_id = w.course_id
+         LEFT JOIN preference_items pi ON pi.submission_id = ps.id AND pi.course_id = w.course_id
          LEFT JOIN live ON live.id = w.id
          WHERE w.window_id = $1 AND w.student_id = $2
-         ORDER BY pi.rank`,
+         -- Ranked queues first, in rank order; queues joined during add/drop
+         -- after them, in the order they were joined.
+         ORDER BY pi.rank NULLS LAST, w.position`,
         [windowId, studentId],
       );
       return result.rows.map((row) => ({
@@ -497,7 +612,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
         capacity: row.capacity,
         allocated: row.allocated_count,
         score: row.score,
-        preferenceRank: row.rank as PreferenceRank,
+        preferenceRank: asRank(row.rank),
         reason:
           row.removal_reason === null
             ? null
@@ -547,7 +662,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
           position: number | null;
           stored_position: number;
           score: number;
-          rank: number;
+          rank: number | null;
           removal_reason: string | null;
         }
       >(
@@ -560,10 +675,10 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
                 w.score, pi.rank, w.removal_reason, ${STUDENT_COLUMNS}
          FROM waitlist_entries w
          ${studentJoins('w')}
-         JOIN preference_submissions ps
+         LEFT JOIN preference_submissions ps
            ON ps.window_id = w.window_id AND ps.student_id = w.student_id
           AND ps.status = 'SUBMITTED'
-         JOIN preference_items pi ON pi.submission_id = ps.id AND pi.course_id = w.course_id
+         LEFT JOIN preference_items pi ON pi.submission_id = ps.id AND pi.course_id = w.course_id
          LEFT JOIN live ON live.id = w.id
          WHERE w.window_id = $1 AND w.course_id = $2
          ORDER BY w.status <> 'WAITING', w.position`,
@@ -575,7 +690,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
         position: row.position,
         storedPosition: row.stored_position,
         score: row.score,
-        preferenceRank: row.rank as PreferenceRank,
+        preferenceRank: asRank(row.rank),
         reason:
           row.removal_reason === null
             ? null
