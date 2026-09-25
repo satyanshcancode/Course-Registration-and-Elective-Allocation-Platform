@@ -92,7 +92,9 @@ export type MyCourseStatus =
   | { code: 'SUBMITTED'; rank: PreferenceRank }
   | { code: 'ENROLLED' }
   /** Place in line among students still waiting (1 = next). */
-  | { code: 'WAITLISTED'; position: number };
+  | { code: 'WAITLISTED'; position: number }
+  /** Ranked, allocation has run, and this course was not the outcome. */
+  | { code: 'NOT_ALLOCATED'; rank: PreferenceRank };
 
 export type MyCourseStatusCode = MyCourseStatus['code'];
 

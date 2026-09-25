@@ -288,6 +288,8 @@ function statusExplanation(code: MyCourseStatusCode): string {
       return 'You hold a seat in this course.';
     case 'WAITLISTED':
       return 'You’re on the waitlist and move up automatically when a seat frees up.';
+    case 'NOT_ALLOCATED':
+      return 'You ranked this course, but allocation gave you one you ranked higher.';
   }
 }
 

@@ -214,10 +214,17 @@ erDiagram
   after a promotion; readers use `ORDER BY position`.
 - **`allocation_runs`** — one per allocation execution. Stores the method,
   algorithm version, seed, config snapshot and input snapshot, so a run can be
-  reproduced exactly.
+  reproduced exactly, plus (migration 0009) the `metrics` it produced and an
+  `output_hash` — a SHA-256 over the sorted decisions — which is what
+  "Verify reproducibility" compares against. A CHECK makes both mandatory on a
+  `COMPLETED` run and forbidden otherwise, and `finished_at >= started_at`, so
+  both timestamps must come from the same clock: the database's.
 - **`allocation_results`** — per run, student and ranked course: outcome,
   preference/priority/total score, final rank and the plain-language explanation
   shown to that student. Scores are `NULL` for FCFS, which doesn't score.
+  Migration 0009 adds `explanation_detail` (the structured explanation the UI
+  formats) and `waitlist_position`, which a CHECK ties to the `WAITLISTED`
+  outcome: exactly the waitlisted rows have a place in a queue.
 
 ### Timeline, notifications, audit
 
@@ -226,7 +233,8 @@ erDiagram
   Append-only.
 - **`notifications`** — messages to a user; `read_at` marks them read.
 - **`audit_logs`** — who changed what (old/new JSON values and a reason). Append-only.
-  Later phases write to it; it has no UI yet.
+  Capacity edits, window transitions, `ALLOCATION_RUN` and `ALLOCATION_VERIFY`
+  are recorded here; it has no UI yet.
 
 ## How the database prevents overbooking and duplicates
 

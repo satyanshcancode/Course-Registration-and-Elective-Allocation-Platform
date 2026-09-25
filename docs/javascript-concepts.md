@@ -278,6 +278,67 @@ would defeat the whole mechanism. `crypto.randomUUID()` is the platform's own
 v4 generator (secure context only, which `localhost` and HTTPS both are); no
 library is needed. See [CONCURRENCY.md](CONCURRENCY.md).
 
+## Classes, prototypes and the strategy pattern — allocation
+
+[`backend/src/allocation/`](../backend/src/allocation/): `types.ts` declares
+the interface, `fcfsStrategy.ts` and `preferencePriorityStrategy.ts` implement
+it, `index.ts` chooses between them.
+
+**One interface, two classes.**
+
+```ts
+export interface AllocationStrategy {
+  readonly method: AllocationMethod;
+  readonly algorithmVersion: string;
+  allocate(input: AllocationInput): AllocationOutput;
+}
+```
+
+The caller never asks which method it has:
+
+```ts
+const strategy = strategyFor(window.policy.method);
+const output = runStrategy(strategy, input);
+```
+
+Adding a third method means writing one class and adding one `case`. The
+factory's `default` branch takes a `never`, so the build fails until that
+case exists — the same trick as the eligibility formatter.
+
+**Classes are prototypes at runtime.** `class FcfsStrategy { allocate() {} }`
+is, underneath, a constructor function whose `prototype` object holds
+`allocate`. Every instance gets a hidden link to that one object, so a
+thousand strategy instances share a single `allocate` function rather than
+carrying a copy each, and a method call walks the prototype chain to find it:
+
+```ts
+const one = strategyFor('FCFS');
+const two = strategyFor('FCFS');
+one !== two; // different objects
+Object.getPrototypeOf(one) === Object.getPrototypeOf(two); // same prototype
+Object.hasOwn(one, 'allocate'); // false — it lives on the prototype
+```
+
+That is asserted in `allocation.test.ts`, because it is the reason the
+pattern is cheap: the interface costs an object per strategy, not per call.
+
+**Pure functions, and why it matters here.** The whole engine is a pure
+function of its input — no database, no clock, no `Math.random`:
+
+- the same input and seed always produce the same output, which is what
+  makes `POST /allocation-runs/:id/verify` mean something;
+- a test is an object in and an object out, so 5,000 students over 50 courses
+  is checked in milliseconds with no server;
+- the property-based tests can generate thousands of random universes and
+  assert the rules hold in all of them.
+
+The two things a pure function cannot do are done by its caller. `runStrategy`
+times the call with `performance.now()` and adds `runtimeMs`; the service owns
+the transaction and the clock. Randomness is passed in as a **seed**, not
+taken from the environment, and `tieBreaksFor` draws one number per student
+from it — once, not per comparison, because a fresh draw each time would make
+the ordering non-transitive and the run unrepeatable.
+
 # TypeScript highlights
 
 Where the syllabus's TypeScript topics do real work in this app.

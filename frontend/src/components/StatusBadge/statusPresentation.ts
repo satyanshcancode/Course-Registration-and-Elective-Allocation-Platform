@@ -96,6 +96,7 @@ export const STATUS_PRESENTATION: {
     SUBMITTED: { tone: 'info', icon: Send, label: 'Submitted' },
     ENROLLED: { tone: 'success', icon: CircleCheck, label: 'Enrolled' },
     WAITLISTED: { tone: 'warning', icon: Hourglass, label: 'Waitlisted' },
+    NOT_ALLOCATED: { tone: 'neutral', icon: CircleX, label: 'Not allocated' },
   },
 };
 

@@ -48,6 +48,8 @@ interface CatalogueServiceDependencies {
 interface StudentContext {
   facts: EligibilityStudent;
   statuses: Map<string, CourseStatusRecord[]>;
+  /** The window's allocation has already run, so results are final. */
+  allocated: boolean;
 }
 
 const NO_WINDOW_MESSAGE = 'There is no registration window yet.';
@@ -61,6 +63,7 @@ export function createCatalogueService({
   async function loadStudentContext(
     viewer: AuthContext,
     windowId: string,
+    allocated: boolean,
   ): Promise<StudentContext | null> {
     if (viewer.role !== 'STUDENT') {
       return null;
@@ -73,7 +76,7 @@ export function createCatalogueService({
     if (!facts) {
       throw AppError.notFound('Student profile not found.');
     }
-    return { facts, statuses: groupStatusesByCourse(statuses) };
+    return { facts, statuses: groupStatusesByCourse(statuses), allocated };
   }
 
   function personalise(
@@ -85,7 +88,7 @@ export function createCatalogueService({
     }
     return {
       eligibility: evaluateEligibility(context.facts, toEligibilityCourse(offering)),
-      myStatus: resolveMyStatus(context.statuses.get(offering.courseId) ?? []),
+      myStatus: resolveMyStatus(context.statuses.get(offering.courseId) ?? [], context.allocated),
     };
   }
 
@@ -145,7 +148,7 @@ export function createCatalogueService({
       // offerings in one, the student's facts in one, their statuses in one.
       const [offerings, context] = await Promise.all([
         catalogue.listOfferings(window.id),
-        loadStudentContext(viewer, window.id),
+        loadStudentContext(viewer, window.id, window.summary.status === 'ALLOCATED'),
       ]);
       const matching = offerings
         .map((offering) => toCatalogueCourse(offering, context))
@@ -165,7 +168,7 @@ export function createCatalogueService({
       const window = await requireWindow();
       const [offerings, context] = await Promise.all([
         catalogue.listOfferings(window.id, code),
-        loadStudentContext(viewer, window.id),
+        loadStudentContext(viewer, window.id, window.summary.status === 'ALLOCATED'),
       ]);
       const offering = offerings[0];
       if (!offering) {
