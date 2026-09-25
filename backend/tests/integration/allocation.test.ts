@@ -104,9 +104,13 @@ async function buildAllocationWorld(
 
 const adminCookie = (admin: string) => sessionFor(admin, 'ADMIN');
 
-function runAllocation(admin: string, body: unknown = { confirm: true }) {
+function runAllocation(admin: string, body: object = { confirm: true }) {
   return request(app()).post(RUN_PATH).set('Cookie', adminCookie(admin)).send(body);
 }
+
+/** The failure message; supertest types the body as `any`. */
+const messageOf = (response: request.Response) =>
+  (response.body as { message?: string }).message ?? '';
 
 async function counts(windowId: string) {
   const pool = getTestPool();
@@ -182,8 +186,7 @@ describe('POST /api/admin/allocation/preview', () => {
 describe('POST /api/admin/allocation/run', () => {
   it('refuses unless the window is closed', async () => {
     const { admin } = await buildAllocationWorld();
-    const response = await runAllocation(admin).expect(409);
-    expect(response.body).toMatchObject({ message: expect.stringContaining('OPEN') });
+    expect(messageOf(await runAllocation(admin).expect(409))).toContain('OPEN');
   });
 
   it('refuses without an explicit confirmation', async () => {
@@ -244,8 +247,7 @@ describe('POST /api/admin/allocation/run', () => {
     await setWindowStatus(getTestPool(), windowId, 'CLOSED');
     await runAllocation(admin).expect(200);
 
-    const again = await runAllocation(admin).expect(409);
-    expect(again.body).toMatchObject({ message: expect.stringContaining('already') });
+    expect(messageOf(await runAllocation(admin).expect(409))).toContain('already');
   });
 
   it('rolls everything back and records the run as FAILED when it breaks', async () => {
