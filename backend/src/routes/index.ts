@@ -7,6 +7,7 @@ import { createEligibilityController } from '../controllers/eligibilityControlle
 import { createAllocationController } from '../controllers/allocationController.js';
 import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
+import { createWaitlistController } from '../controllers/waitlistController.js';
 import {
   createLoginRateLimiter,
   createSubmitRateLimiter,
@@ -23,6 +24,7 @@ import type { HealthService } from '../services/healthService.js';
 import type { RegistrationWindowService } from '../services/registrationWindowService.js';
 import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
+import type { WaitlistService } from '../services/waitlistService.js';
 import { createAdminRouter } from './adminRoutes.js';
 import { createAdminAllocationRouter, createAllocationRouter } from './allocationRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
@@ -32,6 +34,7 @@ import { createEligibilityRouter } from './eligibilityRoutes.js';
 import { createHealthRouter } from './healthRoutes.js';
 import { createRegistrationWindowRouter } from './registrationWindowRoutes.js';
 import { createStudentRouter } from './studentRoutes.js';
+import { createAdminWaitlistRouter } from './waitlistRoutes.js';
 
 /** Services the HTTP layer depends on; built once in container.ts (or a test). */
 export interface ApiServices {
@@ -45,6 +48,7 @@ export interface ApiServices {
   adminCourseService: AdminCourseService;
   registrationWindowService: RegistrationWindowService;
   allocationService: AllocationService;
+  waitlistService: WaitlistService;
 }
 
 export interface ApiRouterOptions {
@@ -66,9 +70,14 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
       { requireAuth, loginRateLimiter: createLoginRateLimiter(options.loginRateLimit) },
     ),
   );
+  const waitlistController = createWaitlistController(services.waitlistService);
   router.use(
     '/students',
-    createStudentRouter(createStudentController(services.studentService), requireAuth),
+    createStudentRouter(
+      createStudentController(services.studentService),
+      waitlistController,
+      requireAuth,
+    ),
   );
   const courseController = createCourseController(services.catalogueService);
   router.use(
@@ -96,6 +105,7 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
   const allocationController = createAllocationController(services.allocationService);
   router.use('/allocation', createAllocationRouter(allocationController, requireAuth));
   router.use('/admin', createAdminAllocationRouter(allocationController, requireAuth));
+  router.use('/admin', createAdminWaitlistRouter(waitlistController, requireAuth));
   router.use(
     '/admin',
     createAdminRouter(

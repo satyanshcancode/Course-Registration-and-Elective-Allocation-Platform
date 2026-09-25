@@ -32,8 +32,19 @@ export type EnrollmentStatus = (typeof ENROLLMENT_STATUSES)[number];
 export const ENROLLMENT_SOURCES = ['ALLOCATION', 'WAITLIST_PROMOTION', 'ADD'] as const;
 export type EnrollmentSource = (typeof ENROLLMENT_SOURCES)[number];
 
+/** Why an ACTIVE seat was released. Mirrors enrollments_drop_reason_check. */
+export const ENROLLMENT_DROP_REASONS = ['UPGRADED', 'ADMIN_WITHDRAWAL', 'STUDENT_DROP'] as const;
+export type EnrollmentDropReason = (typeof ENROLLMENT_DROP_REASONS)[number];
+
 export const WAITLIST_STATUSES = ['WAITING', 'PROMOTED', 'REMOVED'] as const;
 export type WaitlistStatus = (typeof WAITLIST_STATUSES)[number];
+
+/**
+ * Why a waiting entry ended without a promotion: the student no longer met the
+ * course's requirements, or they were promoted somewhere they ranked higher.
+ */
+export const WAITLIST_REMOVAL_REASONS = ['INELIGIBLE', 'RANKED_BELOW_SEAT'] as const;
+export type WaitlistRemovalReason = (typeof WAITLIST_REMOVAL_REASONS)[number];
 
 export const ALLOCATION_RUN_STATUSES = ['RUNNING', 'COMPLETED', 'FAILED'] as const;
 export type AllocationRunStatus = (typeof ALLOCATION_RUN_STATUSES)[number];

@@ -40,9 +40,13 @@ export function createAdminController({
     async updateCapacity(req, res) {
       const code = parseInput(courseCodeSchema, req.params.code);
       const change = parseInput(updateCapacitySchema, req.body);
-      const updated = await adminCourseService.updateCapacity(getAuth(req).userId, code, change);
-      sendSuccess(res, updated, {
-        message: `${updated.code} capacity is now ${updated.capacity}.`,
+      const result = await adminCourseService.updateCapacity(getAuth(req).userId, code, change);
+      const promoted = result.promotions?.promoted.length ?? 0;
+      sendSuccess(res, result, {
+        message:
+          promoted === 0
+            ? `${result.offering.code} capacity is now ${result.offering.capacity}.`
+            : `${result.offering.code} capacity is now ${result.offering.capacity}. ${promoted} ${promoted === 1 ? 'student was' : 'students were'} promoted from the waitlist.`,
       });
     },
 

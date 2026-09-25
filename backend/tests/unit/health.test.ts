@@ -43,6 +43,12 @@ function buildApp(repository: HealthRepository) {
       submitService: { submit: notUsed, getStatus: notUsed },
       eligibilityService: { getOverview: notUsed, getCourse: notUsed },
       adminCourseService: { listOfferings: notUsed, updateCapacity: notUsed },
+      waitlistService: {
+        getStudentWaitlist: notUsed,
+        getAdminView: notUsed,
+        withdraw: notUsed,
+        processAll: notUsed,
+      },
       registrationWindowService: {
         getDetail: notUsed,
         updateWindow: notUsed,

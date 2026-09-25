@@ -1,7 +1,9 @@
 import type {
   AdminCourseList,
   AdminCourseOffering,
+  PromotionSummary,
   UpdateCapacityRequest,
+  UpdateCapacityResult,
 } from '@course-reg/shared';
 import type { PoolClient } from 'pg';
 import { isConstraintViolation, PG_ERROR } from '../database/pgErrors.js';
@@ -13,6 +15,7 @@ import type { RegistrationWindowRepository } from '../repositories/registrationW
 import type { OfferingRecord } from '../types/catalogue.js';
 import { AppError } from '../utils/appError.js';
 import { demandRatio } from './catalogueRules.js';
+import type { WaitlistPromotionService } from './waitlistPromotionService.js';
 
 export interface AdminCourseService {
   listOfferings(): Promise<AdminCourseList>;
@@ -20,7 +23,7 @@ export interface AdminCourseService {
     actorUserId: string,
     courseCode: string,
     change: UpdateCapacityRequest,
-  ): Promise<AdminCourseOffering>;
+  ): Promise<UpdateCapacityResult>;
 }
 
 interface AdminCourseServiceDependencies {
@@ -30,6 +33,7 @@ interface AdminCourseServiceDependencies {
   /** Repositories bound to the transaction's client. */
   offeringsFor: (client: PoolClient) => OfferingRepository;
   auditLogsFor: (client: PoolClient) => AuditLogRepository;
+  promotions: WaitlistPromotionService;
 }
 
 export const CAPACITY_CHANGED_ACTION = 'COURSE_CAPACITY_CHANGED';
@@ -64,6 +68,7 @@ export function createAdminCourseService({
   catalogue,
   offeringsFor,
   auditLogsFor,
+  promotions,
 }: AdminCourseServiceDependencies): AdminCourseService {
   return {
     async listOfferings() {
@@ -81,6 +86,7 @@ export function createAdminCourseService({
         throw AppError.notFound('There is no registration window yet.');
       }
 
+      let promoted: PromotionSummary | null = null;
       try {
         await withTransaction(pool, async (client) => {
           const offering = await offeringsFor(client).lockByCode(window.id, courseCode);
@@ -95,6 +101,18 @@ export function createAdminCourseService({
             throw AppError.badRequest(message, [{ field: 'capacity', message }]);
           }
           await offeringsFor(client).updateCapacity(window.id, offering.courseId, capacity);
+
+          // Extra seats after allocation are not left empty while people are
+          // waiting for them. Same transaction: the seats and whoever takes
+          // them commit together.
+          if (window.summary.status === 'ALLOCATED' && capacity > offering.capacity) {
+            promoted = await promotions.processFreedSeats(client, {
+              windowId: window.id,
+              courseIds: [offering.courseId],
+              actorUserId,
+            });
+          }
+
           await auditLogsFor(client).record({
             actorUserId,
             action: CAPACITY_CHANGED_ACTION,
@@ -124,7 +142,7 @@ export function createAdminCourseService({
       if (!updated) {
         throw AppError.notFound(`No course with code ${courseCode} is offered in this window.`);
       }
-      return toAdminOffering(updated);
+      return { offering: toAdminOffering(updated), promotions: promoted };
     },
   };
 }

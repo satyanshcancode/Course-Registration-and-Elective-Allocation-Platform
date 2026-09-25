@@ -56,7 +56,18 @@ export type AllocationExplanation =
       grantedRank: PreferenceRank;
     } & AllocationFacts)
   | ({ type: 'NOT_ALLOCATED_FULL' } & AllocationFacts)
-  | ({ type: 'NOT_ALLOCATED_INELIGIBLE' } & AllocationFacts);
+  | ({ type: 'NOT_ALLOCATED_INELIGIBLE' } & AllocationFacts)
+  | ({
+      /** Moved off the waitlist after the run, when a seat freed up. */
+      type: 'PROMOTED';
+      /** The lower-ranked seat released to take this one, if there was one. */
+      fromCourse: CourseRef | null;
+      fromRank: PreferenceRank | null;
+    } & AllocationFacts)
+  | ({
+      /** The seat was held and then released by an administrator. */
+      type: 'SEAT_WITHDRAWN';
+    } & AllocationFacts);
 
 export type AllocationExplanationType = AllocationExplanation['type'];
 
@@ -67,6 +78,8 @@ export const ALLOCATION_EXPLANATION_TYPES = [
   'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED',
   'NOT_ALLOCATED_FULL',
   'NOT_ALLOCATED_INELIGIBLE',
+  'PROMOTED',
+  'SEAT_WITHDRAWN',
 ] as const satisfies readonly AllocationExplanationType[];
 
 /** How one course fared in a run. */
