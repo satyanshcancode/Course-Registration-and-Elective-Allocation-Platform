@@ -207,6 +207,29 @@
   whose `default` branch takes a `never`. They carry the student's own
   standing only — never another student's identity or data.
 
+## Waitlist promotion conventions (Phase 9)
+
+- **Every path that frees a seat calls `waitlistPromotionService.processFreedSeats`**
+  — the capacity endpoint, the admin withdrawal, the sweep, and the student
+  drop when it arrives. It runs on the CALLER's client, inside the caller's
+  transaction, so an action and the promotions it caused commit together.
+- Promotion is serialised per window by `pg_advisory_xact_lock(hashtext(window_id))`,
+  taken first. Not row locks: a cascade discovers its courses as it goes, so
+  two cascades would take them in opposite orders and deadlock. The reasoning
+  is in `docs/CONCURRENCY.md`.
+- A promotion is only ever an **upgrade**. Releasing the lower-ranked seat
+  frees it in turn, which is the cascade; it terminates because every step
+  strictly improves one student's rank.
+- **Waitlist positions are never renumbered.** `position` is written once by
+  the allocation run; what a student sees is `rank() OVER (PARTITION BY
+course_id ORDER BY position)` over the entries still `WAITING`.
+- `allocation_results` rows are never rewritten — they are the evidence a run
+  is reproducible. What the student is shown is that stored explanation
+  brought up to date by the pure `allocationResultsOverlay.ts`.
+- Waitlist wording lives in exactly one place
+  (`frontend/src/utils/waitlistText.ts`), whose `default` branches take a
+  `never`.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one

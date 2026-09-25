@@ -1,9 +1,10 @@
-# Concurrency: the atomic submit
+# Concurrency: the atomic submit, and the atomic promotion
 
 When registration opens, a few hundred students press **Submit** inside the
-same minute, several of them twice because the first click seemed slow. This
-document explains exactly what the server guarantees then, how each guarantee
-is enforced, and how to demonstrate it.
+same minute, several of them twice because the first click seemed slow. Months
+later, seats free up and the waitlists behind them move on their own, sometimes
+several at once. This document explains exactly what the server guarantees in
+both cases, how each guarantee is enforced, and how to demonstrate it.
 
 ## What submitting is — and is not
 
@@ -108,6 +109,61 @@ Application code can be wrong; the schema should still hold.
   can quietly rewrite a submission afterwards.
 - Migration 0008 freezes the window's policy and its set of offered courses
   once it leaves `DRAFT`.
+
+## Waitlist promotion: one window at a time
+
+Submitting does not take a seat. Promotion does, and it takes them in a
+cascade: releasing a lower-ranked seat frees that seat for someone else, so a
+single withdrawal can touch several courses. Two of those running at once is
+the interesting case.
+
+**The lock is `pg_advisory_xact_lock(hashtext(window_id))`**, taken as the
+first thing `processFreedSeats` does.
+
+### Why an advisory lock, and not a row lock
+
+The obvious alternative is to lock the offering rows. It does not work here,
+because a cascade does not know in advance which courses it will touch — it
+learns that as it goes, from whichever student happens to be next in line. Two
+cascades that discover their courses in opposite orders take those row locks in
+opposite orders, which is a textbook deadlock. PostgreSQL would detect it and
+kill one transaction, turning a correct withdrawal into a 500 for reasons the
+administrator could not act on.
+
+Serialising promotion per window removes the ordering problem instead of
+gambling on it. Promotions are rare and short — the demo window's largest
+cascade is two steps — so the contention this creates costs nothing, while the
+alternative is a class of failure that only appears under load.
+
+### Why transaction-scoped
+
+`pg_advisory_xact_lock` is released by COMMIT or ROLLBACK, automatically. A
+session-scoped lock (`pg_advisory_lock`) would have to be released by hand, and
+a connection returned to the pool still holding one would wedge every later
+promotion in that window — including the retry.
+
+`hashtext` is what turns the window's UUID into the `bigint` the advisory lock
+functions take. Two different windows could in principle hash to the same key;
+the only consequence is that one waits for the other, which is the behaviour
+being asked for anyway.
+
+### The offering row is still locked
+
+Inside the advisory lock, each course is read `FOR UPDATE` before its free
+seats are counted, so the count cannot be stale by the time the seat is given
+out. And the trigger on `enrollments` remains the final guard: its CHECK on
+`allocated_count` rejects any statement that would overbook, however the code
+got there.
+
+### What the tests prove
+
+`tests/integration/waitlistConcurrency.test.ts`:
+
+- **20 simultaneous withdrawals from one course** — all 20 succeed, 20 students
+  are promoted, the course ends exactly full, and no student holds two seats.
+- **Two withdrawals on different courses with overlapping cascades** — neither
+  deadlocks, neither overbooks, and nobody is promoted twice.
+- **A sweep racing a withdrawal** — both return 200.
 
 ## The pool deadlock this caught
 
