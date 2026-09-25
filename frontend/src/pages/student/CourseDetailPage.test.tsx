@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as courseApi from '../../api/courseApi';
 import { expectNoA11yViolations } from '../../test/axe';
@@ -50,7 +50,11 @@ describe('CourseDetailPage', () => {
       await screen.findByRole('heading', { level: 1, name: 'Artificial Intelligence' }),
     ).toBeInTheDocument();
     expect(api.getCourse).toHaveBeenCalledWith('CS401', expect.any(AbortSignal));
-    expect(document.title).toBe('CS401 Artificial Intelligence · Course Registration');
+    // The title is set by an effect, which React may flush after the heading
+    // renders; asserting it directly is a race under a loaded test run.
+    await waitFor(() => {
+      expect(document.title).toBe('CS401 Artificial Intelligence · Course Registration');
+    });
 
     const article = screen.getByRole('article', { name: 'CS401 Artificial Intelligence' });
     expect(within(article).getByRole('heading', { name: 'About this course' })).toBeVisible();
