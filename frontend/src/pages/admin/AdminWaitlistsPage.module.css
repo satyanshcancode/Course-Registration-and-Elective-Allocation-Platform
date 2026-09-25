@@ -1,0 +1,59 @@
+/*
+ * One course at a time: the picker, the course's seats, then the two lists
+ * that explain each other — who holds a seat, and who is next for one.
+ */
+.body {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+}
+
+.notice {
+  max-width: 68ch;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.course {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--layout-narrow);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.courseTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.statusCell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.reason {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.picker {
+  max-width: 28rem;
+}

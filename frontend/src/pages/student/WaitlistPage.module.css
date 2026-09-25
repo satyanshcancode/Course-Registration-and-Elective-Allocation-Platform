@@ -1,0 +1,103 @@
+/*
+ * A queue reads like a posted list: the place in line first, then the numbers
+ * that explain it. Same card as the results page, one section per state.
+ */
+.body {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.heading {
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-md);
+}
+
+.lead {
+  max-width: 68ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.card[data-ended='true'] {
+  border-left-color: var(--color-rule-strong);
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.queue {
+  max-width: 60ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+@media (width < 40rem) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: start;
+  }
+}

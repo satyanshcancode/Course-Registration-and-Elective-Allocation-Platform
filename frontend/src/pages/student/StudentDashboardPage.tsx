@@ -300,7 +300,10 @@ function ResultSummary({ results }: { results: StudentAllocationResults }) {
       </p>
       <p className={dashboard.muted}>
         {results.allocated
-          ? `Your choice ${results.allocated.preferenceRank}.`
+          ? `Your choice ${results.allocated.preferenceRank}.${
+              // A seat can arrive after the run, off the waitlist.
+              results.allocated.type === 'PROMOTED' ? ' Promoted from the waitlist.' : ''
+            }`
           : 'You are on the waitlist for the courses you ranked.'}
       </p>
       <Link to="/student/results" className={dashboard.link}>
