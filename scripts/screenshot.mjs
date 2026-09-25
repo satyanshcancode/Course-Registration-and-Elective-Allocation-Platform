@@ -44,6 +44,55 @@ const ACCOUNTS = {
 
 /** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
 const SHOTS = [
+  // Phase 8 — allocation.
+  {
+    name: 'student-results-1280-light',
+    as: 'allocated',
+    path: '/student/results',
+    w: 1280,
+    h: 1000,
+  },
+  {
+    name: 'student-results-820-dark',
+    as: 'waitlisted',
+    path: '/student/results',
+    w: 820,
+    h: 1100,
+    dark: true,
+  },
+  { name: 'student-results-390-light', as: 'waitlisted', path: '/student/results', w: 390, h: 900 },
+  {
+    name: 'admin-allocation-runs-1280-light',
+    as: 'admin',
+    path: '/admin/allocation-runs',
+    w: 1280,
+    h: 1100,
+  },
+  {
+    name: 'admin-allocation-run-1280-dark',
+    as: 'admin',
+    path: 'RUN_DETAIL',
+    w: 1280,
+    h: 1200,
+    dark: true,
+  },
+  { name: 'admin-allocation-run-390-light', as: 'admin', path: 'RUN_DETAIL', w: 390, h: 900 },
+  {
+    name: 'admin-dashboard-allocation-1280-light',
+    as: 'admin',
+    path: '/admin/dashboard',
+    w: 1280,
+    h: 900,
+  },
+  {
+    name: 'student-dashboard-result-820-light',
+    as: 'allocated',
+    path: '/student/dashboard',
+    w: 820,
+    h: 1000,
+  },
+
+  // Phase 7 — the cart.
   { name: 'student-cart-1280-light', as: 'draft', path: '/student/cart', w: 1280, h: 900 },
   { name: 'student-cart-820-light', as: 'draft', path: '/student/cart', w: 820, h: 1000 },
   { name: 'student-cart-390-dark', as: 'draft', path: '/student/cart', w: 390, h: 844, dark: true },
@@ -133,12 +182,19 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * and skeleton placeholders to be gone.
  */
 async function waitForIdle(devtools, settleMs = 1200) {
+  // Every loading placeholder in this app is a Skeleton, and a Skeleton is
+  // the only thing that runs the `pulse` animation — so "no pulse" is a
+  // reliable "finished", whatever the page's own class names happen to be.
+  // CSS Modules hashes keyframe names too, so match on a substring rather
+  // than on `pulse` exactly.
   const ready = `(() => {
     const main = document.querySelector('main');
     if (!main || !main.querySelector('h1')) return false;
     if (main.textContent.includes('Loading page')) return false;
-    if (main.querySelector('[aria-busy="true"], [aria-hidden="true"] [class*="skeleton" i]')) return false;
-    return true;
+    if (main.querySelector('[aria-busy="true"]')) return false;
+    return ![...main.querySelectorAll('*')].some(
+      (el) => getComputedStyle(el).animationName.includes('pulse'),
+    );
   })()`;
   for (let attempt = 0; attempt < 80; attempt += 1) {
     const { result } = await devtools.send('Runtime.evaluate', {
@@ -183,16 +239,43 @@ async function main() {
       WHERE ps.status = 'DRAFT' AND EXISTS (SELECT 1 FROM preference_items pi WHERE pi.submission_id = ps.id)
       ORDER BY ps.created_at DESC LIMIT 1`,
   );
+  // One student who got a seat, and one who is waiting well down a queue:
+  // the two shapes the results page has to handle.
+  const allocated = await database.query(
+    `SELECT student_id AS id FROM enrollments WHERE status = 'ACTIVE' ORDER BY enrolled_at LIMIT 1`,
+  );
+  const waitlisted = await database.query(
+    `SELECT student_id AS id FROM waitlist_entries
+      WHERE status = 'WAITING' AND position BETWEEN 5 AND 12 ORDER BY position LIMIT 1`,
+  );
+  const latestRun = await database.query(
+    `SELECT id FROM allocation_runs WHERE status = 'COMPLETED' ORDER BY finished_at DESC LIMIT 1`,
+  );
   await database.end();
 
+  const runId = latestRun.rows[0]?.id;
+  const pathFor = (shot) => {
+    if (shot.path !== 'RUN_DETAIL') {
+      return shot.path;
+    }
+    if (!runId) {
+      throw new Error('No completed allocation run; run `demo:reset --stage=allocated` first.');
+    }
+    return `/admin/allocation-runs/${runId}`;
+  };
+
+  const generated = { draft, allocated, waitlisted };
+
   const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
+  /**
+   * Null when this demo stage has nobody in that situation — an allocated
+   * database has no editable cart, for instance. Those shots are skipped with
+   * a note rather than failing the whole run.
+   */
   const sessionFor = (as) => {
-    if (as === 'draft') {
-      const id = draft.rows[0]?.id;
-      if (!id) {
-        throw new Error('No student has a draft cart; save one first.');
-      }
-      return jwt.sign({ role: 'STUDENT' }, secret, { subject: id, expiresIn: '1h' });
+    if (as in generated) {
+      const id = generated[as].rows[0]?.id;
+      return id ? jwt.sign({ role: 'STUDENT' }, secret, { subject: id, expiresIn: '1h' }) : null;
     }
     const account = ACCOUNTS[as];
     const id = idByEmail.get(account.email);
@@ -234,6 +317,12 @@ async function main() {
     }
 
     for (const shot of shots) {
+      const session = sessionFor(shot.as);
+      if (!session) {
+        process.stdout.write(`  (skipped ${shot.name}: no "${shot.as}" student in this stage)
+`);
+        continue;
+      }
       const target = await fetch(`http://127.0.0.1:${PORT}/json/new?about:blank`, {
         method: 'PUT',
       }).then((r) => r.json());
@@ -252,13 +341,13 @@ async function main() {
         });
         await devtools.send('Network.setCookie', {
           name: 'cr_session',
-          value: sessionFor(shot.as),
+          value: session,
           url: `${BASE_URL}/api`,
           path: '/api',
           httpOnly: true,
           sameSite: 'Strict',
         });
-        await devtools.send('Page.navigate', { url: `${BASE_URL}${shot.path}` });
+        await devtools.send('Page.navigate', { url: `${BASE_URL}${pathFor(shot)}` });
         await waitForIdle(devtools);
 
         const { data } = await devtools.send('Page.captureScreenshot', {
@@ -276,7 +365,15 @@ async function main() {
   } finally {
     browser.kill();
     await wait(500);
-    rmSync(profile, { recursive: true, force: true });
+    try {
+      rmSync(profile, { recursive: true, force: true });
+    } catch {
+      // Windows can still hold the profile's files for a moment after the
+      // browser exits. The screenshots are already written; a leftover temp
+      // directory is not worth failing the run for.
+      process.stdout.write(`  (left ${profile} behind; the OS was still holding it)
+`);
+    }
   }
 }
 

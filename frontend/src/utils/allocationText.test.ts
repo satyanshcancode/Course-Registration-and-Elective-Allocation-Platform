@@ -101,6 +101,15 @@ describe('every explanation type', () => {
     );
   });
 
+  it('never says a rank that reads as a contradiction against the seats', () => {
+    // 27th of 116 AND one of 20 seats is true but looks impossible: most
+    // higher-scoring applicants were given a course they ranked above this.
+    const sentences = explainResult(EXAMPLES.ALLOCATED).join(' ');
+    expect(sentences).not.toMatch(/\d+(st|nd|rd|th) of \d+/);
+    expect(sentences).toContain('113 students ranked CS401, for 20 seats.');
+    expect(sentences).toContain('One of them is yours.');
+  });
+
   it('claims no score for a method that does not score', () => {
     const fcfs: AllocationExplanation = { type: 'NOT_ALLOCATED_FULL', ...facts, score: null };
     expect(explainResult(fcfs).join(' ')).not.toContain('score for this course');

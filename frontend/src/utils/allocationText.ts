@@ -74,20 +74,24 @@ export function explainResult(explanation: AllocationExplanation): string[] {
     cutoffScore === null
       ? null
       : `${capacity} ${capacity === 1 ? 'seat' : 'seats'} went to applicants with scores of ${cutoffScore} or higher.`;
+  const competition = `${applicants} students ranked ${course.code}, for ${capacity} ${capacity === 1 ? 'seat' : 'seats'}.`;
 
+  // `finalRank` is a student's place among EVERYONE who ranked the course,
+  // including the many who were given something they ranked higher and so
+  // never competed for a seat here. Saying "you came 77th of 95, and one of
+  // the 25 seats is yours" is true and reads as a contradiction, so the
+  // student-facing sentences use the numbers that mean what they sound like:
+  // how many wanted it, how many seats there were, the cut-off, and the
+  // queue position.
   switch (explanation.type) {
     case 'ALLOCATED':
-      return [
-        ranked,
-        ...(scored ? [scored] : []),
-        `You came ${ordinal(explanation.finalRank)} of ${applicants} for ${course.code}, and one of the ${capacity} seats is yours.`,
-      ];
+      return [ranked, ...(scored ? [scored] : []), competition, 'One of them is yours.'];
 
     case 'WAITLISTED':
       return [
         ranked,
         ...(scored ? [scored] : []),
-        ...(cutoff ? [cutoff] : [`All ${capacity} seats were taken.`]),
+        ...(cutoff ? [cutoff] : [`Every seat was taken.`]),
         `You are ${ordinal(explanation.waitlistPosition)} in the queue and move up automatically if a seat opens.`,
       ];
 
@@ -102,8 +106,8 @@ export function explainResult(explanation: AllocationExplanation): string[] {
       return [
         ranked,
         ...(scored ? [scored] : []),
-        ...(cutoff ? [cutoff] : [`All ${capacity} seats were taken.`]),
-        `You came ${ordinal(explanation.finalRank)} of ${applicants}.`,
+        competition,
+        ...(cutoff ? [cutoff] : [`Every seat was taken.`]),
       ];
 
     case 'NOT_ALLOCATED_INELIGIBLE':
