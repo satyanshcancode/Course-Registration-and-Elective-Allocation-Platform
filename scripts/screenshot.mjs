@@ -44,6 +44,38 @@ const ACCOUNTS = {
 
 /** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
 const SHOTS = [
+  // Phase 9 — waitlists.
+  {
+    name: 'student-waitlist-1280-light',
+    as: 'waitlisted',
+    path: '/student/waitlist',
+    w: 1280,
+    h: 1000,
+  },
+  {
+    name: 'student-waitlist-390-dark',
+    as: 'waitlisted',
+    path: '/student/waitlist',
+    w: 390,
+    h: 900,
+    dark: true,
+  },
+  {
+    name: 'admin-waitlists-1280-light',
+    as: 'admin',
+    path: '/admin/waitlists?course=CS401',
+    w: 1280,
+    h: 1200,
+  },
+  {
+    name: 'admin-waitlists-390-dark',
+    as: 'admin',
+    path: '/admin/waitlists?course=CS401',
+    w: 390,
+    h: 1100,
+    dark: true,
+  },
+
   // Phase 8 — allocation.
   {
     name: 'student-results-1280-light',

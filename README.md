@@ -239,6 +239,24 @@ on `/student`, administrators on `/admin`.
 | `POST /api/admin/registration-window/open`        | admin   | `DRAFT → OPEN`. Freezes the policy and notifies every student                                |
 | `POST /api/admin/registration-window/close`       | admin   | `OPEN → CLOSED`                                                                              |
 
+### The cart, allocation and waitlists
+
+| Endpoint                                     | Who     | What                                                                         |
+| -------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `GET /api/preferences`                       | student | The caller's own cart                                                        |
+| `PUT /api/preferences`                       | student | Saves the draft cart in rank order                                           |
+| `POST /api/registration/submit`              | student | One atomic submit; needs an idempotency key; rate limited                    |
+| `GET /api/registration/status`               | student | Whether they have submitted, and their reference                             |
+| `POST /api/admin/allocation/preview`         | admin   | Both methods on a fresh snapshot. Writes nothing                             |
+| `POST /api/admin/allocation/run`             | admin   | `CLOSED → ALLOCATED`. Once per window; needs `{ confirm: true }`             |
+| `GET /api/admin/allocation-runs[/:id]`       | admin   | Past runs, with metrics and the per-course table                             |
+| `POST /api/admin/allocation-runs/:id/verify` | admin   | Re-runs the stored snapshot and compares hashes                              |
+| `GET /api/allocation/results`                | student | The caller's own outcome and the reasoning behind it                         |
+| `GET /api/students/me/waitlist`              | student | The caller's own queues, with live positions                                 |
+| `GET /api/admin/waitlists?course=CODE`       | admin   | One course's roster and queue                                                |
+| `POST /api/admin/enrollments/:id/withdraw`   | admin   | `{ reason }`; releases a seat and promotes whoever is next, cascade included |
+| `POST /api/admin/waitlists/process`          | admin   | The safety sweep: offers every free seat in the window to its waitlist       |
+
 `JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
 The server refuses to start in production with the example value.
 

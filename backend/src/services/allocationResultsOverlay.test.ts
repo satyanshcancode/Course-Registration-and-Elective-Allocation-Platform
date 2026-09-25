@@ -40,6 +40,31 @@ const asAllocated: StudentAllocationResult[] = [
 const nothing: LiveStanding = { held: null, entries: new Map() };
 
 describe('applyLiveStanding', () => {
+  it('re-points a lower course at the seat the student holds NOW', () => {
+    // The run gave them CS402 and ruled CS403 out by naming it. A promotion
+    // to AI401 since then makes that sentence wrong.
+    const withLower: StudentAllocationResult[] = [
+      ...asAllocated,
+      result({
+        ...facts({ code: 'CS403', name: 'Distributed Systems' }, 3),
+        type: 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED',
+        grantedCourse: CS,
+        grantedRank: 2,
+      }),
+    ];
+
+    const [, , lower] = applyLiveStanding(withLower, {
+      held: { ...AI, rank: 1, source: 'WAITLIST_PROMOTION' },
+      entries: new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]),
+    });
+
+    expect(lower?.explanation).toMatchObject({
+      type: 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED',
+      grantedCourse: AI,
+      grantedRank: 1,
+    });
+  });
+
   it('leaves an untouched result exactly as the run recorded it', () => {
     const live: LiveStanding = {
       held: { ...CS, rank: 2, source: 'ALLOCATION' },

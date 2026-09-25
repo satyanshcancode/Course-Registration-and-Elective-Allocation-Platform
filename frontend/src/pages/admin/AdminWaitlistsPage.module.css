@@ -23,10 +23,10 @@
   line-height: var(--leading-body);
 }
 
+/* Full width, so the summary lines up with the two tables under it. */
 .course {
   display: grid;
   gap: var(--space-3);
-  max-width: var(--layout-narrow);
   padding: var(--space-4);
   border: var(--border-hairline);
   border-radius: var(--radius-md);
