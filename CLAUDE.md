@@ -2,14 +2,14 @@
 
 ## Before any task
 
-1. Read `docs/PROBLEM_STATEMENT.md` and `docs/SPEC.md` at the start of every task.
-2. **Scope** comes from `docs/PROBLEM_STATEMENT.md` (the 7 features listed in
+1. **Scope** comes from `docs/PROBLEM_STATEMENT.md` (the 7 features listed in
    SPEC "Scope"). Build only those unless the user explicitly asks for a
    stretch goal. SPEC.md "Stretch goals" (extra strategies, simulator,
    analytics, Redis, worker container, faculty role, cloud deploy, …) are
    **out of scope** by default.
-3. **Quality, architecture, naming, structure and syllabus rules** come from
-   `docs/SPEC.md`.
+2. **Quality, architecture, naming, structure and syllabus rules** come from
+   `docs/SPEC.md` — read the sections the task touches, not the whole file.
+3. See **Standard phase workflow** below for how a phase runs end to end.
 
 ## Architecture
 
@@ -242,16 +242,40 @@
   after `npm install`, approve it with `npm install-scripts approve esbuild`
   rather than changing any version.
 
-## Definition of done for every phase
+## Standard phase workflow
 
-You run these yourself and fix failures yourself before reporting:
+Applies to every phase unless a prompt says otherwise, so prompts can be short.
 
-1. `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` — all
-   pass with zero errors.
-2. `npm run format:check` passes.
-3. The Docker stack is verified running: `docker compose up --build -d`, all
-   containers healthy, `GET http://localhost:4000/api/health` and
-   `http://localhost:5173` respond.
+- **Context:** this file is read automatically. Open another doc
+  (`SPEC`, `DATABASE`, `DESIGN`, `CONCURRENCY`, `ALLOCATION`) only when the
+  task touches it, and read only the relevant sections.
+- **Before starting:** check `git status`. If the previous phase left
+  uncommitted or unfinished work, finish that first.
+- **Build in small steps** and commit after each logical step (conventional
+  commits), so an interruption loses nothing.
+- **Tests are the main verification:** unit + integration tests for every
+  business rule, RTL + axe for every new component or page.
+- **Browser verification:** ONE focused pass per phase, covering only the new
+  user flows, scripted headless where possible. Don't re-check what the tests
+  already prove.
+- **Screenshots:** only for NEW pages, at most 2 per page (1280px light and
+  390px dark), in `docs/screenshots/`. One design review against
+  `docs/DESIGN.md`; re-screenshot only the pages that changed. The full visual
+  review of every page happens once, in the final phase.
+- **Definition of done** — run these yourself and fix the failures yourself
+  before reporting:
+  1. `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` —
+     all pass with zero errors.
+  2. `npm run format:check` passes.
+  3. The Docker dev stack is healthy: `docker compose up --build -d`, all
+     containers healthy, `GET http://localhost:4000/api/health` and
+     `http://localhost:5173` respond.
+  4. The dev database is left in the demo state the prompt names (through
+     `npm run demo:reset -- --stage=<stage>` where it exists).
+- **Close any headless browsers** or scratch processes you start.
+- **Final report:** at most ~40 lines. What was built, the endpoints, test
+  counts, anything found and fixed, deviations with reasons, and the final
+  database state. No step-by-step narration, and don't repeat the prompt back.
 
 ## Git
 
