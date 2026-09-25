@@ -43,6 +43,7 @@ import type {
 } from '../repositories/registrationHistoryRepository.js';
 import type { RegistrationWindowRepository } from '../repositories/registrationWindowRepository.js';
 import { AppError } from '../utils/appError.js';
+import { logger } from '../utils/logger.js';
 import { injectFault } from '../utils/faultInjection.js';
 import { fromStoredInput, toEngineInput, toStoredInput } from './allocationSnapshot.js';
 
@@ -296,7 +297,6 @@ export function createAllocationService({
             runId,
             metrics: output.metrics,
             outputHash: hashOutput(output),
-            finishedAt: now(),
           });
           await windowsFor(client).setStatus(window.id, 'ALLOCATED');
         });
@@ -305,7 +305,15 @@ export function createAllocationService({
         // RUNNING row with it only if it was created inside it — it was not,
         // so it is still there and has to be marked FAILED.
         const message = error instanceof Error ? error.message : String(error);
-        await allocations.failRun(runId, message, now());
+        try {
+          await allocations.failRun(runId, message);
+        } catch (bookkeeping: unknown) {
+          // Recording the failure must never replace the failure itself.
+          logger.error('Could not mark the allocation run as failed', {
+            runId,
+            error: bookkeeping,
+          });
+        }
         throw error;
       }
 

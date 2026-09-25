@@ -93,7 +93,6 @@ export interface CompleteRunInput {
   runId: string;
   metrics: AllocationMetrics;
   outputHash: string;
-  finishedAt: Date;
 }
 
 export interface AllocationRepository {
@@ -113,7 +112,7 @@ export interface AllocationRepository {
   /** Written inside the transaction, once the snapshot has actually been read. */
   saveInputSnapshot(runId: string, snapshot: unknown): Promise<void>;
   completeRun(input: CompleteRunInput): Promise<void>;
-  failRun(runId: string, message: string, finishedAt: Date): Promise<void>;
+  failRun(runId: string, message: string): Promise<void>;
   /** True when this window already has a completed run. */
   hasCompletedRun(windowId: string): Promise<boolean>;
   /** `sentence` renders the human-readable line stored beside the JSON. */
@@ -364,21 +363,24 @@ export function createAllocationRepository(
       ]);
     },
 
-    async completeRun({ runId, metrics, outputHash, finishedAt }) {
+    // started_at comes from the database's clock, so finished_at must too:
+    // this host's clock runs behind the container's, and a JS Date here
+    // produced finished_at < started_at and tripped the CHECK.
+    async completeRun({ runId, metrics, outputHash }) {
       await pool.query(
         `UPDATE allocation_runs
-         SET status = 'COMPLETED', finished_at = $2, metrics = $3, output_hash = $4
+         SET status = 'COMPLETED', finished_at = now(), metrics = $2, output_hash = $3
          WHERE id = $1`,
-        [runId, finishedAt, metrics, outputHash],
+        [runId, metrics, outputHash],
       );
     },
 
-    async failRun(runId, message, finishedAt) {
+    async failRun(runId, message) {
       await pool.query(
         `UPDATE allocation_runs
-         SET status = 'FAILED', finished_at = $2, error_message = $3
+         SET status = 'FAILED', finished_at = now(), error_message = $2
          WHERE id = $1 AND status = 'RUNNING'`,
-        [runId, finishedAt, message.slice(0, 2000)],
+        [runId, message.slice(0, 2000)],
       );
     },
 
