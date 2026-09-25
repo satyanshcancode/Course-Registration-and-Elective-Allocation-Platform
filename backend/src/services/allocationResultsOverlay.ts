@@ -92,6 +92,17 @@ export function applyLiveStanding(
 
     const entry = live.entries.get(code);
     if (!entry) {
+      // No waitlist entry, so the run ruled this course out for them. If it
+      // did so by naming a better course they were given, and they have since
+      // moved to a different one, the sentence has to name the new one — they
+      // were never waiting here, so nothing else would have corrected it.
+      if (
+        result.explanation.type === 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED' &&
+        held &&
+        held.code !== result.explanation.grantedCourse.code
+      ) {
+        return { outcome: 'NOT_ALLOCATED', explanation: higherChoiceGranted(facts) };
+      }
       return result;
     }
     if (entry.status === 'WAITING') {
