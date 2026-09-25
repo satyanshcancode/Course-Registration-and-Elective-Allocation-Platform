@@ -1,5 +1,5 @@
 /** Admin course list and capacity editing, over HTTP against the test database. */
-import type { AdminCourseList, AdminCourseOffering } from '@course-reg/shared';
+import type { AdminCourseList, UpdateCapacityResult } from '@course-reg/shared';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
@@ -142,13 +142,17 @@ describe('PATCH /api/admin/courses/:code/capacity', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(dataOf(response) as AdminCourseOffering).toMatchObject({
-      code: 'CS401',
-      capacity: 12,
-      allocated: 3,
-      available: 9,
-      demandRatio: 0.5,
-      oversubscribed: false,
+    expect(dataOf(response) as UpdateCapacityResult).toMatchObject({
+      offering: {
+        code: 'CS401',
+        capacity: 12,
+        allocated: 3,
+        available: 9,
+        demandRatio: 0.5,
+        oversubscribed: false,
+      },
+      // Promotion belongs to an ALLOCATED window; this one is not there yet.
+      promotions: null,
     });
     expect((response.body as { message: string }).message).toBe('CS401 capacity is now 12.');
     expect(await capacityOf(windowId, ai)).toBe(12);
