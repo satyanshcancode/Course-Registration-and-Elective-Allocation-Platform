@@ -2,6 +2,7 @@ import {
   CAPACITY_LIMITS,
   CAPACITY_REASON_LENGTH,
   type AdminCourseOffering,
+  type UpdateCapacityResult,
 } from '@course-reg/shared';
 import { CircleAlert } from 'lucide-react';
 import { useId, useRef, useState, type SubmitEvent } from 'react';
@@ -24,7 +25,7 @@ export interface EditCapacityDialogProps {
   /** The offering being edited; null keeps the dialog closed. */
   offering: AdminCourseOffering | null;
   onClose: () => void;
-  onSaved: (updated: AdminCourseOffering) => void;
+  onSaved: (result: UpdateCapacityResult) => void;
 }
 
 /**
@@ -61,7 +62,7 @@ function CapacityForm({
 }: {
   offering: AdminCourseOffering;
   onCancel: () => void;
-  onSaved: (updated: AdminCourseOffering) => void;
+  onSaved: (result: UpdateCapacityResult) => void;
 }) {
   const formId = useId();
   const capacityRef = useRef<HTMLInputElement>(null);

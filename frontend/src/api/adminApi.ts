@@ -1,9 +1,9 @@
 import type {
   AdminCourseList,
-  AdminCourseOffering,
   AdminWindowDetail,
   ApiResponse,
   UpdateCapacityRequest,
+  UpdateCapacityResult,
   UpdateWindowRequest,
   WindowActionRequest,
 } from '@course-reg/shared';
@@ -16,8 +16,8 @@ export function getAdminCourses(signal?: AbortSignal): Promise<ApiResponse<Admin
 export function updateCapacity(
   code: string,
   change: UpdateCapacityRequest,
-): Promise<ApiResponse<AdminCourseOffering>> {
-  return apiClient.patch<AdminCourseOffering>(
+): Promise<ApiResponse<UpdateCapacityResult>> {
+  return apiClient.patch<UpdateCapacityResult>(
     `/admin/courses/${encodeURIComponent(code)}/capacity`,
     { body: change },
   );

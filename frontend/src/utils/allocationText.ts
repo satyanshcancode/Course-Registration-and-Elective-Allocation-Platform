@@ -52,6 +52,10 @@ export function describeOutcome(explanation: AllocationExplanation): string {
       return 'Allocated';
     case 'WAITLISTED':
       return `Waitlisted, #${explanation.waitlistPosition}`;
+    case 'PROMOTED':
+      return 'Promoted';
+    case 'SEAT_WITHDRAWN':
+      return 'Seat released';
     case 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED':
     case 'NOT_ALLOCATED_FULL':
     case 'NOT_ALLOCATED_INELIGIBLE':
@@ -114,6 +118,27 @@ export function explainResult(explanation: AllocationExplanation): string[] {
       return [
         ranked,
         'You no longer met this course’s requirements when allocation ran, so it could not be given to you.',
+      ];
+
+    case 'PROMOTED':
+      return [
+        ranked,
+        ...(scored ? [scored] : []),
+        'A seat opened up after allocation and you were next in line.',
+        ...(explanation.fromCourse
+          ? [
+              `You were moved from ${explanation.fromCourse.code} ${explanation.fromCourse.name}${
+                explanation.fromRank ? `, your ${ordinal(explanation.fromRank)} choice` : ''
+              }, and that seat was released to the next student waiting for it.`,
+            ]
+          : []),
+      ];
+
+    case 'SEAT_WITHDRAWN':
+      return [
+        ranked,
+        'You were given this seat, and an administrator has since released it.',
+        'Your notifications say why. If that looks wrong, speak to the registrar.',
       ];
 
     default:
