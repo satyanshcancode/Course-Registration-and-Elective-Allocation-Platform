@@ -1,5 +1,5 @@
 import { Ellipsis } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { Icon } from '../components/Icon';
 import styles from './MobileNav.module.css';
@@ -8,13 +8,14 @@ import type { NavItem } from './navigation';
 interface MobileNavProps {
   label: string;
   items: readonly NavItem[];
+  itemBadge?: (item: NavItem) => ReactNode;
 }
 
 /**
  * Phones only (hidden by CSS elsewhere): a fixed bottom bar with the main
  * destinations, and "More" opening the rest in a sheet above it.
  */
-export function MobileNav({ label, items }: MobileNavProps) {
+export function MobileNav({ label, items, itemBadge }: MobileNavProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetId = useId();
   const containerRef = useRef<HTMLElement>(null);
@@ -60,6 +61,7 @@ export function MobileNav({ label, items }: MobileNavProps) {
             <NavLink to={item.to} className={styles.sheetLink} onClick={close}>
               <Icon icon={item.icon} size={20} />
               <span>{item.label}</span>
+              {itemBadge?.(item) && <span className={styles.badge}>{itemBadge(item)}</span>}
             </NavLink>
           </li>
         ))}
@@ -69,7 +71,10 @@ export function MobileNav({ label, items }: MobileNavProps) {
           <li key={item.to}>
             <NavLink to={item.to} className={styles.barLink} onClick={close}>
               <Icon icon={item.icon} size={20} />
-              <span className={styles.barLabel}>{item.shortLabel ?? item.label}</span>
+              <span className={styles.barLabel}>
+                {item.shortLabel ?? item.label}
+                {itemBadge?.(item) && <span className={styles.badge}>{itemBadge(item)}</span>}
+              </span>
             </NavLink>
           </li>
         ))}

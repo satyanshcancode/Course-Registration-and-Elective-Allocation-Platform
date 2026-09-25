@@ -113,3 +113,9 @@
   color: var(--color-accent);
   font-weight: var(--weight-semibold);
 }
+
+.badge {
+  margin-left: var(--space-1);
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}

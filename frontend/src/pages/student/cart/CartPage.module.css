@@ -1,0 +1,378 @@
+/*
+ * The cart reads like a filled-in form on the registrar's desk: a numbered
+ * list on the left, the totals and the one irreversible button on the right.
+ */
+.body {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  align-items: start;
+  gap: var(--space-5);
+}
+
+.main {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.listHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+}
+
+.heading {
+  font-size: var(--text-md);
+}
+
+.count {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reordering announcements; empty until something moves. */
+.announcer {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  min-height: 1.25rem;
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The ranked list. The <ol> keeps its own numbering; .rank shows it. */
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+.item[data-dragging='true'] {
+  opacity: 0.5;
+}
+
+/* Where the dragged item would land. */
+.item[data-over='true'] {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 2px 0 0 var(--color-accent);
+}
+
+.item[data-problem='true'] {
+  border-color: var(--color-warning);
+  background-color: var(--color-warning-soft);
+}
+
+.rank {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.itemBody {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.itemName {
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+}
+
+.itemProblem {
+  display: flex;
+  align-items: start;
+  gap: var(--space-1);
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  line-height: var(--leading-dense);
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.grip {
+  display: inline-flex;
+  color: var(--color-rule-strong);
+  cursor: grab;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.iconButton:hover:not(:disabled) {
+  background-color: var(--color-surface-sunken);
+}
+
+.iconButton:disabled {
+  color: var(--color-rule-strong);
+  cursor: not-allowed;
+}
+
+.overall {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+/* The submit panel sticks while the list scrolls. */
+.side {
+  position: sticky;
+  top: calc(var(--app-header-height) + var(--space-4));
+}
+
+.panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.panelHeading {
+  font-size: var(--text-base);
+}
+
+.totals {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.totals > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: var(--border-hairline);
+}
+
+.totals dt {
+  color: var(--color-ink-muted);
+}
+
+.totals dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.note[data-dirty='true'] {
+  color: var(--color-warning);
+  font-weight: var(--weight-medium);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hint {
+  display: flex;
+  align-items: start;
+  gap: var(--space-1);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-dense);
+}
+
+.confirmList {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.retryNote {
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+}
+
+/* The receipt: a stamped docket, not a dashboard. */
+.receipt {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--layout-narrow);
+  padding: var(--space-5);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.receiptMark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-success);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.receiptTitle {
+  font-size: var(--text-xl);
+}
+
+.receiptLead {
+  color: var(--color-ink-muted);
+  line-height: var(--leading-body);
+}
+
+.receiptFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-block: var(--border-hairline);
+}
+
+.receiptFacts dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.receiptFacts dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.reference {
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-code);
+}
+
+.receiptSubheading {
+  font-size: var(--text-base);
+}
+
+.receiptList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.receiptList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.receiptName {
+  font-size: var(--text-base);
+}
+
+.receiptCredits {
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.receiptActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+@media (width < 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    position: static;
+  }
+}
+
+@media (width < 40rem) {
+  .item {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .itemActions {
+    grid-column: 2;
+    justify-content: end;
+  }
+}

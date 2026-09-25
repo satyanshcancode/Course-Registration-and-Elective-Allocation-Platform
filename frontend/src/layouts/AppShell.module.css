@@ -236,3 +236,14 @@
       calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
   }
 }
+
+/* A count beside a nav label (e.g. courses in the cart): text, not a dot. */
+.navBadge {
+  margin-left: auto;
+  padding: 0 var(--space-1);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}

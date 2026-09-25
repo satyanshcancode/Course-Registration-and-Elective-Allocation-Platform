@@ -7,13 +7,20 @@ import { DataTable } from '../../../components/DataTable';
 import type { Column } from '../../../components/DataTable/tableLogic';
 import { Icon } from '../../../components/Icon';
 import { SeatMeter } from '../../../components/SeatMeter';
+import { CartAction } from '../../../components/CartAction';
+import { cartActionFor, type CART_ACTIONS, type CartSnapshot } from '../../../utils/cartActions';
 import { describeDemand } from '../../../utils/courseText';
 import { describeReason } from '../../../utils/eligibilityText';
 import { findRowAction } from '../../../utils/tableActions';
 import styles from './CatalogueTable.module.css';
 
-/** What a row button can ask for. More actions (e.g. "Add to cart") join this map later. */
-export type CatalogueRowActions = Record<'view', (courseCode: string) => void>;
+/** Every action a row button can ask for; "view" is always handled. */
+export type CatalogueRowActionName = 'view' | (typeof CART_ACTIONS)[keyof typeof CART_ACTIONS];
+
+export type CatalogueRowActions = Partial<
+  Record<CatalogueRowActionName, (courseCode: string) => void>
+> &
+  Record<'view', (courseCode: string) => void>;
 
 export interface CatalogueTableProps {
   courses: readonly CatalogueCourse[];
@@ -21,12 +28,14 @@ export interface CatalogueTableProps {
   changed: ReadonlySet<string>;
   actions: CatalogueRowActions;
   caption: string;
+  /** The cart the add/remove column acts on; null hides the column. */
+  cart?: CartSnapshot | null;
 }
 
 function isKnownAction(
   action: string,
   actions: CatalogueRowActions,
-): action is keyof CatalogueRowActions {
+): action is CatalogueRowActionName {
   return Object.hasOwn(actions, action);
 }
 
@@ -35,7 +44,13 @@ function isKnownAction(
  * server (which sorts and pages). Row buttons carry data-action and
  * data-course-code, and ONE listener on the table body handles them all.
  */
-export function CatalogueTable({ courses, changed, actions, caption }: CatalogueTableProps) {
+export function CatalogueTable({
+  courses,
+  changed,
+  actions,
+  caption,
+  cart = null,
+}: CatalogueTableProps) {
   const columns: Column<CatalogueCourse>[] = [
     {
       id: 'code',
@@ -94,6 +109,24 @@ export function CatalogueTable({ courses, changed, actions, caption }: Catalogue
       accessor: (course) => course.personal?.myStatus.code,
       cell: (course) => course.personal && <MyStatusBadge status={course.personal.myStatus} />,
     },
+    ...(cart
+      ? [
+          {
+            id: 'cart',
+            header: 'Cart',
+            accessor: (course: CatalogueCourse) => cart.codes.indexOf(course.code) + 1 || null,
+            searchable: false,
+            cell: (course: CatalogueCourse) => (
+              <CartAction
+                compact
+                action={cartActionFor(course.code, course.personal?.eligibility, cart)}
+                code={course.code}
+                name={course.name}
+              />
+            ),
+          } satisfies Column<CatalogueCourse>,
+        ]
+      : []),
     {
       id: 'actions',
       header: 'Actions',
@@ -122,7 +155,7 @@ export function CatalogueTable({ courses, changed, actions, caption }: Catalogue
   const handleBodyClick = (event: MouseEvent<HTMLTableSectionElement>) => {
     const found = findRowAction(event.target, event.currentTarget);
     if (found && isKnownAction(found.action, actions)) {
-      actions[found.action](found.courseCode);
+      actions[found.action]?.(found.courseCode);
     }
   };
 

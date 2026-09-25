@@ -6,12 +6,23 @@ export class ApiRequestError extends Error {
   readonly fieldErrors: ApiFieldError[];
   /** HTTP status, or null when unknown (e.g. the server was unreachable). */
   readonly status: number | null;
+  /**
+   * The failure's endpoint-specific `details`, still unknown: each endpoint's
+   * contract says how to read it (the cart uses `readCartProblems`).
+   */
+  readonly details: unknown;
 
-  constructor(message: string, fieldErrors: ApiFieldError[] = [], status: number | null = null) {
+  constructor(
+    message: string,
+    fieldErrors: ApiFieldError[] = [],
+    status: number | null = null,
+    details?: unknown,
+  ) {
     super(message);
     this.name = 'ApiRequestError';
     this.fieldErrors = fieldErrors;
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -19,7 +30,7 @@ export class ApiRequestError extends Error {
 export function unwrap<T>(response: ApiResponse<T>): T {
   if (!response.success) {
     const status = 'httpStatus' in response ? (response as ClientFailure).httpStatus : null;
-    throw new ApiRequestError(response.message, response.errors, status);
+    throw new ApiRequestError(response.message, response.errors, status, response.details);
   }
   return response.data;
 }

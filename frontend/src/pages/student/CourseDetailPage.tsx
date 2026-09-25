@@ -1,8 +1,10 @@
 import type { CourseDetail, MyCourseStatusCode } from '@course-reg/shared';
 import { ArrowLeft, BookX, CircleCheck, CircleX, TrendingUp, Users } from 'lucide-react';
+import type { MouseEvent } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { isNotFound } from '../../api/unwrap';
 import { Badge } from '../../components/Badge';
+import { CartAction } from '../../components/CartAction';
 import { LinkButton } from '../../components/Button';
 import { EligibilityBadge, MyStatusBadge } from '../../components/CourseBadges';
 import { CourseCode } from '../../components/CourseCode';
@@ -14,12 +16,16 @@ import { PageHeader } from '../../components/PageHeader';
 import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { SeatMeter } from '../../components/SeatMeter';
 import { Skeleton } from '../../components/Skeleton';
+import { useToast } from '../../components/Toast';
+import { useCart } from '../../hooks/useCart';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useLiveSeats } from '../../hooks/useLiveSeats';
+import { cartActionFor, CART_ACTIONS } from '../../utils/cartActions';
 import { describeDemand, isOversubscribed } from '../../utils/courseText';
 import { describeReason } from '../../utils/eligibilityText';
 import { seatsNewerThan, withLiveSeats } from '../../utils/liveSeats';
+import { findRowAction } from '../../utils/tableActions';
 import styles from './CourseDetailPage.module.css';
 
 /** The catalogue URL to go back to, with the filters the student came from. */
@@ -110,8 +116,36 @@ function CourseDetailBody({
   seatsChanged: boolean;
 }) {
   const { personal } = course;
+  const cartContext = useCart();
+  const cart = cartContext?.snapshot ?? null;
+  const toast = useToast();
+
+  // The same delegated handler as the catalogue: the button carries its intent
+  // in data-action, and this one listener on the <article> reads it.
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
+    const found = findRowAction(event.target, event.currentTarget);
+    if (!found || !cartContext) {
+      return;
+    }
+    const adding = found.action === CART_ACTIONS.add;
+    void (adding ? cartContext.add(found.courseCode) : cartContext.remove(found.courseCode)).then(
+      (result) => {
+        toast.show(
+          result.ok
+            ? { tone: 'success', title: adding ? 'Added to your cart' : 'Removed from your cart' }
+            : { tone: 'warning', title: 'Your cart wasn’t changed', message: result.message },
+        );
+      },
+    );
+  };
+
   return (
-    <article className={styles.layout} aria-label={`${course.code} ${course.name}`}>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: the click comes from a real button
+    <article
+      className={styles.layout}
+      aria-label={`${course.code} ${course.name}`}
+      onClick={handleClick}
+    >
       <div className={styles.main}>
         <section className={styles.section} aria-labelledby="about-heading">
           <h2 id="about-heading" className={styles.heading}>
@@ -228,8 +262,13 @@ function CourseDetailBody({
             </h2>
             <MyStatusBadge status={personal.myStatus} />
             <p className={styles.note}>{statusExplanation(personal.myStatus.code)}</p>
-            {/* Slot for the "Add to cart" action, which arrives with the registration cart. */}
-            <div className={styles.cartSlot} data-slot="cart-action" />
+            <div className={styles.cartSlot} data-slot="cart-action">
+              <CartAction
+                action={cartActionFor(course.code, personal.eligibility, cart)}
+                code={course.code}
+                name={course.name}
+              />
+            </div>
           </section>
         )}
       </aside>

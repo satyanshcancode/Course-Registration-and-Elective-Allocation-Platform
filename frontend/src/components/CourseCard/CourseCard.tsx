@@ -2,7 +2,9 @@ import type { CatalogueCourse } from '@course-reg/shared';
 import { TrendingUp, Users } from 'lucide-react';
 import { Link, type To } from 'react-router';
 import { describeDemand, isOversubscribed } from '../../utils/courseText';
+import type { CartAction as CartActionState } from '../../utils/cartActions';
 import { describeReason } from '../../utils/eligibilityText';
+import { CartAction } from '../CartAction';
 import { Badge } from '../Badge';
 import { EligibilityBadge, MyStatusBadge } from '../CourseBadges';
 import { CourseCode } from '../CourseCode';
@@ -19,6 +21,11 @@ export interface CourseCardProps {
   /** The seat numbers just changed: flash them briefly. */
   seatsChanged?: boolean;
   headingLevel?: 2 | 3;
+  /**
+   * What the cart offers for this course (from `cartActionFor`). The button it
+   * draws has no onClick: the list around these cards delegates the click.
+   */
+  cartAction?: CartActionState | null;
 }
 
 /**
@@ -32,6 +39,7 @@ export function CourseCard({
   linkState,
   seatsChanged = false,
   headingLevel = 2,
+  cartAction = null,
 }: CourseCardProps) {
   const Heading = `h${headingLevel}` as const;
   const { personal } = course;
@@ -102,6 +110,12 @@ export function CourseCard({
           </dd>
         </div>
       </dl>
+
+      {cartAction && (
+        <div className={styles.cart}>
+          <CartAction action={cartAction} code={course.code} name={course.name} />
+        </div>
+      )}
     </article>
   );
 }
