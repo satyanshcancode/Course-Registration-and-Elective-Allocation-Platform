@@ -81,7 +81,13 @@ export function createUser(
 export async function createStudent(
   pool: Pool,
   programId: string,
-  overrides: { semester?: number; creditsCompleted?: number; userId?: string } = {},
+  overrides: {
+    semester?: number;
+    creditsCompleted?: number;
+    userId?: string;
+    /** A readable name, for tests whose expectations name the student. */
+    name?: string;
+  } = {},
 ): Promise<string> {
   const userId = overrides.userId ?? (await createUser(pool));
   const n = nextId();
@@ -94,7 +100,7 @@ export async function createStudent(
     [
       userId,
       `ROLL${String(n).padStart(4, '0')}`,
-      `Student ${n}`,
+      overrides.name ?? `Student ${n}`,
       programId,
       overrides.semester ?? 5,
       overrides.creditsCompleted ?? 90,

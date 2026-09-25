@@ -27,9 +27,15 @@ export function createRegistrationHistoryRepository(
   return {
     async record(entry) {
       await pool.query(
-        `INSERT INTO registration_history (student_id, window_id, event_type, details)
-         VALUES ($1, $2, $3, $4)`,
-        [entry.studentId, entry.windowId, entry.eventType, JSON.stringify(entry.details ?? {})],
+        `INSERT INTO registration_history (student_id, window_id, course_id, event_type, details)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          entry.studentId,
+          entry.windowId,
+          entry.courseId ?? null,
+          entry.eventType,
+          JSON.stringify(entry.details ?? {}),
+        ],
       );
     },
 
