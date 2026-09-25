@@ -13,12 +13,12 @@ validated, immutable list of preferences and the order it arrived in.
 
 That makes the guarantees for this phase precise:
 
-| # | Guarantee                     | Meaning                                                                        |
-| - | ----------------------------- | ------------------------------------------------------------------------------ |
-| 1 | **No duplicate submissions**  | One student has at most one `SUBMITTED` row per window — ever.                   |
-| 2 | **No partial submissions**    | Either every ranked item, the history row and the notification exist, or none.   |
-| 3 | **Idempotent retries**        | The same `Idempotency-Key` replays the first result; it never writes twice.      |
-| 4 | **A correct arrival order**   | Every submission gets a unique, gap-free number from a database sequence.        |
+| #   | Guarantee                    | Meaning                                                                        |
+| --- | ---------------------------- | ------------------------------------------------------------------------------ |
+| 1   | **No duplicate submissions** | One student has at most one `SUBMITTED` row per window — ever.                 |
+| 2   | **No partial submissions**   | Either every ranked item, the history row and the notification exist, or none. |
+| 3   | **Idempotent retries**       | The same `Idempotency-Key` replays the first result; it never writes twice.    |
+| 4   | **A correct arrival order**  | Every submission gets a unique, gap-free number from a database sequence.      |
 
 The seat race — 100 students competing for 10 seats — belongs to add/drop
 (Phase 10), where a seat really is taken.
@@ -117,7 +117,7 @@ concurrent submits each held one client and waited for a sixth that could
 never come: 100 simultaneous submits hung until the test timed out at 120 s.
 
 The fix is the rule now written into the service's types: every read inside a
-transaction goes through a repository bound to *that transaction's* client
+transaction goes through a repository bound to _that transaction's_ client
 (`catalogueFor`, `studentsFor`, `preferencesFor`, …). The concurrency suite
 went from a timeout to passing in 47 s.
 
@@ -141,7 +141,7 @@ went from a timeout to passing in 47 s.
 - **A submit racing a cart PUT**: whichever wins, what is stored is what the
   winner validated — never a mixture.
 
-`submit.test.ts` adds the rollback proof: a fault injected *after* the row is
+`submit.test.ts` adds the rollback proof: a fault injected _after_ the row is
 marked `SUBMITTED` leaves no submission, no sequence, no history and no
 notification, and submitting again afterwards still works. The fault point
 only exists when `NODE_ENV === 'test'`; in development and production

@@ -124,27 +124,36 @@ async function loadPlanStudents(
     eligiblePrograms: (programsByCourse.get(row.id) ?? []).map(ref),
     prerequisites: (prerequisitesByCourse.get(row.id) ?? []).map(ref),
   }));
-  const fixedByRoll = new Map(DEMO_STUDENTS.map((s) => [s.rollNumber, s.preferences]));
+  const fixedByRoll = new Map(
+    DEMO_STUDENTS.filter((s) => s.submitsInDemo).map((s) => [s.rollNumber, s.preferences]),
+  );
+  // Named accounts that must have NO submission, so the cart and the atomic
+  // submit can be demonstrated live rather than described.
+  const withoutSubmission = new Set(
+    DEMO_STUDENTS.filter((s) => !s.submitsInDemo).map((s) => s.rollNumber),
+  );
 
-  const planStudents = students.rows.map((row): PlanStudent => {
-    const facts = {
-      programId: row.program_id,
-      program: { code: row.program_id, name: row.program_id },
-      semester: row.semester,
-      creditsCompleted: row.credits_completed,
-      completedCourseIds: new Set(completedByStudent.get(row.user_id) ?? []),
-    };
-    const eligibleCourseCodes = new Set(
-      rules.filter((course) => evaluateEligibility(facts, course).eligible).map((c) => c.code),
-    );
-    const fixedPreferences = fixedByRoll.get(row.roll_number);
-    return {
-      id: row.user_id,
-      rollNumber: row.roll_number,
-      eligibleCourseCodes,
-      ...(fixedPreferences ? { fixedPreferences } : {}),
-    };
-  });
+  const planStudents = students.rows
+    .filter((row) => !withoutSubmission.has(row.roll_number))
+    .map((row): PlanStudent => {
+      const facts = {
+        programId: row.program_id,
+        program: { code: row.program_id, name: row.program_id },
+        semester: row.semester,
+        creditsCompleted: row.credits_completed,
+        completedCourseIds: new Set(completedByStudent.get(row.user_id) ?? []),
+      };
+      const eligibleCourseCodes = new Set(
+        rules.filter((course) => evaluateEligibility(facts, course).eligible).map((c) => c.code),
+      );
+      const fixedPreferences = fixedByRoll.get(row.roll_number);
+      return {
+        id: row.user_id,
+        rollNumber: row.roll_number,
+        eligibleCourseCodes,
+        ...(fixedPreferences ? { fixedPreferences } : {}),
+      };
+    });
 
   return {
     students: planStudents,

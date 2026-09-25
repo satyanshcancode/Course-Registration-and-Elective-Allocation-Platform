@@ -209,6 +209,75 @@ plenty of time.
 matrix (draft, open, closed, allocated, and each one past its date) is unit
 tested without a browser.
 
+## The cart: drag-and-drop, `beforeunload` and `crypto.randomUUID()`
+
+[`CartList.tsx`](../frontend/src/pages/student/cart/CartList.tsx),
+[`CartPage.tsx`](../frontend/src/pages/student/cart/CartPage.tsx) and
+[`useBeforeUnload.ts`](../frontend/src/hooks/useBeforeUnload.ts).
+
+**Native drag-and-drop is the enhancement, never the mechanism.** Each `<li>`
+is `draggable` and uses the browser's own events — `dragstart` sets
+`effectAllowed` and one item of `text/plain` data (Firefox will not start a
+drag without it), `dragover` calls `preventDefault()` (without it the browser
+refuses the drop) and sets `dropEffect`, and `drop` performs the move:
+
+```tsx
+const handleDragOver = (index: number) => (event: DragEvent<HTMLLIElement>) => {
+  event.preventDefault(); // "yes, you may drop here"
+  event.dataTransfer.dropEffect = 'move';
+  setOverIndex(index);
+};
+```
+
+Dragging is impossible with a keyboard and hard with a screen reader, so the
+real controls are Move up / Move down buttons with names like "Move Cloud
+Security up to rank 1". Both paths call the same `moveItem(items, from, to)`,
+which is pure and unit tested.
+
+**Focus and a polite announcement after a move.** Moving an item re-renders
+the list, so the button that was pressed may be gone or disabled (at rank 1
+"Move up" is disabled). An effect keyed on the new order focuses the moved
+item's first usable button, and a separate `aria-live="polite"` paragraph is
+given one sentence — "Cloud Security moved to choice 1 of 3." The list itself
+is not a live region: announcing every item on every move would be unusable.
+
+**`beforeunload` only while there is something to lose.**
+
+```ts
+useEffect(() => {
+  if (!when) return undefined; // nothing unsaved: no listener at all
+  const warn = (event: BeforeUnloadEvent) => {
+    event.preventDefault();
+  };
+  window.addEventListener('beforeunload', warn);
+  return () => {
+    window.removeEventListener('beforeunload', warn);
+  };
+}, [when]);
+```
+
+`preventDefault()` is what asks the browser for its own "leave site?" prompt;
+the wording belongs to the browser and cannot be changed. Attaching the
+listener permanently would slow every navigation for no reason, so the hook
+takes a boolean and the cart passes `dirty`.
+
+**`crypto.randomUUID()` for the idempotency key.** The key is generated once,
+when the confirm dialog opens, and kept in state:
+
+```ts
+const openConfirm = () => {
+  setSubmitKey(crypto.randomUUID()); // once per attempt...
+  setConfirmOpen(true);
+};
+```
+
+Every retry of that attempt — including the one offered after "We couldn't
+confirm your submission" — sends the **same** key, so the server replays the
+first result instead of creating a second submission. A fresh key per click
+would defeat the whole mechanism. `crypto.randomUUID()` is the platform's own
+v4 generator (secure context only, which `localhost` and HTTPS both are); no
+library is needed. See [CONCURRENCY.md](CONCURRENCY.md).
+
 # TypeScript highlights
 
 Where the syllabus's TypeScript topics do real work in this app.

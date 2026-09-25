@@ -1,6 +1,6 @@
 import type {
   AdminCourseOffering,
-  ApiResponse,
+  ApiSuccess,
   CatalogueCourse,
   CataloguePage,
   CourseDetail,
@@ -19,7 +19,9 @@ export const fallWindow: RegistrationWindowSummary = {
   endsAt: '2026-10-13T11:30:00.000Z',
 };
 
-export function ok<T>(data: T): ApiResponse<T> {
+/** A successful envelope. Typed as ApiSuccess, not ApiResponse, so it is
+ *  assignable wherever the client's ApiResult is expected. */
+export function ok<T>(data: T): ApiSuccess<T> {
   return { success: true, data };
 }
 

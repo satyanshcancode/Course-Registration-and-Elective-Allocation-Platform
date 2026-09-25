@@ -1,5 +1,4 @@
 import { Check, Minus, Plus } from 'lucide-react';
-import { describeReason } from '../../utils/eligibilityText';
 import { CART_ACTIONS, type CartAction as CartActionState } from '../../utils/cartActions';
 import { Icon } from '../Icon';
 import styles from './CartAction.module.css';
@@ -72,11 +71,10 @@ export function CartAction({ action, code, name, compact = false }: CartActionPr
       );
 
     case 'ineligible':
-      return (
-        <p className={styles.note}>
-          {action.reasons[0] ? describeReason(action.reasons[0]) : 'You can’t take this course.'}
-        </p>
-      );
+      // The reason itself is already on screen beside this control (the
+      // eligibility badge on a card or a row, the checklist on the detail
+      // page), so repeating it here would say the same thing twice.
+      return <p className={styles.note}>Not eligible — this course can’t be ranked.</p>;
 
     case 'locked':
       return <p className={styles.note}>{action.reason}</p>;
