@@ -225,7 +225,7 @@ describe('POST /api/admin/enrollments/:id/withdraw', () => {
 
     const result = dataOf(
       await withdraw(world.admin, enrollment).expect(200),
-    ).valueOf() as WithdrawEnrollmentResult;
+    ) as WithdrawEnrollmentResult;
 
     expect(result.promotions.promoted).toEqual([
       {
@@ -321,7 +321,7 @@ describe('POST /api/admin/enrollments/:id/withdraw', () => {
 
     const result = dataOf(
       await withdraw(world.admin, await activeEnrollment(world.ava, world.ai)).expect(200),
-    ).valueOf() as WithdrawEnrollmentResult;
+    ) as WithdrawEnrollmentResult;
 
     expect(result.promotions.promoted.map((move) => move.course.code)).toEqual(['AI401']);
     expect(result.promotions.removed).toEqual([
@@ -373,7 +373,7 @@ describe('PATCH /api/admin/courses/:code/capacity', () => {
       .set('Cookie', adminCookie(world.admin))
       .send({ capacity: 2, reason: 'A second lab group opened up' })
       .expect(200);
-    const result = dataOf(response).valueOf() as UpdateCapacityResult;
+    const result = dataOf(response) as UpdateCapacityResult;
 
     expect(result.offering.capacity).toBe(2);
     // Bo moves up into AI, which frees CS for Cai: the same cascade.
@@ -392,7 +392,7 @@ describe('PATCH /api/admin/courses/:code/capacity', () => {
         .set('Cookie', adminCookie(world.admin))
         .send({ capacity: 3, reason: 'Still planning the term' })
         .expect(200),
-    ).valueOf() as UpdateCapacityResult;
+    ) as UpdateCapacityResult;
 
     expect(result.promotions).toBeNull();
     expect(await seatsTaken(world.windowId, world.ai)).toBe(1);
@@ -415,7 +415,7 @@ describe('POST /api/admin/waitlists/process', () => {
         .post('/api/admin/waitlists/process')
         .set('Cookie', adminCookie(world.admin))
         .expect(200),
-    ).valueOf() as ProcessWaitlistsResult;
+    ) as ProcessWaitlistsResult;
 
     expect(result.coursesChecked).toBe(1);
     expect(result.promotions.promoted.map((move) => move.course.code)).toEqual(['AI401', 'CS402']);
@@ -429,7 +429,7 @@ describe('POST /api/admin/waitlists/process', () => {
         .post('/api/admin/waitlists/process')
         .set('Cookie', adminCookie(world.admin))
         .expect(200),
-    ).valueOf() as ProcessWaitlistsResult;
+    ) as ProcessWaitlistsResult;
 
     expect(result).toEqual({ coursesChecked: 0, promotions: { promoted: [], removed: [] } });
   });
@@ -444,7 +444,7 @@ describe('GET /api/students/me/waitlist', () => {
         .get('/api/students/me/waitlist')
         .set('Cookie', studentCookie(world.cai))
         .expect(200),
-    ).valueOf() as StudentWaitlist;
+    ) as StudentWaitlist;
 
     expect(waitlist.held).toBeNull();
     expect(waitlist.waiting).toHaveLength(1);
@@ -466,7 +466,7 @@ describe('GET /api/students/me/waitlist', () => {
         .get('/api/students/me/waitlist')
         .set('Cookie', studentCookie(world.bo))
         .expect(200),
-    ).valueOf() as StudentWaitlist;
+    ) as StudentWaitlist;
 
     expect(waitlist.held).toEqual({
       course: { code: 'AI401', name: 'Artificial Intelligence' },
@@ -496,7 +496,7 @@ describe('GET /api/admin/waitlists', () => {
         .get('/api/admin/waitlists?course=CS402')
         .set('Cookie', adminCookie(world.admin))
         .expect(200),
-    ).valueOf() as AdminWaitlistView;
+    ) as AdminWaitlistView;
 
     expect(view.courses.map((course) => course.code)).toEqual(['AI401', 'CS402']);
     expect(view.course).toMatchObject({ code: 'CS402', capacity: 1, allocated: 1, available: 0 });
@@ -512,7 +512,7 @@ describe('GET /api/admin/waitlists', () => {
         .get('/api/admin/waitlists')
         .set('Cookie', adminCookie(world.admin))
         .expect(200),
-    ).valueOf() as AdminWaitlistView;
+    ) as AdminWaitlistView;
 
     expect(view.course).toBeNull();
     expect(view.courses).toHaveLength(2);
@@ -529,7 +529,7 @@ describe('GET /api/allocation/results, after promotion', () => {
         .get('/api/allocation/results')
         .set('Cookie', studentCookie(world.bo))
         .expect(200),
-    ).valueOf() as StudentAllocationResults;
+    ) as StudentAllocationResults;
 
     expect(results.allocated?.type).toBe('PROMOTED');
     expect(results.allocated).toMatchObject({
@@ -548,7 +548,7 @@ describe('GET /api/allocation/results, after promotion', () => {
         .get('/api/allocation/results')
         .set('Cookie', studentCookie(world.ava))
         .expect(200),
-    ).valueOf() as StudentAllocationResults;
+    ) as StudentAllocationResults;
 
     expect(results.allocated).toBeNull();
     expect(results.results.map((result) => result.explanation.type)).toContain('SEAT_WITHDRAWN');
