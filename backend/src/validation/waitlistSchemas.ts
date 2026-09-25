@@ -16,4 +16,4 @@ export const withdrawEnrollmentSchema = z.object({
     ),
 });
 
-export const enrollmentIdSchema = z.string().uuid('Unknown enrollment.');
+export const enrollmentIdSchema = z.uuid('Unknown enrollment.');
