@@ -1,6 +1,6 @@
 import type { CatalogueCourse } from '@course-reg/shared';
 import { LayoutGrid, SearchX, Table2, type LucideIcon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Button } from '../../components/Button';
 import { CourseCard } from '../../components/CourseCard';
@@ -12,13 +12,17 @@ import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { Skeleton } from '../../components/Skeleton';
 import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
+import { useToast } from '../../components/Toast';
+import { useCart } from '../../hooks/useCart';
 import { CATALOGUE_PAGE, useCatalogue, type CatalogueData } from '../../hooks/useCatalogue';
 import { useCatalogueFilters } from '../../hooks/useCatalogueFilters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useLiveSeats } from '../../hooks/useLiveSeats';
+import { cartActionFor, CART_ACTIONS } from '../../utils/cartActions';
 import { hasActiveFilters, type CatalogueView } from '../../utils/catalogueFilters';
 import { scrollIntoViewIfNeeded } from '../../utils/domUtils';
 import { seatsNewerThan, withLiveSeats } from '../../utils/liveSeats';
+import { findRowAction } from '../../utils/tableActions';
 import { CatalogueFilterForm } from './catalogue/CatalogueFilterForm';
 import { CatalogueTable } from './catalogue/CatalogueTable';
 import styles from './StudentCoursesPage.module.css';
@@ -52,6 +56,8 @@ export function StudentCoursesPage() {
   const { filters, setFilters, clear } = useCatalogueFilters();
   const { state, retry } = useCatalogue(filters);
   const live = useLiveSeats();
+  const cart = useCart();
+  const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const resultsRef = useRef<HTMLElement>(null);
@@ -78,6 +84,32 @@ export function StudentCoursesPage() {
   const clearAll = () => {
     setFormKey((key) => key + 1);
     clear();
+  };
+
+  /**
+   * One place both views send their cart clicks: the table's delegated tbody
+   * listener and the card grid's delegated list listener.
+   */
+  const runCartAction = (action: string, code: string) => {
+    if (!cart) {
+      return;
+    }
+    const adding = action === CART_ACTIONS.add;
+    void (adding ? cart.add(code) : cart.remove(code)).then((result) => {
+      toast.show(
+        result.ok
+          ? { tone: 'success', title: adding ? `${code} added to your cart` : `${code} removed` }
+          : { tone: 'warning', title: 'Your cart wasn’t changed', message: result.message },
+      );
+    });
+  };
+
+  // The cards live in a <ul>; one listener on it serves every card's button.
+  const handleGridClick = (event: MouseEvent<HTMLUListElement>) => {
+    const found = findRowAction(event.target, event.currentTarget);
+    if (found) {
+      runCartAction(found.action, found.courseCode);
+    }
   };
   const goToPage = (page: number) => {
     setFilters({ page });
@@ -165,7 +197,8 @@ export function StudentCoursesPage() {
           {data && courses.length > 0 && (
             <div className={styles.list} data-refreshing={refreshing ? 'true' : undefined}>
               {filters.view === 'cards' ? (
-                <ul className={styles.grid}>
+                /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: the clicks come from real buttons inside the cards */
+                <ul className={styles.grid} onClick={handleGridClick}>
                   {courses.map((course) => (
                     <li key={course.code} className={styles.cell}>
                       <CourseCard
@@ -173,6 +206,11 @@ export function StudentCoursesPage() {
                         to={detailPath(course.code)}
                         linkState={linkState}
                         seatsChanged={live.changed.has(course.code)}
+                        cartAction={cartActionFor(
+                          course.code,
+                          course.personal?.eligibility,
+                          cart?.snapshot ?? null,
+                        )}
                       />
                     </li>
                   ))}
@@ -182,9 +220,16 @@ export function StudentCoursesPage() {
                   caption={`Course catalogue: ${resultSummary(data)}`}
                   courses={courses}
                   changed={live.changed}
+                  cart={cart?.snapshot ?? null}
                   actions={{
                     view: (code) => {
                       void navigate(detailPath(code), { state: linkState });
+                    },
+                    [CART_ACTIONS.add]: (code) => {
+                      runCartAction(CART_ACTIONS.add, code);
+                    },
+                    [CART_ACTIONS.remove]: (code) => {
+                      runCartAction(CART_ACTIONS.remove, code);
                     },
                   }}
                 />

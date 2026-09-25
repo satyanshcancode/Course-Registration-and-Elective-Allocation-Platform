@@ -131,6 +131,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.cartSlot {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+}
+
 .cartSlot:empty {
   display: none;
 }

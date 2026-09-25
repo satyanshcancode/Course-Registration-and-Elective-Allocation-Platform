@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Icon } from '../components/Icon';
@@ -20,6 +20,8 @@ export interface AppShellProps {
   /** Small print in the footer. */
   footerNote?: string;
   helpPath?: string;
+  /** Optional count beside a nav item, e.g. how many courses are in the cart. */
+  itemBadge?: (item: NavItem) => ReactNode;
 }
 
 /**
@@ -37,6 +39,7 @@ export function AppShell({
   items,
   footerNote,
   helpPath,
+  itemBadge,
 }: AppShellProps) {
   const { pathname } = useLocation();
   // Only one navigation landmark exists at a time: the sidebar/rail, or the
@@ -63,6 +66,7 @@ export function AppShell({
                 <NavLink to={item.to} className={styles.navLink}>
                   <Icon icon={item.icon} size={20} />
                   <span className={styles.navLabel}>{item.label}</span>
+                  {itemBadge?.(item) && <span className={styles.navBadge}>{itemBadge(item)}</span>}
                 </NavLink>
               </li>
             ))}
@@ -70,7 +74,7 @@ export function AppShell({
         </nav>
       )}
 
-      {isPhone && <MobileNav label={navLabel} items={items} />}
+      {isPhone && <MobileNav label={navLabel} items={items} itemBadge={itemBadge} />}
 
       <main id="main" className={styles.main} tabIndex={-1}>
         <ErrorBoundary resetKey={pathname}>
