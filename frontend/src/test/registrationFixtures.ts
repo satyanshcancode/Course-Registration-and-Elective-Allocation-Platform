@@ -1,8 +1,12 @@
 import {
   DEFAULT_PREFERENCE_PRIORITY_CONFIG,
   type AdminWindowDetail,
+  type CartItem,
   type CourseEligibility,
   type EligibilityOverview,
+  type PreferenceCart,
+  type PreferenceRank,
+  type SubmissionReceipt,
   type WindowCourseOption,
 } from '@course-reg/shared';
 import { fallWindow, SERVER_TIME } from './catalogueFixtures';
@@ -96,5 +100,70 @@ export function adminWindow(overrides: Partial<AdminWindowDetail> = {}): AdminWi
     ],
     serverTime: SERVER_TIME,
     ...overrides,
+  };
+}
+
+export function cartItem(rank: PreferenceRank, overrides: Partial<CartItem> = {}): CartItem {
+  return {
+    rank,
+    code: 'CS401',
+    name: 'Artificial Intelligence',
+    credits: 4,
+    department: { code: 'CSE', name: 'Computer Science and Engineering' },
+    capacity: 20,
+    allocated: 0,
+    available: 20,
+    demand: 114,
+    demandRatio: 5.7,
+    eligibility: { eligible: true },
+    ...overrides,
+  };
+}
+
+/** Three ranked courses in an open window, nothing submitted yet. */
+export function draftCart(overrides: Partial<PreferenceCart> = {}): PreferenceCart {
+  const items = [
+    cartItem(1),
+    cartItem(2, { code: 'CS402', name: 'Cloud Security', credits: 3, capacity: 30, available: 30 }),
+    cartItem(3, { code: 'CS403', name: 'Distributed Systems', credits: 4 }),
+  ];
+  return {
+    window: fallWindow,
+    status: 'DRAFT',
+    items,
+    submittedAt: null,
+    sequence: null,
+    reference: null,
+    editable: true,
+    submittable: true,
+    submitBlockedReason: null,
+    totalCredits: items.reduce((total, item) => total + item.credits, 0),
+    serverTime: SERVER_TIME,
+    ...overrides,
+  };
+}
+
+export function submittedCart(overrides: Partial<PreferenceCart> = {}): PreferenceCart {
+  return draftCart({
+    status: 'SUBMITTED',
+    submittedAt: '2026-09-22T08:55:00.000Z',
+    sequence: 128,
+    reference: 'REF-3F9A2C71',
+    editable: false,
+    submittable: false,
+    submitBlockedReason: 'You have already submitted your preferences.',
+    ...overrides,
+  });
+}
+
+export function receiptFor(cart: PreferenceCart): SubmissionReceipt {
+  return {
+    window: fallWindow,
+    reference: cart.reference ?? 'REF-3F9A2C71',
+    submittedAt: cart.submittedAt ?? '2026-09-22T08:55:00.000Z',
+    sequence: cart.sequence ?? 128,
+    items: cart.items,
+    totalCredits: cart.totalCredits,
+    serverTime: SERVER_TIME,
   };
 }

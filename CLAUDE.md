@@ -152,6 +152,33 @@
   the response arrives (never during render) and add that offset. The ticking
   value sits in no live region.
 
+## Registration cart conventions (Phase 7)
+
+- **Submitting always goes through `submitService.submit`**, never through a
+  repository or a controller: it is one transaction that locks the window
+  `FOR SHARE`, locks the student's own submission row `FOR UPDATE`,
+  re-validates eligibility from freshly read rows, takes the arrival number
+  from `nextval('preference_submission_sequence')` and writes the history row
+  and the notification. Any throw rolls all of it back.
+- **Every submit carries an idempotency key.** The client generates one
+  `crypto.randomUUID()` per attempt and reuses it for every retry; the server
+  replays the first result for the same key and cart, answers `CART_CHANGED`
+  for the same key with a different cart, and `ALREADY_SUBMITTED` otherwise.
+  Never generate a fresh key for a retry.
+- **Inside a transaction, use the client-bound repositories** (`preferencesFor`,
+  `catalogueFor`, `studentsFor`, …). Reading through a pool-bound repository
+  while holding a transaction client deadlocks the pool under load; this cost
+  a day once, and `docs/CONCURRENCY.md` records it.
+- Cart problems are a discriminated union (`CartProblem`) carried in the
+  failure's `details` and read with `readCartProblems`, so the UI can put each
+  message beside the right item.
+- The add/remove buttons on the catalogue card, the catalogue table and the
+  course detail page carry `data-action` + `data-course-code` and have no
+  `onClick`; one delegated listener per surface handles them, and
+  `cartActionFor` is the single place deciding what to draw.
+- The cart page's reordering must stay usable from the keyboard: Move up /
+  Move down are the mechanism, drag-and-drop is an enhancement.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one

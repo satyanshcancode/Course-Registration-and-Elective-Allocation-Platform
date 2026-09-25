@@ -1,15 +1,14 @@
 import {
   IDEMPOTENCY_KEY_HEADER,
-  type ApiResponse,
   type PreferenceCart,
   type SaveCartRequest,
   type SubmissionReceipt,
   type SubmitRequest,
 } from '@course-reg/shared';
-import { apiClient } from './apiClient';
+import { apiClient, type ApiResult } from './apiClient';
 
 /** The caller's own cart: no student id is ever sent. */
-export function getCart(signal?: AbortSignal): Promise<ApiResponse<PreferenceCart>> {
+export function getCart(signal?: AbortSignal): Promise<ApiResult<PreferenceCart>> {
   return apiClient.get<PreferenceCart>('/preferences', { signal });
 }
 
@@ -17,7 +16,7 @@ export function getCart(signal?: AbortSignal): Promise<ApiResponse<PreferenceCar
 export function saveCart(
   courseCodes: string[],
   signal?: AbortSignal,
-): Promise<ApiResponse<PreferenceCart>> {
+): Promise<ApiResult<PreferenceCart>> {
   const body: SaveCartRequest = { courseCodes };
   return apiClient.put<PreferenceCart>('/preferences', { body, signal });
 }
@@ -31,7 +30,7 @@ export function submitCart(
   courseCodes: string[],
   idempotencyKey: string,
   signal?: AbortSignal,
-): Promise<ApiResponse<SubmissionReceipt>> {
+): Promise<ApiResult<SubmissionReceipt>> {
   const body: SubmitRequest = { courseCodes };
   return apiClient.post<SubmissionReceipt>('/registration/submit', {
     body,
@@ -43,6 +42,6 @@ export function submitCart(
 /** The receipt for an already-submitted cart, or null before submitting. */
 export function getSubmissionStatus(
   signal?: AbortSignal,
-): Promise<ApiResponse<SubmissionReceipt | null>> {
+): Promise<ApiResult<SubmissionReceipt | null>> {
   return apiClient.get<SubmissionReceipt | null>('/registration/status', { signal });
 }

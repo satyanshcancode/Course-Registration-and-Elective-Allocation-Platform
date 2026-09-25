@@ -1,9 +1,11 @@
-import type {
-  CurrentWindowResponse,
-  EligibilityOverview,
-  UnreadNotificationCount,
+import {
+  MAX_PREFERENCES,
+  type CurrentWindowResponse,
+  type EligibilityOverview,
+  type PreferenceCart,
+  type UnreadNotificationCount,
 } from '@course-reg/shared';
-import { BadgeCheck, BookOpen, Bell } from 'lucide-react';
+import { BadgeCheck, Bell, BookOpen, ShoppingCart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { apiClient } from '../../api/apiClient';
@@ -18,6 +20,7 @@ import { RegistrationStatusBanner } from '../../components/RegistrationStatusBan
 import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useCurrentStudent } from '../../hooks/useAuth';
+import { useCart } from '../../hooks/useCart';
 import { useDashboardSections } from '../../hooks/useDashboardSections';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import type { AsyncState } from '../../types/asyncState';
@@ -32,8 +35,29 @@ interface DashboardData extends Record<string, unknown> {
   notifications: UnreadNotificationCount;
 }
 
-/** What the student should do next, given where the window is. */
-function nextSteps(status: string | undefined): string[] {
+/** What the student should do next, given the window AND their own cart. */
+function nextSteps(status: string | undefined, cart: PreferenceCart | null): string[] {
+  if (status === 'OPEN' && cart) {
+    if (cart.status === 'SUBMITTED') {
+      return [
+        `Your ${cart.items.length} preferences are submitted${cart.reference ? ` (${cart.reference})` : ''}. They can’t be changed now.`,
+        'Allocation runs once the window closes; you’ll get a notification.',
+      ];
+    }
+    if (cart.items.length === 0) {
+      return [
+        'Add courses to your cart from the catalogue, most wanted first.',
+        `You can rank up to ${MAX_PREFERENCES}.`,
+        'Submit before the window closes — a saved draft is not a submission.',
+      ];
+    }
+    return [
+      `You have ${cart.items.length} of ${MAX_PREFERENCES} courses ranked. Check the order.`,
+      'Submit before the window closes — a saved draft is not a submission.',
+      'Seat counts change: check what is realistic before you submit.',
+    ];
+  }
+
   switch (status) {
     case 'DRAFT':
       return [
@@ -65,6 +89,7 @@ function nextSteps(status: string | undefined): string[] {
 export function StudentDashboardPage() {
   useDocumentTitle('Dashboard');
   const user = useCurrentStudent();
+  const cart = useCart();
   // Three independent requests, together: one failure must not blank the page.
   const { sections, retry } = useDashboardSections<DashboardData>({
     registration: async (signal) => unwrap(await getCurrentWindow(signal)),
@@ -163,7 +188,7 @@ export function StudentDashboardPage() {
 
           <Card title="What to do next" kicker="Guidance" headingLevel={2}>
             <ol className={dashboard.steps}>
-              {nextSteps(windowSummary?.status).map((step) => (
+              {nextSteps(windowSummary?.status, cart?.cart ?? null).map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
@@ -171,6 +196,10 @@ export function StudentDashboardPage() {
         </div>
 
         <div className={dashboard.side}>
+          <Card title="Your cart" kicker="Preferences" headingLevel={2}>
+            <CartSummary cart={cart?.cart ?? null} />
+          </Card>
+
           <Section
             title="Notifications"
             kicker="Inbox"
@@ -212,6 +241,44 @@ export function StudentDashboardPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/** The cart at a glance, with the one link that continues the flow. */
+function CartSummary({ cart }: { cart: PreferenceCart | null }) {
+  if (!cart) {
+    return <Skeleton lines={2} />;
+  }
+  if (cart.status === 'SUBMITTED') {
+    return (
+      <div className={dashboard.eligibility}>
+        <p className={dashboard.count}>Submitted</p>
+        <p className={dashboard.muted}>
+          {cart.items.length} {cart.items.length === 1 ? 'choice' : 'choices'}
+          {cart.reference ? ` · ${cart.reference}` : ''}
+        </p>
+        <Link to="/student/cart" className={dashboard.link}>
+          <ShoppingCart aria-hidden="true" className={dashboard.linkIcon} />
+          See your receipt
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className={dashboard.eligibility}>
+      <p className={dashboard.count}>
+        {cart.items.length} of {MAX_PREFERENCES} ranked
+      </p>
+      <p className={dashboard.muted}>
+        {cart.items.length === 0
+          ? 'Nothing ranked yet. Add courses from the catalogue.'
+          : `${cart.totalCredits} credits. Not submitted yet.`}
+      </p>
+      <Link to="/student/cart" className={dashboard.link}>
+        <ShoppingCart aria-hidden="true" className={dashboard.linkIcon} />
+        Open your cart
+      </Link>
+    </div>
   );
 }
 

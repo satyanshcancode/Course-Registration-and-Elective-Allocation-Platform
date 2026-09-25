@@ -44,14 +44,17 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-/** An ApiFailure as the cart UI needs it: the message, the structured
- *  problems, and the HTTP status (null when the server was never reached). */
-function refusal(response: { message: string; details?: unknown }): CartRefusal {
+/**
+ * A failed call as the cart UI needs it: the message, the structured problems,
+ * and the HTTP status — null when the server was never reached, which is what
+ * makes "retrying is safe" the right thing to say.
+ */
+function refusal(response: ClientFailure): CartRefusal {
   return {
     ok: false,
     message: response.message,
     problems: readCartProblems(response.details),
-    httpStatus: (response as ClientFailure).httpStatus ?? null,
+    httpStatus: response.httpStatus,
   };
 }
 

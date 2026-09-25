@@ -25,7 +25,7 @@ add/drop, and a personal registration history.
 | --- | --------------------------------------------- | -------------------- |
 | 1   | Course catalogue with live seat counts        | **Done** (see below) |
 | 2   | Eligibility pre-check before the window opens | **Done** (see below) |
-| 3   | Registration cart with atomic submit          | Planned              |
+| 3   | Registration cart with atomic submit          | **Done** (see below) |
 | 4   | Fair allocation for oversubscribed electives  | Planned              |
 | 5   | Waitlist with automatic promotion             | Planned              |
 | 6   | Add/drop                                      | Planned              |
@@ -63,6 +63,25 @@ add/drop, and a personal registration history.
   closing, measured against the **server's** clock, so a wrong device clock
   can't mislead anyone.
 
+**Registration cart** (`/student/cart`):
+
+- Add or remove a course from the catalogue cards, the catalogue table or the
+  course detail page. All three use the same delegated `data-action` handler
+  and the same rule for what to offer, so an ineligible course explains itself
+  instead of showing a dead button and a full cart says so.
+- Rank up to five choices with Move up / Move down (drag-and-drop is an extra,
+  never the only way). Focus stays on the moved item and a polite live region
+  announces its new position. Unsaved changes are shown, warned about on
+  leaving the page, and persisted with **Save draft**.
+- **Submitting is one transaction with an idempotency key.** The confirm dialog
+  generates one `crypto.randomUUID()` and reuses it for every retry, so a
+  network failure is safe to retry and cannot create a duplicate. There is
+  never a partial submission, and the arrival order comes from a database
+  sequence. Afterwards the page shows an immutable receipt with the reference,
+  the time and the arrival number.
+- How this is guaranteed, with a sequence diagram:
+  [docs/CONCURRENCY.md](docs/CONCURRENCY.md).
+
 **Registration window** (`/admin/registration-window`):
 
 - Schedule the window, choose the offered courses, and pick the allocation
@@ -78,8 +97,9 @@ add/drop, and a personal registration history.
 
 **Dashboards** — the student dashboard loads the window, the eligibility
 summary and the notification count together with `Promise.allSettled`, so one
-failing section shows its own Retry while the rest of the page still works. The
-admin dashboard shows the window, its counts and the five most demanded courses.
+failing section shows its own Retry while the rest of the page still works. It
+also shows the cart and what to do next. The admin dashboard shows the window,
+its counts and the five most demanded courses.
 
 How the JavaScript and TypeScript concepts are used is written up in
 [docs/javascript-concepts.md](docs/javascript-concepts.md).
@@ -207,18 +227,35 @@ Outside Docker use `npm run seed` and `npm run seed:demo-submissions`. Both are
 deterministic and safe to re-run; `seed` wipes all application data first.
 See [docs/DATABASE.md](docs/DATABASE.md#seed-data) for what gets created.
 
+`seed:demo-submissions` deliberately leaves **aarav.sharma** and **priya.nair**
+without a submission, so the cart and the atomic submit can be demonstrated
+live rather than described.
+
+### Proving the concurrency guarantees
+
+```bash
+npm run docker:demo:concurrent-submit                 # 50 students, default
+npm run docker:demo:concurrent-submit -- --students=100
+```
+
+Every student fires their submit twice at the same instant with the same
+idempotency key. The script then checks the database and prints PASS/FAIL for
+duplicates, partial carts, one submission per student, and unique, gap-free
+arrival numbers. Outside Docker: `npm run demo:concurrent-submit`. It refuses
+to run with `NODE_ENV=production`.
+
 ### Demo accounts
 
 > **Demo-only credentials.** They are published here so the app can be
 > demonstrated. Never reuse them anywhere real.
 
-| Role    | E-mail                        | Password      | Situation                                                                     |
-| ------- | ----------------------------- | ------------- | ----------------------------------------------------------------------------- |
-| Admin   | `admin@university.edu`        | `Admin@123`   | Manages courses, the registration window and allocation                       |
-| Student | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6: eligible for Artificial Intelligence (program relevance +25) |
-| Student | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3: **not** eligible for Artificial Intelligence          |
-| Student | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: highest priority (+20 +25 +40)         |
-| Student | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5: eligible for Artificial Intelligence, no priority bonus      |
+| Role    | E-mail                        | Password      | Situation                                                                                                                    |
+| ------- | ----------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Admin   | `admin@university.edu`        | `Admin@123`   | Manages courses, the registration window and allocation                                                                      |
+| Student | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6: eligible for Artificial Intelligence (program relevance +25). **No submission** — use them to demo the cart |
+| Student | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3: **not** eligible for Artificial Intelligence                                                         |
+| Student | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: highest priority (+20 +25 +40)                                                        |
+| Student | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5: eligible for Artificial Intelligence, no priority bonus. **No submission** — use them to demo the cart      |
 
 The 296 generated students also use `Student@123`; their e-mail is their roll
 number, e.g. `cse24004@university.edu`.

@@ -30,6 +30,12 @@ interface DemoStudentSpec {
   sequence: number;
   /** Fixed preferences for `npm run seed:demo-submissions`. */
   preferences: string[];
+  /**
+   * False leaves this account with NO submission after the demo seed, so the
+   * cart and submit flow can be shown live. Their `preferences` are then just
+   * the courses to pick on stage.
+   */
+  submitsInDemo: boolean;
   situation: string;
 }
 
@@ -43,7 +49,9 @@ const DEMO_STUDENT_SPECS: readonly DemoStudentSpec[] = [
     completedCourseCodes: ['MA201', 'MA202', 'CS201', 'CS202', 'CS301', 'CS302'],
     sequence: 901,
     preferences: ['CS401', 'CS402', 'CS403', 'CS404'],
-    situation: 'Eligible for Artificial Intelligence (program relevance bonus only)',
+    submitsInDemo: false,
+    situation:
+      'Eligible for Artificial Intelligence (program relevance bonus only); submits live in the demo',
   },
   {
     localPart: 'meera.iyer',
@@ -54,6 +62,7 @@ const DEMO_STUDENT_SPECS: readonly DemoStudentSpec[] = [
     completedCourseCodes: ['MA201', 'MA202'],
     sequence: 902,
     preferences: ['MG301'],
+    submitsInDemo: true,
     situation:
       'Not eligible for Artificial Intelligence (program, semester, credits and prerequisite)',
   },
@@ -67,6 +76,7 @@ const DEMO_STUDENT_SPECS: readonly DemoStudentSpec[] = [
     graduatesThisTerm: true,
     sequence: 903,
     preferences: ['CS401', 'CS403', 'CS402', 'CS405'],
+    submitsInDemo: true,
     situation: 'Final year, graduating this term: highest priority (+20 +25 +40)',
   },
   {
@@ -78,12 +88,15 @@ const DEMO_STUDENT_SPECS: readonly DemoStudentSpec[] = [
     completedCourseCodes: ['MA201', 'CS201', 'CS302'],
     sequence: 904,
     preferences: ['CS401', 'CS402', 'CS404', 'EC401'],
-    situation: 'Eligible for Artificial Intelligence but no priority bonus',
+    submitsInDemo: false,
+    situation:
+      'Eligible for Artificial Intelligence but no priority bonus; submits live in the demo',
   },
 ];
 
 export interface DemoStudent extends StudentSeed {
   preferences: string[];
+  submitsInDemo: boolean;
   situation: string;
 }
 
@@ -110,5 +123,6 @@ export const DEMO_STUDENTS: readonly DemoStudent[] = DEMO_STUDENT_SPECS.map((spe
     term: completionTermFor(spec.semester, findCourseSeed(code)),
   })),
   preferences: spec.preferences,
+  submitsInDemo: spec.submitsInDemo,
   situation: spec.situation,
 }));
