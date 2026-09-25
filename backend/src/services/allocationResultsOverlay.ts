@@ -12,6 +12,7 @@
 import type {
   AllocationExplanation,
   AllocationFacts,
+  EnrollmentDropReason,
   EnrollmentSource,
   PreferenceRank,
   StudentAllocationResult,
@@ -33,6 +34,12 @@ export interface LiveStanding {
     string,
     { status: WaitlistStatus; position: number | null; reason: WaitlistRemovalReason | null }
   >;
+  /**
+   * Why each seat they no longer hold was released, by course code. It is the
+   * difference between "an administrator took it back" and "you dropped it",
+   * and only the student's own row can tell them apart.
+   */
+  released: ReadonlyMap<string, EnrollmentDropReason>;
 }
 
 /** The fields every explanation carries, so one type can become another. */
@@ -40,6 +47,31 @@ function factsOf(explanation: AllocationExplanation): AllocationFacts {
   const { course, preferenceRank, score, finalRank, capacity, applicants, cutoffScore } =
     explanation;
   return { course, preferenceRank, score, finalRank, capacity, applicants, cutoffScore };
+}
+
+/**
+ * The sentence for the seat they hold now. The run's own ALLOCATED explanation
+ * still stands; a seat that arrived later needs its own words.
+ */
+function heldExplanation(
+  held: NonNullable<LiveStanding['held']>,
+  facts: AllocationFacts,
+  result: StudentAllocationResult,
+  released: AllocationExplanation | undefined,
+): AllocationExplanation {
+  switch (held.source) {
+    case 'WAITLIST_PROMOTION':
+      return {
+        ...facts,
+        type: 'PROMOTED',
+        fromCourse: released ? released.course : null,
+        fromRank: released ? released.preferenceRank : null,
+      };
+    case 'ADD':
+      return { ...facts, type: 'ADDED' };
+    case 'ALLOCATION':
+      return result.explanation;
+  }
 }
 
 export function applyLiveStanding(
@@ -70,23 +102,22 @@ export function applyLiveStanding(
     const code = facts.course.code;
 
     if (held?.code === code) {
-      const explanation: AllocationExplanation =
-        held.source === 'WAITLIST_PROMOTION'
-          ? {
-              ...facts,
-              type: 'PROMOTED',
-              fromCourse: released ? released.course : null,
-              fromRank: released ? released.preferenceRank : null,
-            }
-          : result.explanation;
-      return { outcome: 'ALLOCATED', explanation };
+      return { outcome: 'ALLOCATED', explanation: heldExplanation(held, facts, result, released) };
     }
 
     // The run gave them this seat and they no longer hold it.
     if (result.explanation.type === 'ALLOCATED') {
+      if (held) {
+        return { outcome: 'NOT_ALLOCATED', explanation: higherChoiceGranted(facts) };
+      }
       return {
         outcome: 'NOT_ALLOCATED',
-        explanation: held ? higherChoiceGranted(facts) : { ...facts, type: 'SEAT_WITHDRAWN' },
+        explanation: {
+          ...facts,
+          // A drop and a withdrawal both leave the seat gone; only the reason
+          // says whether the student chose it.
+          type: live.released.get(code) === 'ADMIN_WITHDRAWAL' ? 'SEAT_WITHDRAWN' : 'SEAT_DROPPED',
+        },
       };
     }
 

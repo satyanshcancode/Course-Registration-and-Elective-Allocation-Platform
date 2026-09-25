@@ -22,6 +22,13 @@ export interface RegistrationWindowSummary {
   status: RegistrationWindowStatus;
   startsAt: IsoDateTime;
   endsAt: IsoDateTime;
+  /**
+   * The add/drop period, set by an admin after allocation. Both ends or
+   * neither: null means no period has been scheduled, so no student add/drop
+   * action is accepted (see `canAddDropNow`).
+   */
+  addDropOpensAt: IsoDateTime | null;
+  addDropClosesAt: IsoDateTime | null;
 }
 
 /**

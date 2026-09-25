@@ -59,6 +59,28 @@ export type {
 } from './api/allocation.js';
 export { ALLOCATION_EXPLANATION_TYPES } from './api/allocation.js';
 export type {
+  AddDropAction,
+  AddDropCourse,
+  AddDropOutcome,
+  AddDropPeriod,
+  AddDropProblem,
+  AddDropProblemType,
+  AddDropResult,
+  AddDropSeat,
+  AddDropView,
+  AddRequest,
+  DropRequest,
+  SwapRequest,
+  UpdateAddDropPeriodRequest,
+  WaitlistRequest,
+} from './api/addDrop.js';
+export {
+  ADD_DROP_ACTIONS,
+  ADD_DROP_PROBLEM_TYPES,
+  findSeatTaken,
+  readAddDropProblems,
+} from './api/addDrop.js';
+export type {
   AdminWaitlistView,
   EnrolledStudentRow,
   ProcessWaitlistsResult,

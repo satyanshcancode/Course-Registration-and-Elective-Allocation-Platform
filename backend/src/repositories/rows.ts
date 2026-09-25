@@ -230,6 +230,8 @@ export interface WindowSummaryRow {
   status: string;
   starts_at: Date;
   ends_at: Date;
+  add_drop_opens_at: Date | null;
+  add_drop_closes_at: Date | null;
 }
 
 /** One offering with its course, department, demand and rule lists (JSON arrays). */
