@@ -4,6 +4,7 @@ import { createAuthController } from '../controllers/authController.js';
 import { createCartController } from '../controllers/cartController.js';
 import { createCourseController } from '../controllers/courseController.js';
 import { createEligibilityController } from '../controllers/eligibilityController.js';
+import { createAllocationController } from '../controllers/allocationController.js';
 import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
 import {
@@ -13,6 +14,7 @@ import {
 } from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
+import type { AllocationService } from '../services/allocationService.js';
 import type { AuthService } from '../services/authService.js';
 import type { CartService } from '../services/cartService.js';
 import type { CatalogueService } from '../services/catalogueService.js';
@@ -22,6 +24,7 @@ import type { RegistrationWindowService } from '../services/registrationWindowSe
 import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
 import { createAdminRouter } from './adminRoutes.js';
+import { createAdminAllocationRouter, createAllocationRouter } from './allocationRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createCartRouter, createRegistrationRouter } from './cartRoutes.js';
 import { createCourseRouter } from './courseRoutes.js';
@@ -41,6 +44,7 @@ export interface ApiServices {
   eligibilityService: EligibilityService;
   adminCourseService: AdminCourseService;
   registrationWindowService: RegistrationWindowService;
+  allocationService: AllocationService;
 }
 
 export interface ApiRouterOptions {
@@ -89,6 +93,9 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     '/eligibility',
     createEligibilityRouter(createEligibilityController(services.eligibilityService), requireAuth),
   );
+  const allocationController = createAllocationController(services.allocationService);
+  router.use('/allocation', createAllocationRouter(allocationController, requireAuth));
+  router.use('/admin', createAdminAllocationRouter(allocationController, requireAuth));
   router.use(
     '/admin',
     createAdminRouter(
