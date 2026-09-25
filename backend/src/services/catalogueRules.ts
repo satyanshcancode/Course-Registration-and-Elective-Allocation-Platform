@@ -49,8 +49,17 @@ const STATUS_PRECEDENCE: readonly CourseStatusRecord['kind'][] = [
   'DRAFT',
 ];
 
-/** Picks the student's single status for a course from their own records. */
-export function resolveMyStatus(records: readonly CourseStatusRecord[]): MyCourseStatus {
+/**
+ * Picks the student's single status for a course from their own records.
+ *
+ * `allocated` says the window's allocation has already run. After that, a
+ * course that is still only "submitted" is one the student did NOT get and is
+ * not waiting for — showing "Submitted · choice 3" then would be stale.
+ */
+export function resolveMyStatus(
+  records: readonly CourseStatusRecord[],
+  allocated = false,
+): MyCourseStatus {
   const precedence = (record: CourseStatusRecord) => STATUS_PRECEDENCE.indexOf(record.kind);
   const strongest = [...records].sort((a, b) => precedence(a) - precedence(b))[0];
   if (!strongest) {
@@ -62,7 +71,9 @@ export function resolveMyStatus(records: readonly CourseStatusRecord[]): MyCours
     case 'WAITLISTED':
       return { code: 'WAITLISTED', position: strongest.position };
     case 'SUBMITTED':
-      return { code: 'SUBMITTED', rank: strongest.rank };
+      return allocated
+        ? { code: 'NOT_ALLOCATED', rank: strongest.rank }
+        : { code: 'SUBMITTED', rank: strongest.rank };
     case 'DRAFT':
       return { code: 'IN_DRAFT_CART', rank: strongest.rank };
   }

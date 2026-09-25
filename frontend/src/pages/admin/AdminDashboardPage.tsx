@@ -1,5 +1,12 @@
-import type { AdminCourseList, AdminCourseOffering, AdminWindowDetail } from '@course-reg/shared';
+import type {
+  AdminCourseList,
+  AdminCourseOffering,
+  AdminWindowDetail,
+  AllocationRunSummary,
+} from '@course-reg/shared';
 import { CalendarClock } from 'lucide-react';
+import { Link } from 'react-router';
+import { getAllocationRuns } from '../../api/allocationApi';
 import { getAdminCourses, getRegistrationWindow } from '../../api/adminApi';
 import { unwrap } from '../../api/unwrap';
 import { LinkButton } from '../../components/Button';
@@ -12,6 +19,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { formatRate } from '../../utils/allocationText';
 import { describeDemand } from '../../utils/courseText';
 import { formatDateTime } from '../../utils/formatDate';
 import { formatDemandRatio } from '../../utils/formatSeats';
@@ -23,6 +31,7 @@ const TOP_COURSES = 5;
 interface AdminDashboardData {
   detail: AdminWindowDetail;
   courses: AdminCourseList;
+  runs: AllocationRunSummary[];
 }
 
 const columns: Column<AdminCourseOffering>[] = [
@@ -48,11 +57,12 @@ export function AdminDashboardPage() {
   useDocumentTitle('Admin dashboard');
   const { state, retry } = useAsync<AdminDashboardData>(async (signal) => {
     // Independent requests, so they run together rather than one after the other.
-    const [detail, courses] = await Promise.all([
+    const [detail, courses, runs] = await Promise.all([
       getRegistrationWindow(signal),
       getAdminCourses(signal),
+      getAllocationRuns(signal),
     ]);
-    return { detail: unwrap(detail), courses: unwrap(courses) };
+    return { detail: unwrap(detail), courses: unwrap(courses), runs: unwrap(runs) };
   });
 
   const data = state.status === 'success' ? state.data : undefined;
@@ -103,6 +113,8 @@ export function AdminDashboardPage() {
                 <strong>{data.detail.counts.submissions}</strong> submissions so far
               </p>
 
+              <AllocationSummary runs={data.runs} />
+
               <Card title="Most demanded courses" kicker="Top 5" headingLevel={2}>
                 <DataTable
                   caption="The five courses with the most submitted requests"
@@ -150,5 +162,47 @@ export function AdminDashboardPage() {
         )}
       </div>
     </>
+  );
+}
+
+/** Once allocation has run, its headline numbers belong on the dashboard. */
+function AllocationSummary({ runs }: { runs: readonly AllocationRunSummary[] }) {
+  const completed = runs.find((run) => run.status === 'COMPLETED');
+  const metrics = completed?.metrics;
+  if (!completed || !metrics) {
+    return null;
+  }
+  return (
+    <Card title="Allocation" kicker="Completed" headingLevel={2}>
+      <dl className={styles.record}>
+        <div>
+          <dt>Method</dt>
+          <dd>
+            {completed.method === 'FCFS' ? 'First come, first served' : 'Preference + Priority'}
+          </dd>
+        </div>
+        <div>
+          <dt>Students placed</dt>
+          <dd className={styles.mono}>
+            {metrics.allocated} of {metrics.students}
+          </dd>
+        </div>
+        <div>
+          <dt>Got their first choice</dt>
+          <dd className={styles.mono}>{formatRate(metrics.firstChoiceRate)}</dd>
+        </div>
+        <div>
+          <dt>Waitlist entries</dt>
+          <dd className={styles.mono}>{metrics.waitlistEntries}</dd>
+        </div>
+        <div>
+          <dt>Justified envy</dt>
+          <dd className={styles.mono}>{metrics.justifiedEnvy}</dd>
+        </div>
+      </dl>
+      <p className={dashboard.counts}>
+        <Link to={`/admin/allocation-runs/${completed.id}`}>See the full run</Link>
+      </p>
+    </Card>
   );
 }

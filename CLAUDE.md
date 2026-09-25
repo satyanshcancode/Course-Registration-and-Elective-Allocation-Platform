@@ -179,6 +179,34 @@
 - The cart page's reordering must stay usable from the keyboard: Move up /
   Move down are the mechanism, drag-and-drop is an enhancement.
 
+## Allocation conventions (Phase 8)
+
+- **The engine in `backend/src/allocation/` stays pure**: no database, no
+  clock, no `Math.random`, no imports from `services/` or `repositories/`.
+  It is a function of its input, which is what makes a run reproducible and
+  the property-based tests possible. Randomness enters as a seed; the runtime
+  measurement is added by `runStrategy`, which owns a clock.
+- **Allocation only happens through `allocationService.run`** — never from a
+  controller, a script or a repository. It is one transaction that locks the
+  window `FOR UPDATE`, builds the snapshot, runs the window's FROZEN
+  strategy, writes results, enrollments, waitlist entries, history,
+  notifications and the audit row, then marks the run COMPLETED and the
+  window ALLOCATED. It can complete once per window.
+- Strategies are classes implementing `AllocationStrategy`, chosen by
+  `strategyFor(method)` whose `default` branch takes a `never`. Bump
+  `algorithmVersion` whenever the output could change: `verify` compares it.
+- `input_snapshot` IS the engine's input as JSON. Never rebuild it from
+  today's database when verifying — that is what makes the check meaningful.
+- Timestamps on `allocation_runs` come from the database's `now()`, not a JS
+  Date: `started_at` already does, and mixing clocks trips the
+  `finished_at >= started_at` CHECK.
+- Justified envy is always measured on the preference-priority scale, even
+  for an FCFS run, so the two methods are compared on the same terms.
+- Explanations are a discriminated union in `shared/src/api/allocation.ts`,
+  formatted in exactly one place (`frontend/src/utils/allocationText.ts`)
+  whose `default` branch takes a `never`. They carry the student's own
+  standing only — never another student's identity or data.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one

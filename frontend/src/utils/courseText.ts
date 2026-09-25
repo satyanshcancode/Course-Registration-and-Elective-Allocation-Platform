@@ -16,6 +16,8 @@ export function describeMyStatus(status: MyCourseStatus): string {
       return 'Enrolled';
     case 'WAITLISTED':
       return `Waitlisted · #${status.position}`;
+    case 'NOT_ALLOCATED':
+      return `Choice ${status.rank} · not allocated`;
   }
 }
 

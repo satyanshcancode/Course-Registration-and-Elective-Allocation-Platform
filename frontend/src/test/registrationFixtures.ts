@@ -1,11 +1,15 @@
 import {
   DEFAULT_PREFERENCE_PRIORITY_CONFIG,
   type AdminWindowDetail,
+  type AllocationMetrics,
+  type AllocationPreview,
+  type AllocationRunDetail,
   type CartItem,
   type CourseEligibility,
   type EligibilityOverview,
   type PreferenceCart,
   type PreferenceRank,
+  type StudentAllocationResults,
   type SubmissionReceipt,
   type WindowCourseOption,
 } from '@course-reg/shared';
@@ -167,3 +171,150 @@ export function receiptFor(cart: PreferenceCart): SubmissionReceipt {
     serverTime: SERVER_TIME,
   };
 }
+
+export function allocationMetrics(overrides: Partial<AllocationMetrics> = {}): AllocationMetrics {
+  return {
+    students: 150,
+    allocated: 142,
+    unallocated: 8,
+    firstChoiceRate: 0.43,
+    topThreeRate: 0.93,
+    averageAllocatedRank: 1.63,
+    seatsOffered: 865,
+    seatsFilled: 142,
+    seatUtilisation: 0.16,
+    waitlistEntries: 101,
+    justifiedEnvy: 0,
+    runtimeMs: 15,
+    courses: [
+      {
+        course: { code: 'CS401', name: 'Artificial Intelligence' },
+        capacity: 20,
+        applicants: 116,
+        allocated: 20,
+        waitlisted: 85,
+        cutoffScore: 185,
+        oversubscribed: true,
+      },
+      {
+        course: { code: 'EC302', name: 'VLSI Design' },
+        capacity: 30,
+        applicants: 18,
+        allocated: 0,
+        waitlisted: 0,
+        cutoffScore: null,
+        oversubscribed: false,
+      },
+    ],
+    ...overrides,
+  };
+}
+
+/** FCFS looks close on the headline rates and terrible on justified envy. */
+export const allocationPreview: AllocationPreview = {
+  window: { ...fallWindow, status: 'CLOSED' },
+  submissions: 150,
+  randomSeed: 2026091801,
+  methods: [
+    {
+      method: 'FCFS',
+      algorithmVersion: 'fcfs-1.0.0',
+      willBeUsed: false,
+      metrics: allocationMetrics({
+        allocated: 140,
+        unallocated: 10,
+        averageAllocatedRank: 1.61,
+        justifiedEnvy: 78,
+        seatsFilled: 140,
+        waitlistEntries: 96,
+        runtimeMs: 9,
+      }),
+    },
+    {
+      method: 'PREFERENCE_PRIORITY',
+      algorithmVersion: 'deferred-acceptance-1.0.0',
+      willBeUsed: true,
+      metrics: allocationMetrics(),
+    },
+  ],
+  serverTime: SERVER_TIME,
+};
+
+export function allocationRun(overrides: Partial<AllocationRunDetail> = {}): AllocationRunDetail {
+  return {
+    id: '11111111-2222-3333-4444-555555555555',
+    method: 'PREFERENCE_PRIORITY',
+    algorithmVersion: 'deferred-acceptance-1.0.0',
+    status: 'COMPLETED',
+    startedAt: '2026-09-25T10:43:03.000Z',
+    finishedAt: '2026-09-25T10:43:03.600Z',
+    errorMessage: null,
+    metrics: allocationMetrics(),
+    triggeredBy: null,
+    window: { ...fallWindow, status: 'ALLOCATED' },
+    randomSeed: 2026091801,
+    config: DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+    outputHash: 'b064a17bf12abef3c05d2b39f7aa2cddc6a39b14c023412dd33718abe5381287',
+    inputSize: { students: 150, courses: 20 },
+    ...overrides,
+  };
+}
+
+const aiFacts = {
+  course: { code: 'CS401', name: 'Artificial Intelligence' },
+  preferenceRank: 1 as const,
+  score: {
+    preferenceRank: 1 as const,
+    preferencePoints: 100,
+    bonuses: [{ type: 'FINAL_YEAR' as const, points: 20 }],
+    priorityPoints: 20,
+    total: 120,
+  },
+  finalRank: 27,
+  capacity: 20,
+  applicants: 116,
+  cutoffScore: 185,
+};
+
+export const studentResults: StudentAllocationResults = {
+  window: { ...fallWindow, status: 'ALLOCATED' },
+  ranAt: '2026-09-25T10:43:03.600Z',
+  method: 'PREFERENCE_PRIORITY',
+  allocated: {
+    type: 'ALLOCATED',
+    ...aiFacts,
+    course: { code: 'CS402', name: 'Cloud Security' },
+    preferenceRank: 2,
+    finalRank: 17,
+    capacity: 30,
+    applicants: 77,
+    cutoffScore: 80,
+  },
+  results: [
+    { outcome: 'WAITLISTED', explanation: { type: 'WAITLISTED', waitlistPosition: 7, ...aiFacts } },
+    {
+      outcome: 'ALLOCATED',
+      explanation: {
+        type: 'ALLOCATED',
+        ...aiFacts,
+        course: { code: 'CS402', name: 'Cloud Security' },
+        preferenceRank: 2,
+        finalRank: 17,
+        capacity: 30,
+        applicants: 77,
+        cutoffScore: 80,
+      },
+    },
+  ],
+  serverTime: SERVER_TIME,
+};
+
+/** Before allocation has run: the window exists, the result does not. */
+export const pendingResults: StudentAllocationResults = {
+  window: fallWindow,
+  ranAt: null,
+  method: null,
+  allocated: null,
+  results: [],
+  serverTime: SERVER_TIME,
+};

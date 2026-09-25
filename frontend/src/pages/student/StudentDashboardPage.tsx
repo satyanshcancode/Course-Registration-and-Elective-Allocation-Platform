@@ -3,13 +3,15 @@ import {
   type CurrentWindowResponse,
   type EligibilityOverview,
   type PreferenceCart,
+  type StudentAllocationResults,
   type UnreadNotificationCount,
 } from '@course-reg/shared';
-import { BadgeCheck, Bell, BookOpen, ShoppingCart } from 'lucide-react';
+import { BadgeCheck, Bell, BookOpen, ListChecks, ShoppingCart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { apiClient } from '../../api/apiClient';
 import { getCurrentWindow } from '../../api/courseApi';
+import { getMyAllocationResults } from '../../api/allocationApi';
 import { getEligibility } from '../../api/eligibilityApi';
 import { unwrap } from '../../api/unwrap';
 import { LinkButton } from '../../components/Button';
@@ -33,10 +35,34 @@ interface DashboardData extends Record<string, unknown> {
   registration: CurrentWindowResponse;
   eligibility: EligibilityOverview;
   notifications: UnreadNotificationCount;
+  results: StudentAllocationResults;
 }
 
-/** What the student should do next, given the window AND their own cart. */
-function nextSteps(status: string | undefined, cart: PreferenceCart | null): string[] {
+/** What the student should do next, given the window, their cart AND their result. */
+function nextSteps(
+  status: string | undefined,
+  cart: PreferenceCart | null,
+  results: StudentAllocationResults | null,
+): string[] {
+  if (status === 'ALLOCATED' && results?.ranAt) {
+    const waiting = results.results.filter((row) => row.outcome === 'WAITLISTED').length;
+    const queued =
+      waiting > 0
+        ? `You are on ${waiting} ${waiting === 1 ? 'waitlist' : 'waitlists'} and move up automatically when seats free up.`
+        : 'You are not waiting for anything else.';
+    return results.allocated
+      ? [
+          `You have a seat in ${results.allocated.course.code} ${results.allocated.course.name}.`,
+          queued,
+          'Use add/drop if your timetable needs a change.',
+        ]
+      : [
+          'No seat this round. Open your results to see how close you came on each course.',
+          queued,
+          'Use add/drop to pick up a course that still has seats.',
+        ];
+  }
+
   if (status === 'OPEN' && cart) {
     if (cart.status === 'SUBMITTED') {
       return [
@@ -100,6 +126,7 @@ export function StudentDashboardPage() {
           signal,
         }),
       ),
+    results: async (signal) => unwrap(await getMyAllocationResults(signal)),
   });
 
   const registration =
@@ -188,7 +215,11 @@ export function StudentDashboardPage() {
 
           <Card title="What to do next" kicker="Guidance" headingLevel={2}>
             <ol className={dashboard.steps}>
-              {nextSteps(windowSummary?.status, cart?.cart ?? null).map((step) => (
+              {nextSteps(
+                windowSummary?.status,
+                cart?.cart ?? null,
+                sections.results.status === 'success' ? sections.results.data : null,
+              ).map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
@@ -196,6 +227,17 @@ export function StudentDashboardPage() {
         </div>
 
         <div className={dashboard.side}>
+          <Section
+            title="Your result"
+            kicker="Allocation"
+            state={sections.results}
+            onRetry={() => {
+              retry('results');
+            }}
+          >
+            {(data) => <ResultSummary results={data} />}
+          </Section>
+
           <Card title="Your cart" kicker="Preferences" headingLevel={2}>
             <CartSummary cart={cart?.cart ?? null} />
           </Card>
@@ -241,6 +283,31 @@ export function StudentDashboardPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/** The outcome at a glance, once allocation has run. */
+function ResultSummary({ results }: { results: StudentAllocationResults }) {
+  if (!results.ranAt) {
+    return <p className={dashboard.muted}>Results appear once allocation has run.</p>;
+  }
+  return (
+    <div className={dashboard.eligibility}>
+      <p className={dashboard.count}>
+        {results.allocated
+          ? `${results.allocated.course.code} ${results.allocated.course.name}`
+          : 'No seat this round'}
+      </p>
+      <p className={dashboard.muted}>
+        {results.allocated
+          ? `Your choice ${results.allocated.preferenceRank}.`
+          : 'You are on the waitlist for the courses you ranked.'}
+      </p>
+      <Link to="/student/results" className={dashboard.link}>
+        <ListChecks aria-hidden="true" className={dashboard.linkIcon} />
+        See why
+      </Link>
+    </div>
   );
 }
 

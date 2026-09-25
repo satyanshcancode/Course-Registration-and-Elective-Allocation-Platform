@@ -26,7 +26,7 @@ add/drop, and a personal registration history.
 | 1   | Course catalogue with live seat counts        | **Done** (see below) |
 | 2   | Eligibility pre-check before the window opens | **Done** (see below) |
 | 3   | Registration cart with atomic submit          | **Done** (see below) |
-| 4   | Fair allocation for oversubscribed electives  | Planned              |
+| 4   | Fair allocation for oversubscribed electives  | **Done** (see below) |
 | 5   | Waitlist with automatic promotion             | Planned              |
 | 6   | Add/drop                                      | Planned              |
 | 7   | Registration status and history               | Planned              |
@@ -94,6 +94,32 @@ add/drop, and a personal registration history.
   attempted directly. Seats per course stay editable.
 - Opening also notifies every student, in the same transaction. Every change,
   open and close is written to `audit_logs` with old and new values.
+
+**Allocation** (`/admin/allocation-runs`, `/student/results`):
+
+- Two methods behind one `AllocationStrategy` interface: **FCFS** (submission
+  order) and **Preference + Priority** (student-proposing deferred
+  acceptance). The engine is a pure function — no database, no clock, no
+  `Math.random` — so a run is reproducible and testable without a server.
+- Score = preference weight (P1 100 … P5 20) + final year +20 + programme
+  relevance +25 + graduation urgency +40, with ties broken by one seeded
+  number per student. Students see the score as the sum it actually is.
+- **Preview** runs both methods on a fresh snapshot and shows them side by
+  side, writing nothing. On the demo data: identical first-choice rates, but
+  FCFS leaves **78** cases of justified envy against Preference + Priority's
+  **0**.
+- **Run** is one transaction: results, enrollments, waitlist entries, history,
+  a notification per student, an audit row, then the window becomes
+  `ALLOCATED`. It can only complete once. A fault injected mid-way rolls back
+  every table and records the run as `FAILED`.
+- **Verify** re-runs the stored input snapshot through the same algorithm
+  version and compares output hashes.
+- Students get a plain-English explanation per ranked course — "Waitlisted,
+  #7. You ranked it 1st. Your score for this course was 145 (1st preference
+  100 + final year 20 + programme relevance 25). 20 seats went to applicants
+  with scores of 150 or higher." — and never see another student's data.
+- The full rule book, with a worked example and the fairness argument:
+  [docs/ALLOCATION.md](docs/ALLOCATION.md).
 
 **Dashboards** — the student dashboard loads the window, the eligibility
 summary and the notification count together with `Promise.allSettled`, so one
@@ -230,6 +256,20 @@ See [docs/DATABASE.md](docs/DATABASE.md#seed-data) for what gets created.
 `seed:demo-submissions` deliberately leaves **aarav.sharma** and **priya.nair**
 without a submission, so the cart and the atomic submit can be demonstrated
 live rather than described.
+
+### Demo stages
+
+```bash
+npm run docker:demo:reset -- --stage=draft      # base seed, window not open yet
+npm run docker:demo:reset -- --stage=open       # + ~150 submissions
+npm run docker:demo:reset -- --stage=closed     # + registration closed
+npm run docker:demo:reset -- --stage=allocated  # + allocation run for real
+```
+
+Each stage is cumulative and goes through the real service, not a shortcut
+`UPDATE`: closing freezes the policy and notifies every student, and
+allocating runs the same transaction the admin's button runs. Outside Docker:
+`npm run demo:reset -- --stage=...`. It refuses to run in production.
 
 ### Proving the concurrency guarantees
 
