@@ -52,7 +52,14 @@ export interface SubmitServiceDependencies {
   catalogue: CourseCatalogueRepository;
   students: StudentRepository;
   preferences: PreferenceRepository;
+  /**
+   * Repositories bound to the transaction's own client. Everything read
+   * inside the transaction MUST use these: asking the pool for a second
+   * client while holding one deadlocks as soon as the pool is saturated.
+   */
   preferencesFor: (client: PoolClient) => PreferenceRepository;
+  catalogueFor: (client: PoolClient) => CourseCatalogueRepository;
+  studentsFor: (client: PoolClient) => StudentRepository;
   historyFor: (client: PoolClient) => RegistrationHistoryRepository;
   notificationsFor: (client: PoolClient) => NotificationRepository;
   now?: () => Date;
@@ -65,15 +72,26 @@ export function createSubmitService({
   students,
   preferences,
   preferencesFor,
+  catalogueFor,
+  studentsFor,
   historyFor,
   notificationsFor,
   now = () => new Date(),
 }: SubmitServiceDependencies): SubmitService {
-  /** Re-derives eligibility from the database; the saved draft is never trusted. */
-  async function loadCandidates(studentId: string, windowId: string) {
+  /**
+   * Re-derives eligibility from the database; the saved draft is never
+   * trusted. `courses` and `profiles` are the caller's repositories, so a
+   * transaction passes its own client-bound ones.
+   */
+  async function loadCandidates(
+    studentId: string,
+    windowId: string,
+    courses: CourseCatalogueRepository,
+    profiles: StudentRepository,
+  ) {
     const [offerings, facts] = await Promise.all([
-      catalogue.listOfferings(windowId),
-      students.findEligibilityFacts(studentId),
+      courses.listOfferings(windowId),
+      profiles.findEligibilityFacts(studentId),
     ]);
     if (!facts) {
       throw AppError.notFound('Student profile not found.');
@@ -171,11 +189,13 @@ export function createSubmitService({
           throw cartProblemError([{ type: 'ALREADY_SUBMITTED' }], 409);
         }
 
-        // 4. Re-validate from scratch against freshly read rows.
+        // 4. Re-validate from scratch against freshly read rows, using this
+        //    transaction's client throughout.
         const requested = [...courseCodes];
+        const transactionCatalogue = catalogueFor(client);
         const [candidates, existing] = await Promise.all([
-          loadCandidates(studentId, current.id),
-          catalogue.findExistingCodes(requested),
+          loadCandidates(studentId, current.id, transactionCatalogue, studentsFor(client)),
+          transactionCatalogue.findExistingCodes(requested),
         ]);
         const validation = validateCart(requested, candidates, existing);
         if (validation.problems.length > 0) {
