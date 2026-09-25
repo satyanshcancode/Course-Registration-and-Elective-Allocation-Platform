@@ -16,7 +16,8 @@
     "seed:demo-submissions": "tsx --conditions=source src/database/seeds/seedDemoSubmissions.ts",
     "seed:prod": "node dist/database/seeds/seed.js",
     "seed:demo-submissions:prod": "node dist/database/seeds/seedDemoSubmissions.js",
-    "demo:concurrent-submit": "tsx --conditions=source src/scripts/demoConcurrentSubmit.ts"
+    "demo:concurrent-submit": "tsx --conditions=source src/scripts/demoConcurrentSubmit.ts",
+    "demo:reset": "tsx --conditions=source src/scripts/demoReset.ts"
   },
   "dependencies": {
     "@course-reg/shared": "0.1.0",

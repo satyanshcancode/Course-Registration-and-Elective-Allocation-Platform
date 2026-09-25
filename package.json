@@ -20,6 +20,7 @@
     "seed": "npm run seed -w backend",
     "seed:demo-submissions": "npm run seed:demo-submissions -w backend",
     "demo:concurrent-submit": "npm run demo:concurrent-submit -w backend --",
+    "demo:reset": "npm run demo:reset -w backend --",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -34,7 +35,8 @@
     "docker:migrate": "docker compose exec backend npm run migrate",
     "docker:seed": "docker compose exec backend npm run seed",
     "docker:seed:demo-submissions": "docker compose exec backend npm run seed:demo-submissions",
-    "docker:demo:concurrent-submit": "docker compose exec backend npm run demo:concurrent-submit --"
+    "docker:demo:concurrent-submit": "docker compose exec backend npm run demo:concurrent-submit --",
+    "docker:demo:reset": "docker compose exec backend npm run demo:reset --"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -59,6 +59,10 @@ const AllocationRunsPage = lazyNamed(
   () => import('../pages/admin/AllocationRunsPage'),
   'AllocationRunsPage',
 );
+const AllocationRunDetailPage = lazyNamed(
+  () => import('../pages/admin/AllocationRunDetailPage'),
+  'AllocationRunDetailPage',
+);
 const AdminWaitlistsPage = lazyNamed(
   () => import('../pages/admin/AdminWaitlistsPage'),
   'AdminWaitlistsPage',
@@ -137,6 +141,7 @@ export const routes: RouteObject[] = [
               { path: 'students', element: <AdminStudentsPage /> },
               { path: 'registration-window', element: <RegistrationWindowPage /> },
               { path: 'allocation-runs', element: <AllocationRunsPage /> },
+              { path: 'allocation-runs/:id', element: <AllocationRunDetailPage /> },
               { path: 'waitlists', element: <AdminWaitlistsPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],

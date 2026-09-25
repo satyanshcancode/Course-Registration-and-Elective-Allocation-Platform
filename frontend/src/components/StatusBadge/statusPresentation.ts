@@ -1,5 +1,6 @@
 import type {
   AllocationOutcome,
+  AllocationRunStatus,
   EnrollmentStatus,
   MyCourseStatusCode,
   RegistrationWindowStatus,
@@ -30,6 +31,8 @@ export type EligibilityStatus = 'ELIGIBLE' | 'NOT_ELIGIBLE';
 /** Every status family the UI shows, keyed by kind. */
 export interface StatusKinds {
   allocation: AllocationOutcome;
+  /** How an allocation run itself ended. */
+  allocationRun: AllocationRunStatus;
   enrollment: EnrollmentStatus;
   waitlist: WaitlistStatus;
   submission: SubmissionStatus;
@@ -58,6 +61,11 @@ export const STATUS_PRESENTATION: {
     ALLOCATED: { tone: 'success', icon: CircleCheck, label: 'Allocated' },
     WAITLISTED: { tone: 'warning', icon: Hourglass, label: 'Waitlisted' },
     NOT_ALLOCATED: { tone: 'danger', icon: CircleX, label: 'Not allocated' },
+  },
+  allocationRun: {
+    RUNNING: { tone: 'info', icon: Clock, label: 'Running' },
+    COMPLETED: { tone: 'success', icon: CircleCheck, label: 'Completed' },
+    FAILED: { tone: 'danger', icon: CircleX, label: 'Failed' },
   },
   enrollment: {
     ACTIVE: { tone: 'success', icon: CircleCheck, label: 'Enrolled' },

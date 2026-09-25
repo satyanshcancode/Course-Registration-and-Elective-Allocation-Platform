@@ -1,0 +1,286 @@
+/*
+ * Allocation is the registrar's most consequential screen, so it reads like a
+ * printed report: sections separated by hairlines, numbers in tabular figures,
+ * one accent colour and no decoration.
+ */
+.body {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.heading {
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-md);
+}
+
+.subheading {
+  font-size: var(--text-base);
+}
+
+.stage,
+.preview,
+.metrics,
+.runs,
+.verify {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.stage,
+.metrics,
+.verify {
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.stageStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  max-width: 70ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.muted {
+  color: var(--color-ink-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-code);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.previewError {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+/* The comparison table: rows are measures, columns are methods. */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-hairline);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table thead th {
+  border-bottom: 1px solid var(--color-rule-strong);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.table tbody th {
+  font-weight: var(--weight-regular);
+}
+
+.willUse {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-accent);
+  font-size: var(--text-2xs);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.metricLabel {
+  display: block;
+}
+
+.metricHint {
+  display: block;
+  max-width: 34ch;
+  margin-top: var(--space-0);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-dense);
+}
+
+.metricValue {
+  font-variant-numeric: tabular-nums;
+}
+
+.metricValue[data-leader='true'] {
+  font-weight: var(--weight-semibold);
+}
+
+/* Words, not colour: the leading cell says so. */
+.leaderNote {
+  display: block;
+  color: var(--color-accent);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-regular);
+}
+
+.tradeoffs {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+}
+
+.tradeoffs ul {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 78ch;
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* Key/value pairs in a responsive grid. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.facts dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.facts dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.config summary {
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.config pre {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.rates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4);
+}
+
+.rate {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.rateLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.rateValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+}
+
+/* A slim horizontal bar; the number beside it is the real answer. */
+.bar {
+  block-size: 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-sunken);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  block-size: 100%;
+  background-color: var(--color-accent);
+}
+
+.rateNote {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.verdict {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+}
+
+.verdict[data-reproducible='true'] {
+  border-color: var(--color-success);
+  background-color: var(--color-success-soft);
+}
+
+.verdict[data-reproducible='false'] {
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-soft);
+}
+
+.verdictLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.verdict ul {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+}
