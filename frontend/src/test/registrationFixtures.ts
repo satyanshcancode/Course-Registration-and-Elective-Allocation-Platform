@@ -1,5 +1,6 @@
 import {
   DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+  type AdminWaitlistView,
   type AdminWindowDetail,
   type AllocationMetrics,
   type AllocationPreview,
@@ -9,7 +10,10 @@ import {
   type EligibilityOverview,
   type PreferenceCart,
   type PreferenceRank,
+  type PromotionSummary,
   type StudentAllocationResults,
+  type StudentWaitlist,
+  type StudentWaitlistEntry,
   type SubmissionReceipt,
   type WindowCourseOption,
 } from '@course-reg/shared';
@@ -317,4 +321,91 @@ export const pendingResults: StudentAllocationResults = {
   allocated: null,
   results: [],
   serverTime: SERVER_TIME,
+};
+
+// ---------------------------------------------------------------------------
+// Waitlists (Phase 9)
+// ---------------------------------------------------------------------------
+
+export function waitlistEntry(overrides: Partial<StudentWaitlistEntry> = {}): StudentWaitlistEntry {
+  return {
+    course: { code: 'CS401', name: 'Artificial Intelligence' },
+    preferenceRank: 1,
+    status: 'WAITING',
+    position: 3,
+    waiting: 18,
+    capacity: 20,
+    allocated: 20,
+    score: 120,
+    reason: null,
+    endedAt: null,
+    ...overrides,
+  };
+}
+
+/** Waiting for their first choice while holding their second. */
+export const studentWaitlist: StudentWaitlist = {
+  window: { ...fallWindow, status: 'ALLOCATED' },
+  held: { course: { code: 'CS402', name: 'Cloud Security' }, rank: 2 },
+  waiting: [waitlistEntry()],
+  ended: [],
+  serverTime: SERVER_TIME,
+};
+
+export const emptyWaitlist: StudentWaitlist = {
+  window: { ...fallWindow, status: 'ALLOCATED' },
+  held: null,
+  waiting: [],
+  ended: [],
+  serverTime: SERVER_TIME,
+};
+
+export function adminWaitlistView(overrides: Partial<AdminWaitlistView> = {}): AdminWaitlistView {
+  return {
+    window: { ...fallWindow, status: 'ALLOCATED' },
+    courses: [
+      { code: 'CS401', name: 'Artificial Intelligence' },
+      { code: 'CS402', name: 'Cloud Security' },
+    ],
+    course: {
+      code: 'CS401',
+      name: 'Artificial Intelligence',
+      capacity: 20,
+      allocated: 20,
+      available: 0,
+    },
+    enrolled: [
+      {
+        enrollmentId: 'enrollment-1',
+        student: { name: 'Ada Iyer', email: 'ada@university.edu', program: 'CSE', semester: 7 },
+        source: 'ALLOCATION',
+        preferenceRank: 1,
+        enrolledAt: SERVER_TIME,
+      },
+    ],
+    waitlist: [
+      {
+        student: { name: 'Bo Nair', email: 'bo@university.edu', program: 'CSE', semester: 5 },
+        status: 'WAITING',
+        position: 1,
+        storedPosition: 4,
+        score: 120,
+        preferenceRank: 1,
+        reason: null,
+      },
+    ],
+    serverTime: SERVER_TIME,
+    ...overrides,
+  };
+}
+
+export const promotionSummary: PromotionSummary = {
+  promoted: [
+    {
+      student: { name: 'Bo Nair', email: 'bo@university.edu', program: 'CSE', semester: 5 },
+      course: { code: 'CS401', name: 'Artificial Intelligence' },
+      fromCourse: { code: 'CS403', name: 'Blockchain' },
+    },
+  ],
+  removed: [],
 };
