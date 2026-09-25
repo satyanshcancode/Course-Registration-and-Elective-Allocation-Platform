@@ -19,6 +19,10 @@ export default defineConfig({
     maxWorkers,
     env: {
       LOG_LEVEL: 'silent',
+      // The Docker image sets NODE_ENV=development, and Vitest leaves an
+      // explicit value alone. Declaring it here is what lets the test-only
+      // fault injection arm itself (see src/utils/faultInjection.ts).
+      NODE_ENV: 'test',
     },
     projects: [
       {

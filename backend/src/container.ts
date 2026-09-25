@@ -60,6 +60,8 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       students,
       preferences,
       preferencesFor: createPreferenceRepository,
+      catalogueFor: createCourseCatalogueRepository,
+      studentsFor: createStudentRepository,
       historyFor: createRegistrationHistoryRepository,
       notificationsFor: createNotificationRepository,
     }),
