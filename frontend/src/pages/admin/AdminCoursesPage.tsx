@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { CourseCode } from '../../components/CourseCode';
 import { DataTable, type DataTableStatus } from '../../components/DataTable';
 import { Icon } from '../../components/Icon';
+import type { UpdateCapacityResult } from '@course-reg/shared';
 import type { Column } from '../../components/DataTable/tableLogic';
 import { PageHeader } from '../../components/PageHeader';
 import { SeatMeter } from '../../components/SeatMeter';
@@ -37,13 +38,19 @@ export function AdminCoursesPage() {
         ? { kind: 'ready' }
         : { kind: 'loading' };
 
-  const handleSaved = (updated: AdminCourseOffering) => {
-    setSaved((current) => new Map(current).set(updated.code, updated));
+  const handleSaved = ({ offering, promotions }: UpdateCapacityResult) => {
+    setSaved((current) => new Map(current).set(offering.code, offering));
     setEditing(null);
+    // After allocation, new seats go straight to whoever is waiting for them,
+    // so the number that moved is part of what just happened.
+    const promoted = promotions?.promoted.length ?? 0;
     toast.show({
       tone: 'success',
-      title: `${updated.code} capacity is now ${updated.capacity}`,
-      message: 'The change is recorded in the audit log.',
+      title: `${offering.code} capacity is now ${offering.capacity}`,
+      message:
+        promoted === 0
+          ? 'The change is recorded in the audit log.'
+          : `${promoted} ${promoted === 1 ? 'student was' : 'students were'} promoted from the waitlist.`,
     });
   };
 

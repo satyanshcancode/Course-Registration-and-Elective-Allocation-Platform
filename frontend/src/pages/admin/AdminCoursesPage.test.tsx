@@ -111,7 +111,10 @@ describe('AdminCoursesPage', () => {
 
   it('saves, closes, confirms with a toast and updates the row', async () => {
     api.updateCapacity.mockResolvedValue(
-      ok(adminOffering({ capacity: 30, available: 18, demandRatio: 3.8 })),
+      ok({
+        offering: adminOffering({ capacity: 30, available: 18, demandRatio: 3.8 }),
+        promotions: null,
+      }),
     );
     const user = userEvent.setup();
     renderAdminCourses();

@@ -40,6 +40,13 @@ const EXAMPLES: Record<(typeof ALLOCATION_EXPLANATION_TYPES)[number], Allocation
   },
   NOT_ALLOCATED_FULL: { type: 'NOT_ALLOCATED_FULL', ...facts },
   NOT_ALLOCATED_INELIGIBLE: { type: 'NOT_ALLOCATED_INELIGIBLE', ...facts, score: null },
+  PROMOTED: {
+    type: 'PROMOTED',
+    fromCourse: { code: 'CS403', name: 'Blockchain' },
+    fromRank: 3,
+    ...facts,
+  },
+  SEAT_WITHDRAWN: { type: 'SEAT_WITHDRAWN', ...facts },
 };
 
 describe('ordinal', () => {
