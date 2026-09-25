@@ -24,6 +24,14 @@ function buildApp(repository: HealthRepository) {
         resolveSession: () => Promise.resolve(null),
         getCurrentUser: notUsed,
       },
+      allocationService: {
+        preview: notUsed,
+        run: notUsed,
+        listRuns: notUsed,
+        getRun: notUsed,
+        verify: notUsed,
+        getStudentResults: notUsed,
+      },
       studentService: { getOwnProfile: notUsed, countUnreadNotifications: notUsed },
       catalogueService: {
         getCurrentWindow: notUsed,

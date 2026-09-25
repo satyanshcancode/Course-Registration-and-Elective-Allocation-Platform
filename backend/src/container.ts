@@ -4,6 +4,7 @@
  */
 import type { Pool } from 'pg';
 import { SESSION_TTL_SECONDS } from './config/session.js';
+import { createAllocationRepository } from './repositories/allocationRepository.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
 import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
 import { createHealthRepository } from './repositories/healthRepository.js';
@@ -16,6 +17,7 @@ import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import type { ApiServices } from './routes/index.js';
 import { createAdminCourseService } from './services/adminCourseService.js';
+import { createAllocationService } from './services/allocationService.js';
 import { createAuthService } from './services/authService.js';
 import { createCartService } from './services/cartService.js';
 import { createCatalogueService } from './services/catalogueService.js';
@@ -35,6 +37,7 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
   const catalogue = createCourseCatalogueRepository(pool);
   const students = createStudentRepository(pool);
   const preferences = createPreferenceRepository(pool);
+  const allocations = createAllocationRepository(pool);
   return {
     healthService: createHealthService(createHealthRepository(pool)),
     authService: createAuthService({
@@ -70,6 +73,17 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       windows,
       catalogue,
       offeringsFor: createOfferingRepository,
+      auditLogsFor: createAuditLogRepository,
+    }),
+    allocationService: createAllocationService({
+      pool,
+      windows,
+      allocations,
+      auditLogs: createAuditLogRepository(pool),
+      allocationsFor: createAllocationRepository,
+      windowsFor: createRegistrationWindowRepository,
+      historyFor: createRegistrationHistoryRepository,
+      notificationsFor: createNotificationRepository,
       auditLogsFor: createAuditLogRepository,
     }),
     registrationWindowService: createRegistrationWindowService({
