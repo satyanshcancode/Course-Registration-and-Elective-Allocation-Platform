@@ -315,6 +315,31 @@ after opening returns 409, and a direct `UPDATE` of a frozen column raises.
 - **Not waitlisted and enrolled in the same course at once** spans two tables,
   so the service keeps it inside one transaction.
 
+### Waitlist promotion (migration 0010)
+
+Promotion has to be able to say WHY, so two nullable `TEXT` columns carry the
+reason, each with a named CHECK mirroring a const tuple in
+`shared/src/domain/enums.ts`:
+
+| Column                            | Values                                         | CHECK                                 |
+| --------------------------------- | ---------------------------------------------- | ------------------------------------- |
+| `enrollments.drop_reason`         | `UPGRADED`, `ADMIN_WITHDRAWAL`, `STUDENT_DROP` | Set exactly when `status = 'DROPPED'` |
+| `waitlist_entries.removal_reason` | `INELIGIBLE`, `RANKED_BELOW_SEAT`              | Set exactly when `status = 'REMOVED'` |
+
+The student and admin waitlist pages read these directly rather than
+reconstructing the reason from `registration_history`.
+
+Nothing else was needed: `enrollments.source` already allowed
+`WAITLIST_PROMOTION`, `registration_history.event_type` already allowed
+`PROMOTED`, `DROPPED` and `WAITLIST_REMOVED`, and
+`notifications.type` already allowed `WAITLIST_PROMOTION` — the schema was
+built for this in Phase 3.
+
+"Who is next in line" is answered by the existing unique partial index
+`waitlist_entries_waiting_position_idx` on `(window_id, course_id, position)
+WHERE status = 'WAITING'`, which is also what makes the next-in-line
+unambiguous.
+
 ## Catalogue queries and indexes
 
 A catalogue request runs a fixed number of queries, however many courses a

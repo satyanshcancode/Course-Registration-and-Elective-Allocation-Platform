@@ -196,7 +196,110 @@ also leaves 78 cases where a student was beaten to a seat by someone who
 scored lower for that course, and places two fewer students. That trade — a
 hundredth of a rank against 78 indefensible seats — is the whole argument.
 
-## 6. Reproducibility
+## 6. Waitlist promotion
+
+Allocation is a single moment; a term is not. Seats come free afterwards — an
+administrator adds capacity, a student is withdrawn, someone drops — and the
+queues built by the run are how those seats are filled. The engine for this is
+`services/waitlistPromotionService.ts`, and every path that frees a seat calls
+the same function, `processFreedSeats`, **inside its own transaction**: the
+action and the promotions it causes commit together or not at all.
+
+Promotion only happens while the window is `ALLOCATED`. Before that there are
+no queues to promote from; the service checks the status itself rather than
+trusting its caller.
+
+### Offering one seat
+
+When a course has a free seat, the student with the **lowest stored position**
+still `WAITING` is considered:
+
+- **Re-checked for eligibility**, from today's rows — not from what was true
+  when the cart was saved, and not from the run's snapshot. A student whose
+  record has moved under them has their entry `REMOVED` with the reason
+  `INELIGIBLE`, and the seat passes to the next in line rather than being left
+  empty.
+- **Eligible → promoted.** A new `enrollments` row with source
+  `WAITLIST_PROMOTION`, the entry marked `PROMOTED`.
+
+### Promotion is always an upgrade
+
+A student only ever waits for courses they ranked **above** whatever they hold,
+so moving up cannot be a demotion. When the promoted student was holding a
+lower-ranked seat:
+
+- that enrollment becomes `DROPPED` with `drop_reason = 'UPGRADED'`,
+- their `WAITING` entries for courses ranked **below** the new one are
+  `REMOVED` with the reason `RANKED_BELOW_SEAT` — waiting there could now only
+  be a downgrade,
+- and **the seat they released is processed the same way**. That is the
+  cascade: one withdrawal can move several students, each one upward.
+
+**The cascade always terminates.** Every promotion strictly improves one
+student's preference rank — 3rd choice to 1st, never sideways — and a rank
+cannot improve past 1. With `n` students and at most 5 preferences each, there
+are fewer than `5n` promotions available in total, so the work queue drains.
+The property-based tests run the whole thing on hundreds of random worlds;
+none of them loops.
+
+### Positions are computed, never rewritten
+
+`waitlist_entries.position` is written once, by the allocation run, and never
+touched again. What a student is shown — "3rd of 18 waiting" — is a rank among
+the entries that are still `WAITING`, computed in the query:
+
+```sql
+rank() OVER (PARTITION BY course_id ORDER BY position)
+```
+
+Promoting the person at position 1 therefore moves everybody below them up by
+one, with no `UPDATE` at all. Renumbering instead would mean rewriting a whole
+queue on every promotion, inside the transaction, while holding its locks —
+and would destroy the evidence of what the run originally decided.
+
+### What each promotion writes
+
+| Table                  | Row                                                               |
+| ---------------------- | ----------------------------------------------------------------- |
+| `enrollments`          | the new seat, source `WAITLIST_PROMOTION`                         |
+| `enrollments`          | the released seat, `DROPPED` with `drop_reason = 'UPGRADED'`      |
+| `waitlist_entries`     | the entry marked `PROMOTED`, and any now-pointless ones `REMOVED` |
+| `registration_history` | `PROMOTED`, plus `DROPPED` and `WAITLIST_REMOVED` as they happen  |
+| `notifications`        | one to the promoted student, naming both courses                  |
+| `audit_logs`           | one `WAITLIST_PROMOTION` row per promotion                        |
+
+`registration_window_courses.allocated_count` is not in that list on purpose:
+the trigger on `enrollments` maintains it, and its CHECK is what makes
+overbooking impossible even if this service were wrong.
+
+### The paths that free a seat
+
+1. **Capacity increased** — `PATCH /api/admin/courses/:code/capacity` calls the
+   service when the window is `ALLOCATED`, so new seats are never left empty
+   beside a queue.
+2. **A student withdrawn** — `POST /api/admin/enrollments/:id/withdraw`, with a
+   reason that goes to the student and into the audit log.
+3. **The sweep** — `POST /api/admin/waitlists/process` offers every free seat
+   in the window to whoever is waiting for it. Nothing should reach it, which
+   is exactly why it exists: it is the safety net for a seat that freed up
+   some other way.
+
+Phase 10's student drop will be the fourth, and will call the same function.
+
+### What the student sees
+
+`GET /api/students/me/waitlist` is their own queues and nobody else's, with the
+live position, the seats, their score and the upgrade rule spelled out in the
+words of their own situation.
+
+Their results page keeps the run's stored explanation as evidence and brings it
+up to date for display (`services/allocationResultsOverlay.ts`, pure and unit
+tested): a `PROMOTED` explanation naming the seat they gave up, a released seat
+explained by the better course they were given, and a `SEAT_WITHDRAWN` one for
+a seat an administrator took back. The stored `allocation_results` row is never
+rewritten — that is what makes a run verifiable.
+
+## 7. Reproducibility
 
 Every run stores what it would need to happen again:
 
@@ -220,7 +323,7 @@ the snapshot has not.
 If the algorithm version has changed since the run, the response says so
 explicitly rather than quietly reporting a mismatch.
 
-## 7. Running it
+## 8. Running it
 
 `POST /api/admin/allocation/run` (see `services/allocationService.ts`):
 
@@ -243,7 +346,7 @@ would otherwise be over a thousand round trips while holding the window lock.
 Allocation for a closed window can complete **once**. Afterwards the window is
 `ALLOCATED` and the service refuses another run.
 
-## 8. Demonstrating it
+## 9. Demonstrating it
 
 ```bash
 npm run docker:demo:reset -- --stage=closed   # 150 submissions, window closed
