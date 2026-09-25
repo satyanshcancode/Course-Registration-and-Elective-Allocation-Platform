@@ -10,6 +10,7 @@ import type { EligibilityResult } from '../domain/eligibility.js';
 import type { PreferenceRank, RegistrationWindowStatus } from '../domain/enums.js';
 import type { IsoDateTime } from '../domain/models.js';
 import type { CourseRef, DepartmentRef, ProgramRef } from '../domain/refs.js';
+import type { PromotionSummary } from './waitlist.js';
 
 // ---------------------------------------------------------------------------
 // Registration window
@@ -196,4 +197,14 @@ export const CAPACITY_REASON_LENGTH = { min: 5, max: 500 } as const;
 export interface UpdateCapacityRequest {
   capacity: number;
   reason: string;
+}
+
+/**
+ * The reply to a capacity change. On an ALLOCATED window the new seats are
+ * offered to the waitlist straight away, so the caller is told who moved.
+ */
+export interface UpdateCapacityResult {
+  offering: AdminCourseOffering;
+  /** Null unless the window is ALLOCATED, where promotion applies. */
+  promotions: PromotionSummary | null;
 }

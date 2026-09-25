@@ -42,9 +42,11 @@ import type {
   HistoryEntry,
 } from '../repositories/registrationHistoryRepository.js';
 import type { RegistrationWindowRepository } from '../repositories/registrationWindowRepository.js';
+import type { WaitlistRepository } from '../repositories/waitlistRepository.js';
 import { AppError } from '../utils/appError.js';
 import { logger } from '../utils/logger.js';
 import { injectFault } from '../utils/faultInjection.js';
+import { applyLiveStanding, type LiveStanding } from './allocationResultsOverlay.js';
 import { fromStoredInput, toEngineInput, toStoredInput } from './allocationSnapshot.js';
 
 /** Fault point a test can arm, to prove the rollback. See utils/faultInjection.ts. */
@@ -65,6 +67,8 @@ export interface AllocationServiceDependencies {
   windows: RegistrationWindowRepository;
   allocations: AllocationRepository;
   auditLogs: AuditLogRepository;
+  /** Read-only here: the run's stored explanations are brought up to date. */
+  waitlists: WaitlistRepository;
   /** Bound to the transaction's own client; see docs/CONCURRENCY.md. */
   allocationsFor: (client: PoolClient) => AllocationRepository;
   windowsFor: (client: PoolClient) => RegistrationWindowRepository;
@@ -87,6 +91,11 @@ function sentenceFor(explanation: AllocationExplanation): string {
       return `Not allocated ${explanation.course.code}: all ${explanation.capacity} seats went to higher-scoring applicants.`;
     case 'NOT_ALLOCATED_INELIGIBLE':
       return `Not allocated ${explanation.course.code}: no longer eligible at allocation time.`;
+    // Neither can come out of a run; both exist only after seats start moving.
+    case 'PROMOTED':
+      return `Promoted into ${explanation.course.code} (choice ${explanation.preferenceRank}).`;
+    case 'SEAT_WITHDRAWN':
+      return `The seat in ${explanation.course.code} was withdrawn.`;
   }
 }
 
@@ -150,6 +159,7 @@ export function createAllocationService({
   windows,
   allocations,
   auditLogs,
+  waitlists,
   allocationsFor,
   windowsFor,
   historyFor,
@@ -430,11 +440,36 @@ export function createAllocationService({
         };
       }
 
-      const stored = await allocations.findStudentResults(run.id, studentId);
-      const results: StudentAllocationResult[] = stored.flatMap((row) => {
+      const [stored, held, entries] = await Promise.all([
+        allocations.findStudentResults(run.id, studentId),
+        waitlists.findHeldSeat(window.id, studentId),
+        waitlists.listStudentEntries(window.id, studentId),
+      ]);
+      const recorded: StudentAllocationResult[] = stored.flatMap((row) => {
         const explanation = row.explanationDetail as AllocationExplanation | null;
         return explanation ? [{ outcome: row.outcome, explanation }] : [];
       });
+
+      // The stored rows say what the RUN decided and are never rewritten.
+      // Seats have moved since, so what the student is told is the run's
+      // explanation brought up to date; see allocationResultsOverlay.ts.
+      const live: LiveStanding = {
+        held: held
+          ? {
+              code: held.code,
+              name: held.name,
+              rank: held.preferenceRank,
+              source: held.source,
+            }
+          : null,
+        entries: new Map(
+          entries.map((entry) => [
+            entry.code,
+            { status: entry.status, position: entry.position, reason: entry.reason },
+          ]),
+        ),
+      };
+      const results = applyLiveStanding(recorded, live);
 
       return {
         window: window.summary,

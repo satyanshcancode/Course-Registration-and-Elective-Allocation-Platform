@@ -30,6 +30,7 @@ export type {
   SortOrder,
   StudentCourseContext,
   UpdateCapacityRequest,
+  UpdateCapacityResult,
 } from './api/courses.js';
 export {
   CAPACITY_LIMITS,
@@ -57,6 +58,21 @@ export type {
   StudentAllocationResults,
 } from './api/allocation.js';
 export { ALLOCATION_EXPLANATION_TYPES } from './api/allocation.js';
+export type {
+  AdminWaitlistView,
+  EnrolledStudentRow,
+  ProcessWaitlistsResult,
+  PromotionMove,
+  PromotionSummary,
+  StudentWaitlist,
+  StudentWaitlistEntry,
+  WaitingStudentRow,
+  WaitlistRemoval,
+  WaitlistStudentRef,
+  WithdrawEnrollmentRequest,
+  WithdrawEnrollmentResult,
+} from './api/waitlist.js';
+export { WITHDRAW_REASON_LENGTH } from './api/waitlist.js';
 export type {
   CartItem,
   CartProblem,

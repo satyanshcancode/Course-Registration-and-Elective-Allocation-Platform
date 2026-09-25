@@ -15,6 +15,7 @@ import { createOfferingRepository } from './repositories/offeringRepository.js';
 import { createRegistrationWindowRepository } from './repositories/registrationWindowRepository.js';
 import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
+import { createWaitlistRepository } from './repositories/waitlistRepository.js';
 import type { ApiServices } from './routes/index.js';
 import { createAdminCourseService } from './services/adminCourseService.js';
 import { createAllocationService } from './services/allocationService.js';
@@ -27,6 +28,8 @@ import { createRegistrationWindowService } from './services/registrationWindowSe
 import { createSubmitService } from './services/submitService.js';
 import { createStudentService } from './services/studentService.js';
 import { createTokenService } from './services/tokenService.js';
+import { createWaitlistPromotionService } from './services/waitlistPromotionService.js';
+import { createWaitlistService } from './services/waitlistService.js';
 
 export interface ServiceConfig {
   jwtSecret: string;
@@ -38,6 +41,15 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
   const students = createStudentRepository(pool);
   const preferences = createPreferenceRepository(pool);
   const allocations = createAllocationRepository(pool);
+  const waitlists = createWaitlistRepository(pool);
+  const promotions = createWaitlistPromotionService({
+    waitlistsFor: createWaitlistRepository,
+    studentsFor: createStudentRepository,
+    catalogueFor: createCourseCatalogueRepository,
+    historyFor: createRegistrationHistoryRepository,
+    notificationsFor: createNotificationRepository,
+    auditLogsFor: createAuditLogRepository,
+  });
   return {
     healthService: createHealthService(createHealthRepository(pool)),
     authService: createAuthService({
@@ -74,12 +86,24 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       catalogue,
       offeringsFor: createOfferingRepository,
       auditLogsFor: createAuditLogRepository,
+      promotions,
+    }),
+    waitlistService: createWaitlistService({
+      pool,
+      windows,
+      waitlists,
+      promotions,
+      waitlistsFor: createWaitlistRepository,
+      historyFor: createRegistrationHistoryRepository,
+      notificationsFor: createNotificationRepository,
+      auditLogsFor: createAuditLogRepository,
     }),
     allocationService: createAllocationService({
       pool,
       windows,
       allocations,
       auditLogs: createAuditLogRepository(pool),
+      waitlists,
       allocationsFor: createAllocationRepository,
       windowsFor: createRegistrationWindowRepository,
       historyFor: createRegistrationHistoryRepository,
