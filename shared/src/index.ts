@@ -40,6 +40,24 @@ export {
   SORT_ORDERS,
 } from './api/courses.js';
 export type {
+  AllocationExplanation,
+  AllocationExplanationType,
+  AllocationFacts,
+  AllocationMetrics,
+  AllocationPreview,
+  AllocationPreviewMethod,
+  AllocationRunDetail,
+  AllocationRunSummary,
+  AllocationVerification,
+  CourseAllocationMetric,
+  RunAllocationRequest,
+  ScoreBonus,
+  ScoreBreakdown,
+  StudentAllocationResult,
+  StudentAllocationResults,
+} from './api/allocation.js';
+export { ALLOCATION_EXPLANATION_TYPES } from './api/allocation.js';
+export type {
   CartItem,
   CartProblem,
   CartProblemType,
