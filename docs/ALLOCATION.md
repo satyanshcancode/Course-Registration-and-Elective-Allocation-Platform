@@ -284,7 +284,9 @@ overbooking impossible even if this service were wrong.
    is exactly why it exists: it is the safety net for a seat that freed up
    some other way.
 
-Phase 10's student drop will be the fourth, and will call the same function.
+4. **A student drops or swaps** — `POST /api/add-drop/drop` and `/swap` call the
+   same function on their own transaction's client, so the student's action and
+   the promotion it caused commit together (see "Add/drop" below).
 
 ### What the student sees
 
@@ -299,7 +301,152 @@ explained by the better course they were given, and a `SEAT_WITHDRAWN` one for
 a seat an administrator took back. The stored `allocation_results` row is never
 rewritten — that is what makes a run verifiable.
 
-## 7. Reproducibility
+## 7. Add/drop
+
+A term does not end when the results are published. Timetables clash, minds
+change, and students who never submitted a cart still need a course. Add/drop is
+the period an administrator opens for that, and the rules are the same rules —
+one elective per student, capacity never exceeded, a free seat never visible
+while somebody eligible waits for it — applied to a student acting on their own
+enrolment instead of a batch acting on everyone's.
+
+The pure decisions live in `services/addDropRules.ts`; the transaction that
+carries them out is `services/addDropService.ts`. The locking is in
+`docs/CONCURRENCY.md` ("The seat race").
+
+### The period
+
+`add_drop_opens_at` and `add_drop_closes_at` on the window (migration 0011), set
+from `/admin/registration-window` through `PUT
+/api/admin/registration-window/add-drop`, with an `ADD_DROP_PERIOD_UPDATED`
+audit row every time. Both ends or neither: a period with only an opening time
+would be one that never closes, and the CHECK refuses it.
+
+It is deliberately **not** part of the frozen policy (migration 0008). Freezing
+exists so that nobody changes the rules students submitted against; extending
+add/drop by a day changes no rule, and the window is `ALLOCATED` by then, so the
+service allows it there and nowhere else.
+
+Outside the period every student action is refused with `PERIOD_CLOSED` (or
+`NOT_ALLOCATED` before the run), and the page goes read-only with the dates.
+`canAddDropNow(window, now)` is the only place that decides this, and the
+transaction re-reads the window and asks it again — the page's idea of the
+period is never trusted.
+
+### The five actions
+
+| Action             | What it does                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| **DROP**           | Releases the seat (`STUDENT_DROP`) and, in the SAME transaction, offers it on.             |
+| **ADD**            | Takes a free seat in an eligible, offered course. Only for a student holding nothing.      |
+| **SWAP**           | Moves atomically from the held seat to another course. Either it happens, or nothing does. |
+| **WAITLIST_JOIN**  | Joins a full course's queue. Only for a student holding nothing.                           |
+| **WAITLIST_LEAVE** | Ends the entry as `REMOVED` with the reason `STUDENT_LEFT`.                                |
+
+Every one of them carries an idempotency key, is rate-limited per session,
+re-checks eligibility server-side from today's rows, writes a
+`registration_history` row and a notification, and leaves `allocated_count` to
+the trigger on `enrollments`.
+
+**DROP** is the interesting one. The freed seat goes through
+`processFreedSeats` before the transaction commits, so the promotion invariant
+holds without a gap: the seat is never observable as "free" while an eligible
+student is waiting for it. The student keeps their own waitlist entries unless
+they ask to leave them (`leaveWaitlists: true`) — dropping a course is not a
+statement about the others they wanted.
+
+**SWAP** releases the old seat and then takes the new one, in that order,
+because `enrollments_one_active_per_student_window_idx` allows exactly one
+ACTIVE seat per student. If taking the new seat fails for any reason, the
+rollback puts the old one back; that is what "the student keeps their old seat"
+means, and it is not a special case in the code but the transaction doing its
+job. The released seat then goes through `processFreedSeats` like any other.
+
+**ADD** and **SWAP** may land on a course the student never ranked. Allocation
+only ever gives a ranked course; add/drop gives whatever the student asks for,
+which is why `enrollments.source` is `ADD` and the seat carries no preference
+rank.
+
+### Late registration
+
+A student who never submitted a cart has no `preference_submissions` row, no
+results and no waitlist entries. They may still add and join queues during
+add/drop, which is the whole point: nothing in add/drop reads a submission.
+
+That is why the waitlist reads outer-join the ranked preferences instead of
+requiring them (see `waitlistRepository`): an entry with no rank behind it is a
+real entry, and promotion has to offer it a seat in its turn.
+
+### Why late joiners do not jump the queue
+
+`waitlist_entries.position` is written once and never renumbered — the rule from
+Phase 9, unchanged. A late joiner is given
+`max(position) + 1` over **every** entry the course has ever had, not over the
+ones still `WAITING`.
+
+The difference matters. Promoting or removing an entry leaves its position
+behind as a gap, and reusing that gap would drop the newcomer into the middle of
+a queue the allocation run ordered by score. Taking the maximum instead means
+every entry created after the run has a position higher than every entry the run
+created, so the run's ordering is preserved exactly and add/drop arrivals form a
+tail in commit order. The per-window advisory lock is what makes "commit order"
+a well-defined thing to be in.
+
+So a student who joins on day three of add/drop waits behind everyone the run
+placed, and behind everyone who joined on day two. They are not being punished;
+they are simply last, which is what arriving last means.
+
+### Joining a queue needs an empty timetable
+
+A queue place is only ever offered to a student holding no seat.
+
+The reason is the promotion rule, not caution. Promotion is only ever an
+**upgrade**: a student is moved to a course they ranked strictly higher than the
+one they hold. A queue joined during add/drop has no rank behind it — the
+student never ranked that course — so "would this be an upgrade?" has no answer,
+and the cascade's termination argument (every promotion strictly improves one
+student's rank) would have nothing to stand on.
+
+Two consequences follow, and both are enforced:
+
+- **Joining while holding a seat is refused** (`ALREADY_HOLDS_SEAT`), and the
+  message points at swapping, which is the action for a change.
+- **Taking any seat ends the queues joined during add/drop**, marked `REMOVED`
+  with the reason `SEAT_ELSEWHERE`. Leaving them `WAITING` would be leaving a
+  promise that promotion could never keep. Places the student **ranked** are
+  untouched: a course they ranked still beats a seat they added, and promotion
+  knows it.
+
+The second point is why `staleEntryReason` in
+`services/waitlistPromotionService.ts` has three branches rather than one, and
+why a seat with no rank (an `ADD`) does not disqualify a ranked entry above it.
+
+### What add/drop writes
+
+| Table                  | Row                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| `enrollments`          | the new seat (source `ADD`); the released one `DROPPED` with its reason      |
+| `waitlist_entries`     | a new `WAITING` entry, or one `REMOVED` as `STUDENT_LEFT` / `SEAT_ELSEWHERE` |
+| `registration_history` | `ADDED`, `DROPPED`, `SWAPPED`, `WAITLIST_JOINED`, `WAITLIST_LEFT`            |
+| `notifications`        | one `ENROLLMENT_CHANGE` naming what changed                                  |
+| `add_drop_requests`    | the idempotency key with the reply that was sent                             |
+
+`allocation_results` is not in that list, and never will be: those rows are the
+evidence the run is reproducible. What the student is shown is that stored
+explanation brought up to date by `allocationResultsOverlay.ts`, which since
+this phase can also say `SEAT_DROPPED` (they released it themselves, as opposed
+to `SEAT_WITHDRAWN`) and `ADDED` (they took it during add/drop). A seat in a
+course they never ranked has no stored row at all, so the results endpoint
+reports it separately as `held`.
+
+### Demonstrating it
+
+```bash
+npm run docker:demo:reset -- --stage=add-drop   # allocated, period open
+npm run docker:demo:seat-race                   # 100 students, 10 seats
+```
+
+## 8. Reproducibility
 
 Every run stores what it would need to happen again:
 
@@ -323,7 +470,7 @@ the snapshot has not.
 If the algorithm version has changed since the run, the response says so
 explicitly rather than quietly reporting a mismatch.
 
-## 8. Running it
+## 9. Running it
 
 `POST /api/admin/allocation/run` (see `services/allocationService.ts`):
 
@@ -346,7 +493,7 @@ would otherwise be over a thousand round trips while holding the window lock.
 Allocation for a closed window can complete **once**. Afterwards the window is
 `ALLOCATED` and the service refuses another run.
 
-## 9. Demonstrating it
+## 10. Demonstrating it
 
 ```bash
 npm run docker:demo:reset -- --stage=closed   # 150 submissions, window closed

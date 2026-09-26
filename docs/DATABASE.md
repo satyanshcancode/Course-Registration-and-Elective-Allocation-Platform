@@ -14,6 +14,9 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
 | 0006      | `allocation_runs`, `allocation_results`                                                                                                                                |
 | 0007      | `registration_history`, `notifications`, `audit_logs`                                                                                                                  |
 | 0008      | The registration-policy freeze triggers                                                                                                                                |
+| 0009      | `allocation_runs.metrics` / `output_hash`, `allocation_results.explanation_detail`                                                                                     |
+| 0010      | `enrollments.drop_reason`, `waitlist_entries.removal_reason`                                                                                                           |
+| 0011      | The add/drop period, one elective per student, `add_drop_requests`                                                                                                     |
 
 **Conventions**
 
@@ -192,6 +195,12 @@ erDiagram
   status `DRAFT → OPEN → CLOSED → ALLOCATED`, the allocation method, its
   `config` (the `AllocationConfig` union: preference weights and priority
   points) and the stored `random_seed` for reproducible tie-breaks.
+  Migration 0011 adds `add_drop_opens_at` / `add_drop_closes_at`: the period
+  students may change their own enrolment in, which an admin sets once the
+  window is `ALLOCATED`. Both ends or neither
+  (`registration_windows_add_drop_dates_check`) — a period with only an opening
+  time would be one that never closes. It is deliberately **outside** the frozen
+  policy of migration 0008: extending add/drop changes no allocation rule.
 - **`registration_window_courses`** — a course **offered** in a window, with
   `capacity` and `allocated_count`. The catalogue's live seat counts come from here.
 
@@ -207,11 +216,23 @@ erDiagram
 ### Outcomes
 
 - **`enrollments`** — a held seat (`ACTIVE`) or a dropped one (`DROPPED`, with
-  `dropped_at`), and how it was obtained: `ALLOCATION`, `WAITLIST_PROMOTION` or `ADD`.
-  Dropped rows are kept as history.
+  `dropped_at`), and how it was obtained: `ALLOCATION`, `WAITLIST_PROMOTION` or
+  `ADD` (taken during add/drop). Dropped rows are kept as history.
+  `drop_reason` (migration 0010, extended by 0011) says why the seat went:
+  `UPGRADED` (promoted somewhere better), `ADMIN_WITHDRAWAL`, `STUDENT_DROP` or
+  `SWAPPED`. A CHECK ties it to the status, so an `ACTIVE` row never carries one
+  and a `DROPPED` row always does.
 - **`waitlist_entries`** — students queued for a full offering, ordered by
   `position`, which comes from the allocation `score`. Positions aren't renumbered
-  after a promotion; readers use `ORDER BY position`.
+  after a promotion; readers use `ORDER BY position`. A student who joins a queue
+  during add/drop is appended at `max(position) + 1` over **every** entry the
+  course has had, so they land behind everyone the run placed rather than in a
+  gap it left. Such an entry has no `preference_items` row behind it, which is
+  why the waitlist reads outer-join the ranked preferences.
+  `removal_reason` (0010, extended by 0011) is why a `WAITING` entry ended
+  without a promotion: `INELIGIBLE`, `RANKED_BELOW_SEAT`, `STUDENT_LEFT` (they
+  left it themselves) or `SEAT_ELSEWHERE` (they took a seat, and an unranked
+  queue can no longer be shown to be an upgrade — see `docs/ALLOCATION.md`).
 - **`allocation_runs`** — one per allocation execution. Stores the method,
   algorithm version, seed, config snapshot and input snapshot, so a run can be
   reproduced exactly, plus (migration 0009) the `metrics` it produced and an
@@ -226,15 +247,28 @@ erDiagram
   formats) and `waitlist_position`, which a CHECK ties to the `WAITLISTED`
   outcome: exactly the waitlisted rows have a place in a queue.
 
+### Add/drop
+
+- **`add_drop_requests`** — the idempotency ledger for the five student
+  actions. Phase 7 could keep the key on `preference_submissions`, because a
+  student has exactly one of those; add/drop actions repeat, so each attempt gets
+  a row holding its `action`, the `request` as `jsonb`, and the `result` that was
+  sent. A retry with the same key and the same request replays that result; the
+  same key with a different request is refused. The request is compared with
+  jsonb `=` **in the database**, because PostgreSQL stores jsonb keys in its own
+  order and two `JSON.stringify` strings would disagree about identical requests.
+
 ### Timeline, notifications, audit
 
 - **`registration_history`** — the student's timeline (`SUBMITTED`,
-  `ALLOCATED`, `WAITLISTED`, `PROMOTED`, `ADDED`, `DROPPED`, …) with JSON details.
+  `ALLOCATED`, `WAITLISTED`, `PROMOTED`, `ADDED`, `DROPPED`, `SWAPPED`,
+  `WAITLIST_JOINED`, `WAITLIST_LEFT`, `WAITLIST_REMOVED`, …) with JSON details.
   Append-only.
 - **`notifications`** — messages to a user; `read_at` marks them read.
 - **`audit_logs`** — who changed what (old/new JSON values and a reason). Append-only.
-  Capacity edits, window transitions, `ALLOCATION_RUN` and `ALLOCATION_VERIFY`
-  are recorded here; it has no UI yet.
+  Capacity edits, window transitions, `ALLOCATION_RUN`, `ALLOCATION_VERIFY`,
+  `WAITLIST_PROMOTION`, `ENROLLMENT_WITHDRAWN` and `ADD_DROP_PERIOD_UPDATED` are
+  recorded here; it has no UI yet.
 
 ## How the database prevents overbooking and duplicates
 
@@ -243,33 +277,35 @@ application code has a bug or two requests race.
 
 ### Overbooking
 
-| Rule                                                             | Mechanism                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Capacity is never negative                                       | `registration_window_courses_capacity_check`: `capacity >= 0`                                                                                                                                                                                                                                                                                      |
-| Seats taken never exceed seats available                         | `registration_window_courses_allocated_count_check`: `allocated_count BETWEEN 0 AND capacity`                                                                                                                                                                                                                                                      |
-| The seat count can't drift from reality                          | Trigger `enrollments_sync_allocated_count` adds 1 when an `ACTIVE` enrollment appears and subtracts 1 when one is dropped or deleted. Inserting a seat beyond capacity makes the trigger's `UPDATE` violate the CHECK, so the **whole statement fails** and nothing is written.                                                                    |
-| Concurrent enrollments can't both take the last seat             | The trigger's `UPDATE` locks the offering row, so concurrent enrollments in the same offering run one after another, and each sees the count the previous one committed. The integration test fires 8 simultaneous enrollments at a 3-seat offering: exactly 3 succeed. Later phases will also take an explicit `SELECT … FOR UPDATE` on that row. |
-| Capacity can't be cut below the seats already held               | The same CHECK rejects `UPDATE … SET capacity` below `allocated_count`.                                                                                                                                                                                                                                                                            |
-| You can only enroll in, wait for or rank a course that's offered | Composite foreign keys `(window_id, course_id) → registration_window_courses` on `enrollments`, `waitlist_entries` and `preference_items`.                                                                                                                                                                                                         |
+| Rule                                                             | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Capacity is never negative                                       | `registration_window_courses_capacity_check`: `capacity >= 0`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Seats taken never exceed seats available                         | `registration_window_courses_allocated_count_check`: `allocated_count BETWEEN 0 AND capacity`                                                                                                                                                                                                                                                                                                                                                                                        |
+| The seat count can't drift from reality                          | Trigger `enrollments_sync_allocated_count` adds 1 when an `ACTIVE` enrollment appears and subtracts 1 when one is dropped or deleted. Inserting a seat beyond capacity makes the trigger's `UPDATE` violate the CHECK, so the **whole statement fails** and nothing is written.                                                                                                                                                                                                      |
+| Concurrent enrollments can't both take the last seat             | The trigger's `UPDATE` locks the offering row, so concurrent enrollments in the same offering run one after another, and each sees the count the previous one committed. The integration test fires 8 simultaneous enrollments at a 3-seat offering: exactly 3 succeed. Promotion and add/drop also take an explicit `SELECT … FOR UPDATE` on that row before counting its free seats, so the application agrees with the database instead of relying on it (`docs/CONCURRENCY.md`). |
+| Capacity can't be cut below the seats already held               | The same CHECK rejects `UPDATE … SET capacity` below `allocated_count`.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| You can only enroll in, wait for or rank a course that's offered | Composite foreign keys `(window_id, course_id) → registration_window_courses` on `enrollments`, `waitlist_entries` and `preference_items`.                                                                                                                                                                                                                                                                                                                                           |
 
 ### Duplicates
 
-| Rule                                                    | Mechanism                                                                                                                                                                                     |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| One submission per student per window                   | `preference_submissions_student_window_key`: `UNIQUE (student_id, window_id)`                                                                                                                 |
-| A retried submit can't create a second submission       | `preference_submissions_idempotency_key_key`: `UNIQUE (idempotency_key)`                                                                                                                      |
-| A submitted cart is complete and final                  | `preference_submissions_submitted_fields_check` requires key, time and sequence once `SUBMITTED`. Triggers reject any later change to a submitted submission or its items (SQLSTATE `55000`). |
-| FCFS order is unambiguous                               | `UNIQUE (submission_sequence)`, assigned from a database sequence                                                                                                                             |
-| A course appears once in a cart                         | `preference_items_submission_course_key`: `UNIQUE (submission_id, course_id)`                                                                                                                 |
-| Each rank is used once, and only ranks 1–5 exist        | Primary key `(submission_id, rank)` and `preference_items_rank_check`: `rank BETWEEN 1 AND 5`                                                                                                 |
-| An item belongs to its submission's window              | Composite FK `(submission_id, window_id) → preference_submissions (id, window_id)`                                                                                                            |
-| One active seat per student per course                  | Partial unique index `enrollments_one_active_per_student_course_idx` on `(student_id, course_id) WHERE status = 'ACTIVE'` (dropped rows don't block re-enrolling)                             |
-| One waitlist spot per student per course                | Partial unique index `waitlist_entries_one_waiting_per_student_course_idx` `WHERE status = 'WAITING'`                                                                                         |
-| "Next in line" is unambiguous                           | Partial unique index `waitlist_entries_waiting_position_idx` on `(window_id, course_id, position) WHERE status = 'WAITING'`                                                                   |
-| One allocation run in progress per window               | Partial unique index `allocation_runs_single_running_idx` `WHERE status = 'RUNNING'`                                                                                                          |
-| One result per student and course per run, ranks unique | `UNIQUE (run_id, student_id, course_id)` and `UNIQUE (run_id, course_id, final_rank)`                                                                                                         |
-| One open registration window at a time                  | Partial unique index `registration_windows_single_open_idx` `WHERE status = 'OPEN'`                                                                                                           |
-| One account per e-mail, case-insensitively              | `users_email_key` on a `CITEXT` column                                                                                                                                                        |
+| Rule                                                    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One submission per student per window                   | `preference_submissions_student_window_key`: `UNIQUE (student_id, window_id)`                                                                                                                                                                                                                                                                                                                                                                                       |
+| A retried submit can't create a second submission       | `preference_submissions_idempotency_key_key`: `UNIQUE (idempotency_key)`                                                                                                                                                                                                                                                                                                                                                                                            |
+| A submitted cart is complete and final                  | `preference_submissions_submitted_fields_check` requires key, time and sequence once `SUBMITTED`. Triggers reject any later change to a submitted submission or its items (SQLSTATE `55000`).                                                                                                                                                                                                                                                                       |
+| FCFS order is unambiguous                               | `UNIQUE (submission_sequence)`, assigned from a database sequence                                                                                                                                                                                                                                                                                                                                                                                                   |
+| A course appears once in a cart                         | `preference_items_submission_course_key`: `UNIQUE (submission_id, course_id)`                                                                                                                                                                                                                                                                                                                                                                                       |
+| Each rank is used once, and only ranks 1–5 exist        | Primary key `(submission_id, rank)` and `preference_items_rank_check`: `rank BETWEEN 1 AND 5`                                                                                                                                                                                                                                                                                                                                                                       |
+| An item belongs to its submission's window              | Composite FK `(submission_id, window_id) → preference_submissions (id, window_id)`                                                                                                                                                                                                                                                                                                                                                                                  |
+| One active seat per student per course                  | Partial unique index `enrollments_one_active_per_student_course_idx` on `(student_id, course_id) WHERE status = 'ACTIVE'` (dropped rows don't block re-enrolling)                                                                                                                                                                                                                                                                                                   |
+| **One elective per student per window**                 | Partial unique index `enrollments_one_active_per_student_window_idx` on `(student_id, window_id) WHERE status = 'ACTIVE'` (migration 0011). Three code paths insert enrolments — allocation, promotion and add/drop — and two simultaneous adds by one student lock different offering rows, so nothing in the row locks alone would stop them both succeeding. It also fixes the order every seat move must take: **release the old seat, then take the new one.** |
+| A retried add/drop action can't act twice               | `add_drop_requests` primary key on `idempotency_key`, claimed with `INSERT … ON CONFLICT DO NOTHING` inside the action's own transaction                                                                                                                                                                                                                                                                                                                            |
+| One waitlist spot per student per course                | Partial unique index `waitlist_entries_one_waiting_per_student_course_idx` `WHERE status = 'WAITING'`                                                                                                                                                                                                                                                                                                                                                               |
+| "Next in line" is unambiguous                           | Partial unique index `waitlist_entries_waiting_position_idx` on `(window_id, course_id, position) WHERE status = 'WAITING'`                                                                                                                                                                                                                                                                                                                                         |
+| One allocation run in progress per window               | Partial unique index `allocation_runs_single_running_idx` `WHERE status = 'RUNNING'`                                                                                                                                                                                                                                                                                                                                                                                |
+| One result per student and course per run, ranks unique | `UNIQUE (run_id, student_id, course_id)` and `UNIQUE (run_id, course_id, final_rank)`                                                                                                                                                                                                                                                                                                                                                                               |
+| One open registration window at a time                  | Partial unique index `registration_windows_single_open_idx` `WHERE status = 'OPEN'`                                                                                                                                                                                                                                                                                                                                                                                 |
+| One account per e-mail, case-insensitively              | `users_email_key` on a `CITEXT` column                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### The frozen registration policy
 
