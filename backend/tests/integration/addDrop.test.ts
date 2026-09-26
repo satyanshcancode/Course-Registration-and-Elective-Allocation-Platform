@@ -214,7 +214,10 @@ describe('POST /api/add-drop/add', () => {
 
     const result = resultOf(await action(late, '/add', { code: 'AI401' }).expect(200));
 
-    expect(result.result).toEqual({ outcome: 'ADDED', course: { code: 'AI401', name: 'Course AI401' } });
+    expect(result.result).toEqual({
+      outcome: 'ADDED',
+      course: { code: 'AI401', name: 'Course AI401' },
+    });
     expect(result.view.held?.course.code).toBe('AI401');
     // A seat taken here was never ranked, so it carries no preference rank.
     expect(result.view.held?.preferenceRank).toBeNull();
@@ -439,7 +442,10 @@ describe('the waitlist during add/drop', () => {
         { code: 'AI401', capacity: 1 },
         { code: 'CS402', capacity: 5 },
       ],
-      students: [{ ranked: ['AI401'], semester: 8 }, { ranked: [], name: 'Late' }],
+      students: [
+        { ranked: ['AI401'], semester: 8 },
+        { ranked: [], name: 'Late' },
+      ],
     });
     const late = world.cookies[1] ?? '';
 

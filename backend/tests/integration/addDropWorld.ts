@@ -190,10 +190,7 @@ export async function doubleBooked(windowId: string): Promise<string[]> {
 }
 
 /** Stored positions of the entries still WAITING for a course, in order. */
-export async function waitingPositions(
-  windowId: string,
-  courseId: string,
-): Promise<number[]> {
+export async function waitingPositions(windowId: string, courseId: string): Promise<number[]> {
   const result = await getTestPool().query<{ position: number }>(
     `SELECT position FROM waitlist_entries
      WHERE window_id = $1 AND course_id = $2 AND status = 'WAITING'

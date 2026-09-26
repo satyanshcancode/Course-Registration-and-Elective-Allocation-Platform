@@ -17,6 +17,7 @@
     "seed:prod": "node dist/database/seeds/seed.js",
     "seed:demo-submissions:prod": "node dist/database/seeds/seedDemoSubmissions.js",
     "demo:concurrent-submit": "tsx --conditions=source src/scripts/demoConcurrentSubmit.ts",
+    "demo:seat-race": "tsx --conditions=source src/scripts/demoSeatRace.ts",
     "demo:reset": "tsx --conditions=source src/scripts/demoReset.ts"
   },
   "dependencies": {

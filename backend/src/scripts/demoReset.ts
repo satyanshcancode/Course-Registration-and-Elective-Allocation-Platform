@@ -1,5 +1,5 @@
 /**
- * CLI: `npm run demo:reset -- --stage=<draft|open|closed|allocated>`
+ * CLI: `npm run demo:reset -- --stage=<draft|open|closed|allocated|add-drop>`
  *
  * Puts the development database into a known state before a demonstration, so
  * a live walk-through always starts from the same place.
@@ -19,7 +19,10 @@ import { seedDatabase } from '../database/seeds/seedDatabase.js';
 import { seedDemoSubmissions } from '../database/seeds/demoSubmissions.js';
 import { logger } from '../utils/logger.js';
 
-export const DEMO_STAGES = ['draft', 'open', 'closed', 'allocated'] as const;
+export const DEMO_STAGES = ['draft', 'open', 'closed', 'allocated', 'add-drop'] as const;
+
+/** How long the demo's add/drop period runs, relative to now, in hours. */
+const ADD_DROP_HOURS = { from: -1, to: 24 } as const;
 export type DemoStage = (typeof DEMO_STAGES)[number];
 
 function isStage(value: string): value is DemoStage {
@@ -56,7 +59,13 @@ async function summarise(pool: Pool) {
        (SELECT coalesce(max(allocated_count), 0)::text
           FROM registration_window_courses o
           JOIN courses c ON c.id = o.course_id
-         WHERE c.code = 'CS401') AS ai_allocated`,
+         WHERE c.code = 'CS401') AS ai_allocated,
+       (SELECT CASE
+                 WHEN add_drop_opens_at IS NULL THEN 'not scheduled'
+                 WHEN now() BETWEEN add_drop_opens_at AND add_drop_closes_at THEN 'open'
+                 ELSE 'closed'
+               END
+          FROM registration_windows ORDER BY starts_at DESC LIMIT 1) AS add_drop`,
   );
   return result.rows[0] ?? {};
 }
@@ -99,6 +108,19 @@ async function reachStage(pool: Pool, stage: DemoStage): Promise<void> {
     allocated: run.metrics?.allocated ?? 0,
     justifiedEnvy: run.metrics?.justifiedEnvy ?? 0,
   });
+  if (stage === 'allocated') {
+    return;
+  }
+
+  // add-drop: the period an admin opens once results are published, through the
+  // real service, so the audit row exists exactly as it would on the day.
+  const hour = 3_600_000;
+  await services.registrationWindowService.setAddDropPeriod(adminId, {
+    opensAt: new Date(Date.now() + ADD_DROP_HOURS.from * hour).toISOString(),
+    closesAt: new Date(Date.now() + ADD_DROP_HOURS.to * hour).toISOString(),
+    reason: 'Demo reset: opening add/drop',
+  });
+  logger.info('Demo reset: add/drop period open');
 }
 
 async function main(): Promise<void> {
@@ -117,7 +139,8 @@ async function main(): Promise<void> {
         `  submissions     ${summary.submissions ?? '0'}\n` +
         `  enrollments     ${summary.enrollments ?? '0'}\n` +
         `  waitlist        ${summary.waitlist ?? '0'}\n` +
-        `  CS401 allocated ${summary.ai_allocated ?? '0'}\n\n`,
+        `  CS401 allocated ${summary.ai_allocated ?? '0'}\n` +
+        `  add/drop        ${summary.add_drop ?? '—'}\n\n`,
     );
   } finally {
     await pool.end();
