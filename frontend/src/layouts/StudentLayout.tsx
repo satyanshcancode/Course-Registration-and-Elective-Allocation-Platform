@@ -1,5 +1,9 @@
 import { CartProvider, useCart } from '../hooks/useCart';
 import { RegistrationWindowProvider } from '../hooks/useRegistrationWindow';
+import {
+  UnreadNotificationsProvider,
+  useUnreadNotifications,
+} from '../hooks/useUnreadNotifications';
 import { AppShell } from './AppShell';
 import { STUDENT_NAV, type NavItem } from './navigation';
 
@@ -10,24 +14,39 @@ export function StudentLayout() {
     // read them from here.
     <RegistrationWindowProvider>
       <CartProvider>
-        <StudentShell />
+        <UnreadNotificationsProvider>
+          <StudentShell />
+        </UnreadNotificationsProvider>
       </CartProvider>
     </RegistrationWindowProvider>
   );
 }
 
-/** Inside the providers, so the nav can show how many courses are ranked. */
+/** Inside the providers, so the nav can show the counts they hold. */
 function StudentShell() {
   const cart = useCart();
   const count = cart?.codes.length ?? 0;
+  const unread = useUnreadNotifications()?.unread ?? 0;
 
-  const badge = (item: NavItem) =>
-    item.to === '/student/cart' && count > 0 ? (
-      <>
-        {count}
-        <span className="visually-hidden"> {count === 1 ? 'course' : 'courses'} ranked</span>
-      </>
-    ) : null;
+  const badge = (item: NavItem) => {
+    if (item.to === '/student/cart' && count > 0) {
+      return (
+        <>
+          {count}
+          <span className="visually-hidden"> {count === 1 ? 'course' : 'courses'} ranked</span>
+        </>
+      );
+    }
+    if (item.to === '/student/notifications' && unread > 0) {
+      return (
+        <>
+          {unread}
+          <span className="visually-hidden"> unread</span>
+        </>
+      );
+    }
+    return null;
+  };
 
   return (
     <AppShell

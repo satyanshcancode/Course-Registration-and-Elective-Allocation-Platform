@@ -1,5 +1,6 @@
 import {
   MAX_PREFERENCES,
+  type HistoryPage,
   type RegistrationWindowSummary,
   type CurrentWindowResponse,
   type EligibilityOverview,
@@ -7,9 +8,10 @@ import {
   type StudentAllocationResults,
   type UnreadNotificationCount,
 } from '@course-reg/shared';
-import { BadgeCheck, Bell, BookOpen, ListChecks, ShoppingCart } from 'lucide-react';
+import { BadgeCheck, Bell, BookOpen, History, ListChecks, ShoppingCart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { getMyHistory } from '../../api/activityApi';
 import { apiClient } from '../../api/apiClient';
 import { getCurrentWindow } from '../../api/courseApi';
 import { getMyAllocationResults } from '../../api/allocationApi';
@@ -17,6 +19,7 @@ import { getEligibility } from '../../api/eligibilityApi';
 import { unwrap } from '../../api/unwrap';
 import { LinkButton } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { Icon } from '../../components/Icon';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { PageHeader } from '../../components/PageHeader';
 import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
@@ -28,7 +31,8 @@ import { useDashboardSections } from '../../hooks/useDashboardSections';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import type { AsyncState } from '../../types/asyncState';
 import { describeEligibilityCount } from '../../utils/eligibilityText';
-import { formatDateTime } from '../../utils/formatDate';
+import { formatDateTime, formatRelative } from '../../utils/formatDate';
+import { describeHistoryEvent, historyEventIcon } from '../../utils/historyText';
 import styles from '../DashboardPage.module.css';
 import dashboard from './StudentDashboardPage.module.css';
 
@@ -37,7 +41,11 @@ interface DashboardData extends Record<string, unknown> {
   eligibility: EligibilityOverview;
   notifications: UnreadNotificationCount;
   results: StudentAllocationResults;
+  activity: HistoryPage;
 }
+
+/** How many events the dashboard shows before linking to the full history. */
+const RECENT_EVENTS = 5;
 
 /**
  * What the student should do next, given the window, their cart AND their
@@ -160,6 +168,7 @@ export function StudentDashboardPage() {
         }),
       ),
     results: async (signal) => unwrap(await getMyAllocationResults(signal)),
+    activity: async (signal) => unwrap(await getMyHistory({ limit: RECENT_EVENTS }, signal)),
   });
 
   const registration =
@@ -246,6 +255,17 @@ export function StudentDashboardPage() {
             )}
           </Section>
 
+          <Section
+            title="Recent activity"
+            kicker="Your record"
+            state={sections.activity}
+            onRetry={() => {
+              retry('activity');
+            }}
+          >
+            {(data) => <RecentActivity page={data} />}
+          </Section>
+
           <Card title="What to do next" kicker="Guidance" headingLevel={2}>
             <ol className={dashboard.steps}>
               {nextSteps(
@@ -319,6 +339,38 @@ export function StudentDashboardPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/** The last few events, in the words the history page uses. */
+function RecentActivity({ page }: { page: HistoryPage }) {
+  if (page.events.length === 0) {
+    return (
+      <p className={dashboard.muted}>
+        Nothing has happened yet. Submissions, allocation and add/drop changes all appear here.
+      </p>
+    );
+  }
+  return (
+    <div className={dashboard.eligibility}>
+      <ol className={dashboard.activity}>
+        {page.events.map((event) => (
+          <li key={event.id}>
+            <Icon icon={historyEventIcon(event.detail.type)} size={16} />
+            <span className={dashboard.activityText}>
+              {describeHistoryEvent(event)}{' '}
+              <time dateTime={event.at} className={dashboard.muted}>
+                {formatRelative(event.at)}
+              </time>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <Link to="/student/history" className={dashboard.link}>
+        <History aria-hidden="true" className={dashboard.linkIcon} />
+        See your full history
+      </Link>
+    </div>
   );
 }
 
