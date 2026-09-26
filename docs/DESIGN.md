@@ -263,3 +263,31 @@ Final screenshots:
 | Registration window, policy frozen | 1280, dark   | [admin-window-1280-dark.png](screenshots/admin-window-1280-dark.png)             |
 | Admin dashboard                    | 1280, light  | [admin-dashboard-1280-light.png](screenshots/admin-dashboard-1280-light.png)     |
 | Admin dashboard (phone)            | 390, light   | [admin-dashboard-390-light.png](screenshots/admin-dashboard-390-light.png)       |
+
+### Phase 10: add/drop
+
+One round against the Docker dev stack at 1280 and 390px, light and dark, from
+the `add-drop` demo stage: a student holding a seat, a student holding nothing,
+and the period closed.
+
+| Finding                                                                                                                                                                                                | Fix                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| "To change course instead, use **Swap** on one of the courses below" was laid out as three columns, because `.hint` was `display: flex` and the text around the `<strong>` became anonymous flex items | `.hint` is a block; the one hint that carries an icon aligns it with `vertical-align` instead                                 |
+| At 390px a gap the height of the heading sat between "Courses with a free seat" and the filter: stacked, `flex: 1 1 18ch` on the heading is a basis on the vertical axis                               | `flex: none` on the heading inside the phone media query, and the stacked header stretches rather than starting its items     |
+| The page said when add/drop closes twice within 100px — the header countdown, then a banner repeating the same date                                                                                    | The banner appears only when the period is closed, where it gives the range and the reason; the countdown is the header's job |
+| Nine solid accent "Swap into …" buttons made a column of competing calls to action, and left the one real one (the queue offered after a losing race) no room                                          | The repeated per-course actions are secondary; `primary` is kept for the race-lost offer, and `danger` for Drop               |
+
+Checked against the banned list: no gradients, blur, emoji or hero banners. The
+seat meters print their numbers, every status is an icon plus words (Enrolled,
+Full, the waitlist position), and the drop dialog is `tone="danger"`, so focus
+starts on Cancel. Outside the period every action button is `disabled` and the
+reason is a sentence, not a greyed-out mystery. No sideways scroll at either
+width or theme.
+
+Final screenshots:
+
+| Page                                 | Width, theme | File                                                                                     |
+| ------------------------------------ | ------------ | ---------------------------------------------------------------------------------------- |
+| Add/drop, holding a seat             | 1280, light  | [student-add-drop-1280-light.png](screenshots/student-add-drop-1280-light.png)           |
+| Add/drop, holding nothing            | 390, dark    | [student-add-drop-390-dark.png](screenshots/student-add-drop-390-dark.png)               |
+| Registration window, add/drop period | 1280, light  | [admin-add-drop-period-1280-light.png](screenshots/admin-add-drop-period-1280-light.png) |

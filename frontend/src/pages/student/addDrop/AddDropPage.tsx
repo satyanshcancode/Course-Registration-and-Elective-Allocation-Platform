@@ -5,7 +5,7 @@ import {
   type AddDropProblem,
   type AddDropView,
 } from '@course-reg/shared';
-import { ArrowLeftRight, CalendarClock, Hourglass, Lock, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, Hourglass, Lock, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState, type MouseEvent } from 'react';
 import {
   addCourse,
@@ -246,15 +246,18 @@ export function AddDropPage() {
 
         {view && (
           <>
-            <p className={styles.period} data-open={view.period.open ? 'true' : undefined}>
-              <Icon icon={view.period.open ? CalendarClock : Lock} size={16} />
-              <span>{describePeriod(view.period)}</span>
-            </p>
-
-            {!view.period.open && view.period.closedReason && (
-              <p className={styles.readOnly}>
-                {view.period.closedReason} You can see your enrolment below, but nothing can be
-                changed.
+            {/* While the period is open the page header's countdown already says when
+                it closes; repeating it here would be noise. Outside it, this is
+                the only place the dates appear. */}
+            {!view.period.open && (
+              <p className={styles.period}>
+                <Icon icon={Lock} size={16} />
+                <span>
+                  {describePeriod(view.period)}{' '}
+                  {view.period.closedReason
+                    ? `${view.period.closedReason} You can see your enrolment below, but nothing can be changed.`
+                    : ''}
+                </span>
               </p>
             )}
 
@@ -609,7 +612,7 @@ function ChoiceCard({
         {available > 0 ? (
           held ? (
             <Button
-              variant="primary"
+              variant="secondary"
               iconStart={ArrowLeftRight}
               data-action={ACTIONS.swap}
               data-course-code={course.code}
@@ -620,7 +623,7 @@ function ChoiceCard({
             </Button>
           ) : (
             <Button
-              variant="primary"
+              variant="secondary"
               iconStart={Plus}
               data-action={ACTIONS.add}
               data-course-code={course.code}
