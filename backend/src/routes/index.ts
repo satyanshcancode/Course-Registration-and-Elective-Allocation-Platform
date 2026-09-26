@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createActivityController } from '../controllers/activityController.js';
 import { createAddDropController } from '../controllers/addDropController.js';
 import { createAdminController } from '../controllers/adminController.js';
 import { createAuthController } from '../controllers/authController.js';
@@ -16,6 +17,7 @@ import {
   type RateLimitOptions,
 } from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
+import type { ActivityService } from '../services/activityService.js';
 import type { AddDropService } from '../services/addDropService.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AllocationService } from '../services/allocationService.js';
@@ -45,6 +47,7 @@ export interface ApiServices {
   healthService: HealthService;
   authService: AuthService;
   studentService: StudentService;
+  activityService: ActivityService;
   catalogueService: CatalogueService;
   cartService: CartService;
   submitService: SubmitService;
@@ -82,6 +85,7 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     createStudentRouter(
       createStudentController(services.studentService),
       waitlistController,
+      createActivityController(services.activityService),
       requireAuth,
     ),
   );

@@ -17,6 +17,7 @@ import type {
   EligibilityResult,
   RegistrationWindowStatus,
 } from '@course-reg/shared';
+import type { WindowRecord } from '../types/catalogue.js';
 
 /** The window fields the period depends on. */
 export interface AddDropWindow {
@@ -98,6 +99,16 @@ export function canAddDropNow(
 }
 
 /** The period as the page shows it, including why it is unusable. */
+/** A window as the rules read it: ISO strings become Dates, once, here. */
+export function toRuleWindow(window: WindowRecord): AddDropWindow {
+  const { status, addDropOpensAt, addDropClosesAt } = window.summary;
+  return {
+    status,
+    addDropOpensAt: addDropOpensAt === null ? null : new Date(addDropOpensAt),
+    addDropClosesAt: addDropClosesAt === null ? null : new Date(addDropClosesAt),
+  };
+}
+
 export function describeAddDropPeriod(window: AddDropWindow | null, now: Date): AddDropPeriod {
   const gate = canAddDropNow(window, now);
   return {

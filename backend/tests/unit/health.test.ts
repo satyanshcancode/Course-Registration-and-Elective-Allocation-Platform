@@ -33,6 +33,13 @@ function buildApp(repository: HealthRepository) {
         getStudentResults: notUsed,
       },
       studentService: { getOwnProfile: notUsed, countUnreadNotifications: notUsed },
+      activityService: {
+        getStatus: notUsed,
+        getHistory: notUsed,
+        getNotifications: notUsed,
+        markNotificationRead: notUsed,
+        markAllNotificationsRead: notUsed,
+      },
       catalogueService: {
         getCurrentWindow: notUsed,
         listCatalogue: notUsed,

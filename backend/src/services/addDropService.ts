@@ -47,7 +47,6 @@ import type { RegistrationHistoryRepository } from '../repositories/registration
 import type { RegistrationWindowRepository } from '../repositories/registrationWindowRepository.js';
 import type { StudentRepository } from '../repositories/studentRepository.js';
 import type { StudentWaitlistRow, WaitlistRepository } from '../repositories/waitlistRepository.js';
-import type { WindowRecord } from '../types/catalogue.js';
 import { AppError } from '../utils/appError.js';
 import { injectFault } from '../utils/faultInjection.js';
 import {
@@ -58,6 +57,7 @@ import {
   decideLeaveWaitlist,
   decideSwap,
   describeAddDropPeriod,
+  toRuleWindow,
   type CourseState,
 } from './addDropRules.js';
 import { toEligibilityCourse } from './catalogueRules.js';
@@ -689,11 +689,3 @@ const toWaitingEntry = (row: StudentWaitlistRow): StudentWaitlistEntry => ({
 });
 
 /** The window fields the period rules need, from the loaded record. */
-function toRuleWindow(window: WindowRecord) {
-  const { status, addDropOpensAt, addDropClosesAt } = window.summary;
-  return {
-    status,
-    addDropOpensAt: addDropOpensAt === null ? null : new Date(addDropOpensAt),
-    addDropClosesAt: addDropClosesAt === null ? null : new Date(addDropClosesAt),
-  };
-}
