@@ -237,13 +237,7 @@ export function AdminStudentsPage() {
             </Button>
           </div>
         }
-      >
-        {shown && (
-          <p className={styles.summary}>
-            {shown.total} {shown.total === 1 ? 'student' : 'students'} match these filters
-          </p>
-        )}
-      </PageHeader>
+      ></PageHeader>
 
       <div className={styles.body}>
         {reference.state.status === 'error' && (
@@ -356,6 +350,9 @@ export function AdminStudentsPage() {
           // The server owns filtering, sorting and paging for this list.
           filterable={false}
           paginated={false}
+          // The server owns the count too: without it the summary would read
+          // "of 20" beside a pager offering 15 pages.
+          totalRows={shown?.total ?? 0}
           status={status}
           itemName={{ one: 'student', other: 'students' }}
           emptyTitle="No students match these filters"

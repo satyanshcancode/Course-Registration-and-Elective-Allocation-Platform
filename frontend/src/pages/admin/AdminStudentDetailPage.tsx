@@ -15,7 +15,7 @@ import {
 } from '../../api/adminStudentApi';
 import { isNotFound, unwrap } from '../../api/unwrap';
 import { Badge } from '../../components/Badge';
-import { Button } from '../../components/Button';
+import { Button, LinkButton } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CourseCode } from '../../components/CourseCode';
@@ -205,12 +205,9 @@ export function AdminStudentDetailPage() {
           </div>
         }
       >
-        <p className={styles.back}>
-          <Link to="/admin/students">
-            <ArrowLeft aria-hidden="true" className={styles.backIcon} />
-            All students
-          </Link>
-        </p>
+        <LinkButton to="/admin/students" variant="ghost" size="sm" iconStart={ArrowLeft}>
+          All students
+        </LinkButton>
       </PageHeader>
 
       <div className={styles.body}>

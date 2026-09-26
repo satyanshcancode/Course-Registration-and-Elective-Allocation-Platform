@@ -222,8 +222,11 @@ export function AdminCataloguePage() {
             ? 'All programmes'
             : row.eligiblePrograms.map((item) => item.code).join(', ')}
           {row.relevantPrograms.length > 0 && (
+            // Named, not just prefixed with "+": these are the programmes whose
+            // students get the relevance bonus, which is a different thing from
+            // the programmes allowed to take the course above.
             <span className={styles.relevance}>
-              +{row.relevantPrograms.map((item) => item.code).join(', ')}
+              Relevance bonus: {row.relevantPrograms.map((item) => item.code).join(', ')}
             </span>
           )}
         </span>
