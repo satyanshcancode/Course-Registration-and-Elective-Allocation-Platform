@@ -7,10 +7,16 @@ export interface SessionClaims {
   role: UserRole;
 }
 
+/** The claims as read back, including the issued-at the signer set. */
+export interface VerifiedSessionClaims extends SessionClaims {
+  /** Whole seconds since the epoch, as JWT defines `iat`. */
+  issuedAt: number;
+}
+
 export interface TokenService {
   sign(claims: SessionClaims): string;
   /** Returns the claims, or null for any invalid, tampered or expired token. */
-  verify(token: string): SessionClaims | null;
+  verify(token: string): VerifiedSessionClaims | null;
 }
 
 const ALGORITHM = 'HS256';
@@ -34,8 +40,15 @@ export function createTokenService(options: { secret: string; ttlSeconds: number
         if (typeof payload === 'string' || typeof payload.sub !== 'string') {
           return null;
         }
+        // `iat` is what makes a password change able to end a session, so a
+        // token without one is not usable: it cannot be placed in time.
+        if (typeof payload.iat !== 'number') {
+          return null;
+        }
         const role: unknown = payload.role;
-        return isOneOf(USER_ROLES, role) ? { userId: payload.sub, role } : null;
+        return isOneOf(USER_ROLES, role)
+          ? { userId: payload.sub, role, issuedAt: payload.iat }
+          : null;
       } catch {
         return null;
       }

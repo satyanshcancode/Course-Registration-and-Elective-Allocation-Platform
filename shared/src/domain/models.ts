@@ -57,7 +57,12 @@ export interface Student {
 export interface CompletedCourse {
   studentId: string;
   courseId: string;
-  completedTerm: AcademicTerm;
+  /**
+   * When the course was passed, or null when it is not known: an administrator
+   * recording a student's record asserts only that it WAS passed, which is the
+   * fact the prerequisite check needs.
+   */
+  completedTerm: AcademicTerm | null;
 }
 
 export interface Course {
