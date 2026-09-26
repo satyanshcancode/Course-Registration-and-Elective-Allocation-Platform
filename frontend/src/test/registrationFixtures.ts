@@ -1,5 +1,8 @@
 import {
   DEFAULT_PREFERENCE_PRIORITY_CONFIG,
+  type AddDropCourse,
+  type AddDropPeriod,
+  type AddDropView,
   type AdminWaitlistView,
   type AdminWindowDetail,
   type AllocationMetrics,
@@ -294,6 +297,7 @@ export const studentResults: StudentAllocationResults = {
     applicants: 77,
     cutoffScore: 80,
   },
+  held: { course: { code: 'CS402', name: 'Cloud Security' }, source: 'ALLOCATION' },
   results: [
     { outcome: 'WAITLISTED', explanation: { type: 'WAITLISTED', waitlistPosition: 7, ...aiFacts } },
     {
@@ -318,6 +322,7 @@ export const pendingResults: StudentAllocationResults = {
   window: fallWindow,
   ranAt: null,
   method: null,
+  held: null,
   allocated: null,
   results: [],
   serverTime: SERVER_TIME,
@@ -408,4 +413,80 @@ export const promotionSummary: PromotionSummary = {
     },
   ],
   removed: [],
+};
+
+// ---------------------------------------------------------------------------
+// Add/drop
+// ---------------------------------------------------------------------------
+
+export function makeAddDropCourse(overrides: Partial<AddDropCourse> = {}): AddDropCourse {
+  return {
+    code: 'CS404',
+    name: 'Computer Vision',
+    credits: 4,
+    department: { code: 'CSE', name: 'Computer Science' },
+    capacity: 30,
+    allocated: 12,
+    available: 18,
+    preferenceRank: null,
+    waiting: 0,
+    ...overrides,
+  };
+}
+
+/** The period students can change their enrolment in, open right now. */
+export const openAddDropPeriod: AddDropPeriod = {
+  opensAt: '2026-10-18T04:30:00.000Z',
+  closesAt: '2026-10-25T11:30:00.000Z',
+  open: true,
+  closedReason: null,
+};
+
+/** Holding CS402, one free course to move to, one full one, one queue. */
+export const addDropView: AddDropView = {
+  window: {
+    ...fallWindow,
+    status: 'ALLOCATED',
+    addDropOpensAt: openAddDropPeriod.opensAt,
+    addDropClosesAt: openAddDropPeriod.closesAt,
+  },
+  period: openAddDropPeriod,
+  held: {
+    course: { code: 'CS402', name: 'Cloud Security' },
+    credits: 4,
+    source: 'ALLOCATION',
+    preferenceRank: 2,
+    enrolledAt: '2026-09-25T10:43:03.600Z',
+  },
+  available: [makeAddDropCourse()],
+  full: [
+    makeAddDropCourse({
+      code: 'CS401',
+      name: 'Artificial Intelligence',
+      capacity: 20,
+      allocated: 20,
+      available: 0,
+      preferenceRank: 1,
+      waiting: 18,
+    }),
+  ],
+  waiting: [waitlistEntry()],
+  serverTime: SERVER_TIME,
+};
+
+/** A student who never submitted: nothing held, nothing queued. */
+export const addDropForNewcomer: AddDropView = {
+  ...addDropView,
+  held: null,
+  waiting: [],
+};
+
+/** Outside the period: everything read-only, with the dates. */
+export const addDropClosed: AddDropView = {
+  ...addDropView,
+  period: {
+    ...openAddDropPeriod,
+    open: false,
+    closedReason: 'The add/drop period has closed, so enrolments can no longer be changed.',
+  },
 };

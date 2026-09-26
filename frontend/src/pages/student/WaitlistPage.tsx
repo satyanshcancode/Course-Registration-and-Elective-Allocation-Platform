@@ -14,9 +14,13 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useLiveSeats } from '../../hooks/useLiveSeats';
-import { ordinal } from '../../utils/allocationText';
 import { seatsNewerThan } from '../../utils/liveSeats';
-import { describeEnded, describeQueue, describeUpgrade } from '../../utils/waitlistText';
+import {
+  describeChoice,
+  describeEnded,
+  describeQueue,
+  describeUpgrade,
+} from '../../utils/waitlistText';
 import styles from './WaitlistPage.module.css';
 
 export function WaitlistPage() {
@@ -152,7 +156,7 @@ function WaitingCard({
       <dl className={styles.facts}>
         <div>
           <dt>Your choice</dt>
-          <dd>{ordinal(entry.preferenceRank)}</dd>
+          <dd>{describeChoice(entry.preferenceRank)}</dd>
         </div>
         {entry.score > 0 && (
           <div>

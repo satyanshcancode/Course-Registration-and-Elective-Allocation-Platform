@@ -1,5 +1,6 @@
 import {
   MAX_PREFERENCES,
+  type RegistrationWindowSummary,
   type CurrentWindowResponse,
   type EligibilityOverview,
   type PreferenceCart,
@@ -38,28 +39,38 @@ interface DashboardData extends Record<string, unknown> {
   results: StudentAllocationResults;
 }
 
-/** What the student should do next, given the window, their cart AND their result. */
+/**
+ * What the student should do next, given the window, their cart AND their
+ * result. Once allocation has run, what to say depends on the add/drop period:
+ * "use add/drop" is unhelpful advice while it is closed.
+ *
+ * `now` is the server's clock, passed in. A `now` of 0 means it has not arrived
+ * yet, which reads as "before the period opens" — the cautious answer.
+ */
 function nextSteps(
-  status: string | undefined,
+  window: RegistrationWindowSummary | null | undefined,
   cart: PreferenceCart | null,
   results: StudentAllocationResults | null,
+  now: number,
 ): string[] {
+  const status = window?.status;
   if (status === 'ALLOCATED' && results?.ranAt) {
     const waiting = results.results.filter((row) => row.outcome === 'WAITLISTED').length;
     const queued =
       waiting > 0
         ? `You are on ${waiting} ${waiting === 1 ? 'waitlist' : 'waitlists'} and move up automatically when seats free up.`
         : 'You are not waiting for anything else.';
-    return results.allocated
+    const held = results.allocated ?? results.held;
+    return held
       ? [
-          `You have a seat in ${results.allocated.course.code} ${results.allocated.course.name}.`,
+          `You have a seat in ${held.course.code} ${held.course.name}.`,
           queued,
-          'Use add/drop if your timetable needs a change.',
+          addDropStep(window, now, 'change'),
         ]
       : [
           'No seat this round. Open your results to see how close you came on each course.',
           queued,
-          'Use add/drop to pick up a course that still has seats.',
+          addDropStep(window, now, 'find'),
         ];
   }
 
@@ -105,11 +116,33 @@ function nextSteps(
     case 'ALLOCATED':
       return [
         'Check your results and your place on any waitlist.',
-        'Use add/drop if your timetable needs a change.',
+        addDropStep(window, now, 'change'),
       ];
     default:
       return ['Registration has not been scheduled yet. Check back soon.'];
   }
+}
+
+/** The add/drop line, which depends entirely on whether the period is open. */
+function addDropStep(
+  window: RegistrationWindowSummary | null | undefined,
+  now: number,
+  intent: 'change' | 'find',
+): string {
+  const opensAt = window?.addDropOpensAt;
+  const closesAt = window?.addDropClosesAt;
+  if (!opensAt || !closesAt) {
+    return 'Add/drop has not been scheduled yet; you will be notified when it opens.';
+  }
+  if (now < Date.parse(opensAt)) {
+    return `Add/drop opens ${formatDateTime(opensAt)}, and you can change your enrolment then.`;
+  }
+  if (now >= Date.parse(closesAt)) {
+    return `Add/drop closed ${formatDateTime(closesAt)}, so your enrolment is final.`;
+  }
+  return intent === 'change'
+    ? `Add/drop is open until ${formatDateTime(closesAt)}: drop or swap your course if your timetable needs it.`
+    : `Add/drop is open until ${formatDateTime(closesAt)}: add a course that still has seats, or join a waitlist.`;
 }
 
 export function StudentDashboardPage() {
@@ -216,9 +249,12 @@ export function StudentDashboardPage() {
           <Card title="What to do next" kicker="Guidance" headingLevel={2}>
             <ol className={dashboard.steps}>
               {nextSteps(
-                windowSummary?.status,
+                windowSummary,
                 cart?.cart ?? null,
                 sections.results.status === 'success' ? sections.results.data : null,
+                // The SERVER's clock: a device set to the wrong date must not
+                // be told add/drop is still open.
+                registration ? Date.parse(registration.serverTime) : 0,
               ).map((step) => (
                 <li key={step}>{step}</li>
               ))}
@@ -291,12 +327,13 @@ function ResultSummary({ results }: { results: StudentAllocationResults }) {
   if (!results.ranAt) {
     return <p className={dashboard.muted}>Results appear once allocation has run.</p>;
   }
+  // A course added during add/drop was never part of the run, so it has no
+  // explanation to show — only the seat itself.
+  const held = results.allocated ?? results.held;
   return (
     <div className={dashboard.eligibility}>
       <p className={dashboard.count}>
-        {results.allocated
-          ? `${results.allocated.course.code} ${results.allocated.course.name}`
-          : 'No seat this round'}
+        {held ? `${held.course.code} ${held.course.name}` : 'No seat this round'}
       </p>
       <p className={dashboard.muted}>
         {results.allocated
@@ -304,7 +341,9 @@ function ResultSummary({ results }: { results: StudentAllocationResults }) {
               // A seat can arrive after the run, off the waitlist.
               results.allocated.type === 'PROMOTED' ? ' Promoted from the waitlist.' : ''
             }`
-          : 'You are on the waitlist for the courses you ranked.'}
+          : results.held
+            ? 'You took this seat yourself during add/drop.'
+            : 'You are on the waitlist for the courses you ranked.'}
       </p>
       <Link to="/student/results" className={dashboard.link}>
         <ListChecks aria-hidden="true" className={dashboard.linkIcon} />

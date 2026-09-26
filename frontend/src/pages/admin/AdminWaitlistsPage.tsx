@@ -26,7 +26,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ordinal } from '../../utils/allocationText';
-import { describePromotions, describeRemoval } from '../../utils/waitlistText';
+import { describeChoice, describePromotions, describeRemoval } from '../../utils/waitlistText';
 import styles from './AdminWaitlistsPage.module.css';
 
 /** The course being looked at lives in the URL, so the view can be linked to. */
@@ -187,7 +187,7 @@ function CourseWaitlist({
       id: 'choice',
       header: 'Their choice',
       accessor: (row) => row.preferenceRank,
-      cell: (row) => (row.preferenceRank ? ordinal(row.preferenceRank) : '—'),
+      cell: (row) => (row.preferenceRank === null ? '—' : ordinal(row.preferenceRank)),
     },
     {
       id: 'source',
@@ -228,7 +228,7 @@ function CourseWaitlist({
       id: 'choice',
       header: 'Their choice',
       accessor: (row) => row.preferenceRank,
-      cell: (row) => ordinal(row.preferenceRank),
+      cell: (row) => describeChoice(row.preferenceRank),
     },
     { id: 'score', header: 'Score', key: 'score', sortable: true, align: 'end' },
     {

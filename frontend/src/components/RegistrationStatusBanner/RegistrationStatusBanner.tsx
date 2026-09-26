@@ -1,3 +1,4 @@
+import type { RegistrationWindowSummary } from '@course-reg/shared';
 import { CalendarClock } from 'lucide-react';
 import { useRegistrationWindow } from '../../hooks/useRegistrationWindow';
 import { useServerClock } from '../../hooks/useServerClock';
@@ -7,6 +8,20 @@ import { Icon } from '../Icon';
 import { Skeleton } from '../Skeleton';
 import { StatusBadge } from '../StatusBadge';
 import styles from './RegistrationStatusBanner.module.css';
+
+/** The date the countdown is counting towards, so the banner can print it. */
+function countdownTarget(window: RegistrationWindowSummary): string {
+  if (window.status === 'DRAFT') {
+    return window.startsAt;
+  }
+  // Once allocation has run, the deadline that matters is add/drop's.
+  if (window.status === 'ALLOCATED' && window.addDropOpensAt && window.addDropClosesAt) {
+    return Date.now() < Date.parse(window.addDropOpensAt)
+      ? window.addDropOpensAt
+      : window.addDropClosesAt;
+  }
+  return window.endsAt;
+}
 
 /**
  * The registration window's name, status and live countdown, shown in the
@@ -35,7 +50,7 @@ export function RegistrationStatusBanner() {
 
   const { window } = data;
   const countdown = describeCountdown(window, clock);
-  const target = window.status === 'DRAFT' ? window.startsAt : window.endsAt;
+  const target = countdownTarget(window);
 
   return (
     <p className={styles.banner}>
