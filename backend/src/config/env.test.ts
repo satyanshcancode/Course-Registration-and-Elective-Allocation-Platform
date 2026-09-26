@@ -84,6 +84,33 @@ describe('parseEnv', () => {
     expect(parseEnv(appEnvSchema, validProductionEnv).SMTP_HOST).toBe('smtp.internal');
   });
 
+  // Docker Compose passes `${SMTP_USER:-}` as an empty string when .env has
+  // no SMTP_USER, which is how the production stack refused to start against
+  // a credential-free mail server.
+  it('reads an empty SMTP setting as unset, not as a blank credential', () => {
+    const env = parseEnv(appEnvSchema, {
+      ...validProductionEnv,
+      SMTP_USER: '',
+      SMTP_PASSWORD: '',
+    });
+
+    expect(env.SMTP_USER).toBeUndefined();
+    expect(env.SMTP_PASSWORD).toBeUndefined();
+  });
+
+  it('still refuses half a credential when the other half is empty', () => {
+    expect(() =>
+      parseEnv(appEnvSchema, { ...validEnv, SMTP_USER: 'mailer', SMTP_PASSWORD: '' }),
+    ).toThrow(/SMTP_PASSWORD: SMTP_USER and SMTP_PASSWORD must be set together/);
+  });
+
+  it('treats an empty SMTP_HOST as no mail server at all', () => {
+    expect(parseEnv(appEnvSchema, { ...validEnv, SMTP_HOST: '' }).SMTP_HOST).toBeUndefined();
+    expect(() => parseEnv(appEnvSchema, { ...validProductionEnv, SMTP_HOST: '' })).toThrow(
+      /SMTP_HOST: is required in production/,
+    );
+  });
+
   it('refuses half an SMTP credential', () => {
     expect(() => parseEnv(appEnvSchema, { ...validEnv, SMTP_USER: 'mailer' })).toThrow(
       /SMTP_PASSWORD: SMTP_USER and SMTP_PASSWORD must be set together/,

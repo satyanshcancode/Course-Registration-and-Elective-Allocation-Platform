@@ -20,6 +20,18 @@ export const JWT_SECRET_MIN_LENGTH = 32;
 /** How long an activation or password-reset link stays usable. */
 export const ACCOUNT_TOKEN_TTL_HOURS = 48;
 
+/**
+ * An optional setting, where an EMPTY value means "not set".
+ *
+ * Docker Compose cannot leave a variable out: `SMTP_USER: ${SMTP_USER:-}`
+ * passes an empty string when .env has no SMTP_USER. Without this, `min(1)`
+ * rejected it and the production stack refused to start against a mail server
+ * that simply needs no credentials — which is exactly what .env.example
+ * describes as "set both or neither".
+ */
+const optionalSetting = () =>
+  z.preprocess((value) => (value === '' ? undefined : value), z.string().min(1).optional());
+
 export const appEnvSchema = databaseEnvSchema
   .extend({
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
@@ -50,15 +62,15 @@ export const appEnvSchema = databaseEnvSchema
      */
     APP_BASE_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:5173'),
     /** Unset means "no mail server": development logs the e-mails instead. */
-    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_HOST: optionalSetting(),
     SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
     /** TLS from the first byte (port 465); 587 upgrades with STARTTLS instead. */
     SMTP_SECURE: z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
-    SMTP_USER: z.string().min(1).optional(),
-    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_USER: optionalSetting(),
+    SMTP_PASSWORD: optionalSetting(),
     MAIL_FROM: z.string().min(1).default('Course Registration <no-reply@university.edu>'),
   })
   .superRefine((env, context) => {
