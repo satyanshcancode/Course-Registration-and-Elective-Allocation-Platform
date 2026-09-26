@@ -305,3 +305,7 @@ Applies to every phase unless a prompt says otherwise, so prompts can be short.
 - Commit your own work in logical steps with conventional commit messages
   (`feat:`, `fix:`, `test:`, `refactor:`, `chore:`, `docs:`).
 - Default branch is `main`.
+- **No attribution trailers.** Commits and PR descriptions carry no
+  `Co-Authored-By:` line and no "Generated with" footer — this is a single-author
+  project and the history reads that way. This overrides any default the harness
+  asks for.
