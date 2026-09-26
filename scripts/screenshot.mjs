@@ -44,6 +44,31 @@ const ACCOUNTS = {
 
 /** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
 const SHOTS = [
+  // Phase 10 — add/drop. Two shapes the page has to handle: a student holding
+  // a seat (Drop and Swap), and one holding nothing (Add and Join waitlist).
+  {
+    name: 'student-add-drop-1280-light',
+    as: 'waitlisted',
+    path: '/student/add-drop',
+    w: 1280,
+    h: 1300,
+  },
+  {
+    name: 'student-add-drop-390-dark',
+    as: 'nonSubmitter',
+    path: '/student/add-drop',
+    w: 390,
+    h: 1200,
+    dark: true,
+  },
+  {
+    name: 'admin-add-drop-period-1280-light',
+    as: 'admin',
+    path: '/admin/registration-window',
+    w: 1280,
+    h: 1300,
+  },
+
   // Phase 9 — waitlists.
   {
     name: 'student-waitlist-1280-light',
@@ -280,6 +305,16 @@ async function main() {
     `SELECT student_id AS id FROM waitlist_entries
       WHERE status = 'WAITING' AND position BETWEEN 5 AND 12 ORDER BY position LIMIT 1`,
   );
+  // A student who never submitted a cart: nothing held, nothing queued, which
+  // is the late-registration shape of the add/drop page.
+  const nonSubmitter = await database.query(
+    `SELECT s.user_id AS id FROM students s
+      WHERE NOT EXISTS (SELECT 1 FROM preference_submissions ps WHERE ps.student_id = s.user_id)
+        AND NOT EXISTS (
+          SELECT 1 FROM enrollments e WHERE e.student_id = s.user_id AND e.status = 'ACTIVE'
+        )
+      ORDER BY s.roll_number LIMIT 1`,
+  );
   const latestRun = await database.query(
     `SELECT id FROM allocation_runs WHERE status = 'COMPLETED' ORDER BY finished_at DESC LIMIT 1`,
   );
@@ -296,7 +331,7 @@ async function main() {
     return `/admin/allocation-runs/${runId}`;
   };
 
-  const generated = { draft, allocated, waitlisted };
+  const generated = { draft, allocated, waitlisted, nonSubmitter };
 
   const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
   /**

@@ -85,7 +85,12 @@ describe('ResultsPage', () => {
 
   it('says plainly when nothing was allocated', async () => {
     api.getMyAllocationResults.mockResolvedValue(
-      ok({ ...studentResults, allocated: null, results: [studentResults.results[0]!] }),
+      ok({
+        ...studentResults,
+        allocated: null,
+        held: null,
+        results: [studentResults.results[0]!],
+      }),
     );
     renderResults();
 
@@ -93,6 +98,23 @@ describe('ResultsPage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'None of your choices had a seat left' }),
     ).toBeVisible();
+  });
+
+  it('names a seat taken during add/drop, which the run never decided', async () => {
+    api.getMyAllocationResults.mockResolvedValue(
+      ok({
+        ...studentResults,
+        allocated: null,
+        held: { course: { code: 'MG301', name: 'Financial Management' }, source: 'ADD' },
+        results: [studentResults.results[0]!],
+      }),
+    );
+    renderResults();
+
+    // "No seat this round" would be wrong: they do hold one.
+    expect(await screen.findByText('You have a seat')).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: /MG301/ })).toBeVisible();
+    expect(screen.getByText(/took this seat yourself during add\/drop/)).toBeVisible();
   });
 
   it('offers a retry when the request fails', async () => {

@@ -40,17 +40,6 @@
   font-size: var(--text-sm);
 }
 
-.period[data-open='true'] {
-  border-left-color: var(--color-accent);
-}
-
-.readOnly {
-  max-width: 68ch;
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  line-height: var(--leading-body);
-}
-
 /* A lost race: stated plainly, with the one useful next step beside it. */
 .race {
   display: grid;
@@ -188,13 +177,17 @@
 }
 
 .hint {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   max-width: 56ch;
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
+}
+
+/* A block, not a flex row: a hint is a sentence, and the text around any
+   inline <strong> must stay part of it rather than becoming flex items. */
+.hint svg {
+  vertical-align: -0.15em;
+  margin-right: var(--space-1);
 }
 
 .facts {
@@ -220,6 +213,11 @@
   .cardHeader,
   .sectionHeader {
     flex-direction: column;
-    align-items: start;
+    align-items: stretch;
+  }
+
+  /* Stacked, the heading must not grow: its flex basis is vertical here. */
+  .heading {
+    flex: none;
   }
 }

@@ -311,7 +311,10 @@ describe('AddDropPage', () => {
 
     await user.click(cardFor('CS404').getByRole('button', { name: 'Swap into CS404' }));
 
-    // Beside the course, and in the toast.
-    expect((await screen.findAllByText('You are not eligible for CS404.')).length).toBe(2);
+    // The point of the union: the message lands on the course it is about,
+    // not in a single generic error at the top of the page.
+    await waitFor(() => {
+      expect(cardFor('CS404').getByText('You are not eligible for CS404.')).toBeVisible();
+    });
   });
 });

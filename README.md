@@ -282,6 +282,7 @@ npm run docker:demo:reset -- --stage=draft      # base seed, window not open yet
 npm run docker:demo:reset -- --stage=open       # + ~150 submissions
 npm run docker:demo:reset -- --stage=closed     # + registration closed
 npm run docker:demo:reset -- --stage=allocated  # + allocation run for real
+npm run docker:demo:reset -- --stage=add-drop   # + the add/drop period open
 ```
 
 Each stage is cumulative and goes through the real service, not a shortcut
@@ -295,6 +296,18 @@ allocating runs the same transaction the admin's button runs. Outside Docker:
 npm run docker:demo:concurrent-submit                 # 50 students, default
 npm run docker:demo:concurrent-submit -- --students=100
 ```
+
+```bash
+npm run docker:demo:seat-race                         # 100 students, 10 seats
+npm run docker:demo:seat-race -- --students=200 --seats=20
+```
+
+`demo:seat-race` is the add/drop half: it prepares a course with exactly N free
+seats, finds students who hold no elective and are eligible for it, and fires
+one "add, or join the waitlist if full" per student at the same instant. It
+then prints enrolled, waitlisted, overbooked, duplicate enrolments and whether
+the waitlist positions are unique and consecutive. See
+[docs/CONCURRENCY.md](docs/CONCURRENCY.md#the-seat-race-100-students-10-seats).
 
 Every student fires their submit twice at the same instant with the same
 idempotency key. The script then checks the database and prints PASS/FAIL for
