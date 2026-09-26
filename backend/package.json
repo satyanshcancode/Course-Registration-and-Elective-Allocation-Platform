@@ -18,7 +18,9 @@
     "seed:demo-submissions:prod": "node dist/database/seeds/seedDemoSubmissions.js",
     "demo:concurrent-submit": "tsx --conditions=source src/scripts/demoConcurrentSubmit.ts",
     "demo:seat-race": "tsx --conditions=source src/scripts/demoSeatRace.ts",
-    "demo:reset": "tsx --conditions=source src/scripts/demoReset.ts"
+    "demo:reset": "tsx --conditions=source src/scripts/demoReset.ts",
+    "admin:create": "tsx --conditions=source src/scripts/createAdmin.ts",
+    "admin:create:prod": "node dist/scripts/createAdmin.js"
   },
   "dependencies": {
     "@course-reg/shared": "0.1.0",
