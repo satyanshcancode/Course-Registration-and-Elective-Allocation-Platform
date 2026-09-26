@@ -1,0 +1,24 @@
+.form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (width < 40rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+}

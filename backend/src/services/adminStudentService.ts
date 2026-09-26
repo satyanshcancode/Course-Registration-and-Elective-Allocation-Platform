@@ -96,10 +96,7 @@ export interface AdminStudentServiceDependencies {
   listDepartments: () => Promise<{ code: string; name: string }[]>;
 }
 
-export function statusOf(record: {
-  isActive: boolean;
-  hasPassword: boolean;
-}): AdminStudentStatus {
+export function statusOf(record: { isActive: boolean; hasPassword: boolean }): AdminStudentStatus {
   // Deactivation wins: an account that was never activated and then deactivated
   // is INACTIVE, because that is what decides whether it can be used.
   if (!record.isActive) {
@@ -198,13 +195,15 @@ export function createAdminStudentService({
   ): Promise<Omit<RowContext, 'seenRollNumbers' | 'seenEmails' | 'seenCourseCodes'>> {
     const rollNumbers = rows.map((row) => (row.values.rollNumber ?? '').toUpperCase());
     const emails = rows.map((row) => (row.values.email ?? '').toLowerCase());
-    const [existingRollNumbers, existingEmails, courses, programs, departments] = await Promise.all([
-      students.findExistingRollNumbers(rollNumbers.filter(Boolean)),
-      students.findExistingEmails(emails.filter(Boolean)),
-      listAllCourses(),
-      students.listPrograms(),
-      listDepartments(),
-    ]);
+    const [existingRollNumbers, existingEmails, courses, programs, departments] = await Promise.all(
+      [
+        students.findExistingRollNumbers(rollNumbers.filter(Boolean)),
+        students.findExistingEmails(emails.filter(Boolean)),
+        listAllCourses(),
+        students.listPrograms(),
+        listDepartments(),
+      ],
+    );
     return {
       existingRollNumbers,
       existingEmails,

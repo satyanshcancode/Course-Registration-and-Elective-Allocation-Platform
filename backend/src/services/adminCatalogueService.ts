@@ -74,11 +74,7 @@ export interface AdminCatalogueService {
   list(): Promise<AdminCatalogue>;
   get(code: string): Promise<AdminCourseDto>;
   create(actorUserId: string, request: CreateCourseRequest): Promise<AdminCourseDto>;
-  update(
-    actorUserId: string,
-    code: string,
-    request: UpdateCourseRequest,
-  ): Promise<AdminCourseDto>;
+  update(actorUserId: string, code: string, request: UpdateCourseRequest): Promise<AdminCourseDto>;
   setActive(
     actorUserId: string,
     code: string,
@@ -330,10 +326,7 @@ export function createAdminCatalogueService({
         });
       } catch (error) {
         // The trigger fires only if the check above was somehow bypassed.
-        if (
-          isConstraintViolation(error, PG_ERROR.OBJECT_NOT_IN_PREREQUISITE_STATE) &&
-          !isActive
-        ) {
+        if (isConstraintViolation(error, PG_ERROR.OBJECT_NOT_IN_PREREQUISITE_STATE) && !isActive) {
           throw new AppError(
             409,
             `${code} is offered in a registration window that is no longer a draft, so it cannot be retired.`,

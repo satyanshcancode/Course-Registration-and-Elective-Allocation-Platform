@@ -167,8 +167,7 @@ export function createAccountService({
       // Unknown, wrong purpose, already spent and expired are ONE answer: a
       // guessed token learns nothing beyond "that isn't a live link".
       if (
-        !found ||
-        found.token.purpose !== expected ||
+        found?.token.purpose !== expected ||
         found.token.consumedAt !== null ||
         found.token.expiresAt.getTime() <= Date.now()
       ) {
@@ -245,8 +244,7 @@ export function createAccountService({
       }
       const found = await tokens.lockByHash(hashAccountToken(token));
       if (
-        !found ||
-        found.token.consumedAt !== null ||
+        found?.token.consumedAt !== null ||
         found.token.expiresAt.getTime() <= Date.now() ||
         !found.owner.isActive
       ) {

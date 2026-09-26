@@ -76,11 +76,7 @@ export function createAccountRateLimiter(options: RateLimitOptions): RequestHand
     legacyHeaders: false,
     keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
     handler: (_req, res: Response<ApiFailure>) => {
-      sendFailure(
-        res,
-        429,
-        `Too many requests. Please wait ${minutes} minutes and try again.`,
-      );
+      sendFailure(res, 429, `Too many requests. Please wait ${minutes} minutes and try again.`);
     },
   });
 }

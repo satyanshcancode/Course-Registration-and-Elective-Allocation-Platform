@@ -1,5 +1,6 @@
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, UserCog } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
@@ -21,7 +22,12 @@ function initialsOf(name: string): string {
  */
 export function UserMenu() {
   const { state, logout } = useAuth();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  // The panel belongs to the page it was opened on. Remembering that page and
+  // comparing it during render closes the panel on navigation WITHOUT a
+  // setState in an effect, which would cost a second render every time.
+  const [openedOn, setOpenedOn] = useState(pathname);
   const [signingOut, setSigningOut] = useState(false);
   const panelId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +62,11 @@ export function UserMenu() {
   const { user } = state;
   const name = user.role === 'STUDENT' ? user.student.name : 'Administrator';
   const detail = user.role === 'STUDENT' ? user.student.rollNumber : 'Registrar staff';
+  // The page lives under each role's own area so it keeps that area's layout.
+  const accountPath = user.role === 'ADMIN' ? '/admin/account' : '/student/account';
+
+  // Navigating away (to the account page) leaves the panel behind.
+  const showing = open && openedOn === pathname;
 
   const signOut = () => {
     setSigningOut(true);
@@ -70,10 +81,11 @@ export function UserMenu() {
         ref={buttonRef}
         type="button"
         className={styles.trigger}
-        aria-expanded={open}
+        aria-expanded={showing}
         aria-controls={panelId}
         onClick={() => {
-          setOpen((current) => !current);
+          setOpen(!showing);
+          setOpenedOn(pathname);
         }}
       >
         <span className={styles.initials} aria-hidden="true">
@@ -86,9 +98,13 @@ export function UserMenu() {
         <Icon icon={ChevronDown} className={styles.chevron} />
         <span className="visually-hidden">Account</span>
       </button>
-      <div id={panelId} className={styles.panel} hidden={!open}>
+      <div id={panelId} className={styles.panel} hidden={!showing}>
         <p className={styles.signedInAs}>Signed in as</p>
         <p className={styles.email}>{user.email}</p>
+        <Link className={styles.accountLink} to={accountPath}>
+          <Icon icon={UserCog} />
+          Account and password
+        </Link>
         <Button
           variant="secondary"
           size="sm"

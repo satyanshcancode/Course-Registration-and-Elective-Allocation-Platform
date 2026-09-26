@@ -44,7 +44,7 @@ class MutableTerminal extends Writable {
    * terminal — with `terminal: true` a pipe is consumed at once and the
    * interface closes before the first question is asked.
    */
-  readonly interactive = process.stdin.isTTY === true;
+  readonly interactive = process.stdin.isTTY;
 
   override _write(
     chunk: Buffer | string,
@@ -123,9 +123,7 @@ async function ask(lines: AsyncIterator<string>, terminal: MutableTerminal): Pro
     );
     const assessment = assessPassword(first);
     if (!assessment.acceptable || first.length > PASSWORD_MAX_LENGTH) {
-      process.stdout.write(
-        `  ${assessment.suggestions[0] ?? 'That password is too long.'}\n`,
-      );
+      process.stdout.write(`  ${assessment.suggestions[0] ?? 'That password is too long.'}\n`);
       continue;
     }
     const again = await askLine(lines, terminal, 'Repeat the password: ', true);

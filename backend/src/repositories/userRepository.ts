@@ -55,9 +55,7 @@ function toRole(value: string): UserRole {
   return value;
 }
 
-export function createUserRepository(
-  pool: Pick<Pool | PoolClient, 'query'>,
-): UserRepository {
+export function createUserRepository(pool: Pick<Pool | PoolClient, 'query'>): UserRepository {
   return {
     async findCredentialsByEmail(email) {
       const result = await pool.query<{

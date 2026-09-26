@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ListChecks,
   ListOrdered,
+  Library,
   ShoppingCart,
   Users,
   type LucideIcon,
@@ -48,6 +49,12 @@ export const STUDENT_NAV: readonly NavItem[] = [
 export const ADMIN_NAV: readonly NavItem[] = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, primaryOnMobile: true },
   { to: '/admin/courses', label: 'Courses', icon: BookOpen, primaryOnMobile: true },
+  {
+    to: '/admin/course-catalogue',
+    label: 'Course Catalogue',
+    shortLabel: 'Catalogue',
+    icon: Library,
+  },
   { to: '/admin/students', label: 'Students', icon: Users, primaryOnMobile: true },
   { to: '/admin/registration-window', label: 'Registration Window', icon: CalendarClock },
   {

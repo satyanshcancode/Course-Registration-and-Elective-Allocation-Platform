@@ -15,12 +15,21 @@
  * this returns `ok` for.
  */
 import {
-  CSV_LIST_SEPARATOR,
+  type CSV_LIST_SEPARATOR,
   isAcademicTerm,
   type CsvCellError,
   type CsvRowVerdict,
 } from '@course-reg/shared';
 import { readCsvList } from '../utils/csv.js';
+
+/**
+ * How CSV_LIST_SEPARATOR reads in a message. Written out rather than derived,
+ * because the separator is a literal constant and a conditional on it would be
+ * dead code. The type below is the guard: if the shared separator ever stops
+ * being a space, this stops compiling and the wording must be updated with it.
+ */
+type SeparatorIsASpace = typeof CSV_LIST_SEPARATOR extends ' ' ? 'a space' : never;
+const SEPARATOR_WORD: SeparatorIsASpace = 'a space';
 
 export interface RowContext {
   /** Codes/numbers already in the database. */
@@ -61,8 +70,7 @@ export interface ParsedCourseRow {
 }
 
 export type RowJudgement<T> =
-  | { verdict: CsvRowVerdict; parsed: T }
-  | { verdict: CsvRowVerdict; parsed: null };
+  { verdict: CsvRowVerdict; parsed: T } | { verdict: CsvRowVerdict; parsed: null };
 
 /** Collects one message per bad column, so a row reports every problem at once. */
 class Problems {
@@ -134,7 +142,7 @@ function codeList(
   if (unknown.length > 0) {
     problems.add(
       column,
-      `${unknown.length === 1 ? `no ${noun}` : `no ${noun}s`} with ${unknown.length === 1 ? 'code' : 'codes'} ${unknown.join(', ')} (separate several with a ${CSV_LIST_SEPARATOR === ' ' ? 'space' : CSV_LIST_SEPARATOR})`,
+      `${unknown.length === 1 ? `no ${noun}` : `no ${noun}s`} with ${unknown.length === 1 ? 'code' : 'codes'} ${unknown.join(', ')} (separate several with ${SEPARATOR_WORD})`,
     );
   }
   const duplicates = codes.filter((code, index) => codes.indexOf(code) !== index);

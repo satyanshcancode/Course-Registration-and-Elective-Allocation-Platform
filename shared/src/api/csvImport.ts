@@ -104,10 +104,7 @@ export function toCsvLine(cells: readonly string[]): string {
  * A template file: the header row plus one example, so the expected format of
  * every column — and of the space-separated lists — is visible at a glance.
  */
-export function buildCsvTemplate(
-  columns: readonly string[],
-  example: readonly string[],
-): string {
+export function buildCsvTemplate(columns: readonly string[], example: readonly string[]): string {
   return `${toCsvLine(columns)}\n${toCsvLine(example)}\n`;
 }
 

@@ -104,7 +104,7 @@ export function createAuthService({
       const hash = account?.passwordHash ?? (await dummyPasswordHash);
       const passwordMatches = await bcrypt.compare(password, hash);
 
-      if (!account || account.passwordHash === null || !passwordMatches) {
+      if (account?.passwordHash == null || !passwordMatches) {
         // An unknown e-mail, an account still waiting for its invitation, and a
         // wrong password are one answer, so none of them can be told apart.
         throw AppError.unauthorized(INVALID_CREDENTIALS_MESSAGE);

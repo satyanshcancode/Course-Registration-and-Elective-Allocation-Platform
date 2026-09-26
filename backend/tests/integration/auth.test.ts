@@ -111,11 +111,11 @@ describe('POST /api/auth/login', () => {
       jsonBodyLimit: '100kb',
       cookieSecure: true,
       services: createServices(getTestPool(), {
-      jwtSecret: JWT_SECRET,
-      appBaseUrl: 'http://localhost:5173',
-      mailer: createMemoryMailer(),
-      passwordHashRounds: 4,
-    }),
+        jwtSecret: JWT_SECRET,
+        appBaseUrl: 'http://localhost:5173',
+        mailer: createMemoryMailer(),
+        passwordHashRounds: 4,
+      }),
     });
 
     expect(sessionSetCookie(await login(app, 'ada@test.edu'))).toMatch(/; Secure/);
