@@ -4,19 +4,20 @@ PostgreSQL 16 is the single source of truth. The schema is created by plain-SQL
 migrations in [`backend/src/database/migrations`](../backend/src/database/migrations),
 applied in order by `npm run migrate` and recorded in `schema_migrations`.
 
-| Migration | Creates                                                                                                                                                                |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0001      | `schema_migrations`                                                                                                                                                    |
-| 0002      | `users`, `departments`, `programs`, `students`, `courses`, `course_prerequisites`, `course_eligible_programs`, `course_program_relevance`, `student_completed_courses` |
-| 0003      | `registration_windows`, `registration_window_courses`                                                                                                                  |
-| 0004      | `preference_submissions`, `preference_items`                                                                                                                           |
-| 0005      | `enrollments`, `waitlist_entries` (and the seat-count trigger)                                                                                                         |
-| 0006      | `allocation_runs`, `allocation_results`                                                                                                                                |
-| 0007      | `registration_history`, `notifications`, `audit_logs`                                                                                                                  |
-| 0008      | The registration-policy freeze triggers                                                                                                                                |
-| 0009      | `allocation_runs.metrics` / `output_hash`, `allocation_results.explanation_detail`                                                                                     |
-| 0010      | `enrollments.drop_reason`, `waitlist_entries.removal_reason`                                                                                                           |
-| 0011      | The add/drop period, one elective per student, `add_drop_requests`                                                                                                     |
+| Migration | Creates                                                                                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0001      | `schema_migrations`                                                                                                                                                      |
+| 0002      | `users`, `departments`, `programs`, `students`, `courses`, `course_prerequisites`, `course_eligible_programs`, `course_program_relevance`, `student_completed_courses`   |
+| 0003      | `registration_windows`, `registration_window_courses`                                                                                                                    |
+| 0004      | `preference_submissions`, `preference_items`                                                                                                                             |
+| 0005      | `enrollments`, `waitlist_entries` (and the seat-count trigger)                                                                                                           |
+| 0006      | `allocation_runs`, `allocation_results`                                                                                                                                  |
+| 0007      | `registration_history`, `notifications`, `audit_logs`                                                                                                                    |
+| 0008      | The registration-policy freeze triggers                                                                                                                                  |
+| 0009      | `allocation_runs.metrics` / `output_hash`, `allocation_results.explanation_detail`                                                                                       |
+| 0010      | `enrollments.drop_reason`, `waitlist_entries.removal_reason`                                                                                                             |
+| 0011      | The add/drop period, one elective per student, `add_drop_requests`                                                                                                       |
+| 0012      | `account_tokens`, `users.is_active` / `password_changed_at` (and a nullable `password_hash`), `courses.is_active`, a nullable `student_completed_courses.completed_term` |
 
 **Conventions**
 
@@ -37,6 +38,7 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
 ```mermaid
 erDiagram
     users ||--o| students : "has profile (STUDENT only)"
+    users ||--o{ account_tokens : "invited or resetting by"
     departments ||--o{ programs : offers
     departments ||--o{ courses : owns
     programs ||--o{ students : enrolls
@@ -169,7 +171,37 @@ erDiagram
 ### Identity and academic structure
 
 - **`users`** — every login. `email` is `CITEXT`, so uniqueness ignores case.
-  `password_hash` must look like a bcrypt hash, so a plain-text password can't be stored.
+  `password_hash` must look like a bcrypt hash, so a plain-text password can't be
+  stored — and since migration 0012 it may be **NULL**, which is exactly what an
+  invited account is: created by an administrator, with no password until the
+  student sets one from their invitation link.
+  - `is_active` — a deactivated account cannot sign in. Nothing is deleted, so
+    every submission, enrolment, waitlist place and history row stays intact and
+    referentially whole. Reactivating restores access with the same password.
+  - `password_changed_at` — the **session cut-off**. Every session token carries
+    an `iat` (issued-at, whole seconds); a token issued before this instant is
+    refused, which is how changing or resetting a password signs the other
+    devices out without a session store to keep. It is written by the database's
+    `now()`, never by a JS clock.
+
+    Because `iat` is whole seconds **rounded down**, the cut-off is compared in
+    whole seconds **rounded up** (`sessionCutoffSeconds`), and every new session
+    is stamped at or after that cut-off (`sessionIssuedAtSeconds`). Rounding only
+    one way would leave a token issued earlier in the same second alive, or
+    refuse the very session the change hands back.
+- **`account_tokens`** — single-use activation and password-reset links.
+  - Only the token's **SHA-256 hash** is stored, so a leaked table cannot be
+    turned back into working links. The token itself exists only in the e-mail.
+    SHA-256 rather than bcrypt because the input is already 256 bits of CSPRNG
+    output: there is nothing to slow an attacker down about, and the lookup has
+    to be one indexed query.
+  - `purpose` is `ACTIVATION` or `PASSWORD_RESET`; `consumed_at` marks a spent
+    link; `expires_at` is 48 hours out and must be after `created_at`.
+  - Issuing a link spends any outstanding one of the same purpose, so exactly one
+    is ever live — which is what makes "resend the invitation" invalidate the
+    previous e-mail. Setting a password spends **every** outstanding link.
+  - A partial index over unconsumed rows serves the one lookup that matters:
+    "the live token of this purpose for this user".
 - **`departments`**, **`programs`** — each program belongs to a department.
 - **`students`** — a 1:1 profile for a `STUDENT` user, holding program, semester,
   completed credits and expected graduation term. The mock priority inputs are
@@ -178,12 +210,22 @@ erDiagram
   - program relevance: a row in `course_program_relevance`
   - graduation urgency: `expected_graduation_term` is on or before the window's `term`
 - **`student_completed_courses`** — courses a student has passed, used for
-  prerequisite checks and to block retaking a passed course.
+  prerequisite checks and to block retaking a passed course. `completed_term` is
+  nullable since migration 0012: the seed knows which term each course was
+  passed in, but an administrator recording a record by hand supplies only the
+  course **codes** — "they have passed CS201" is the fact the prerequisite check
+  needs, and inventing a term to satisfy a NOT NULL would be worse than admitting
+  the gap.
 
 ### Courses and their rules
 
 - **`courses`** — the catalogue entry (code, credits, description,
   `min_semester`, `min_credits`). Seats are **not** stored here (see below).
+  `is_active` (migration 0012) retires a course instead of deleting it: a course
+  that has ever been offered is referenced by submissions, enrolments, waitlist
+  entries and stored allocation results, so deleting it would destroy the
+  evidence that a run is reproducible. A retired course stays in every window
+  that already offers it and simply cannot be added to a new one.
 - **`course_prerequisites`** — course → required course. A course can't require itself.
 - **`course_eligible_programs`** — programs allowed to take a course. No rows
   means the course is open to every program.
@@ -325,6 +367,15 @@ application code has a bug or two requests race.
 | One result per student and course per run, ranks unique | `UNIQUE (run_id, student_id, course_id)` and `UNIQUE (run_id, course_id, final_rank)`                                                                                                                                                                                                                                                                                                                                                                               |
 | One open registration window at a time                  | Partial unique index `registration_windows_single_open_idx` `WHERE status = 'OPEN'`                                                                                                                                                                                                                                                                                                                                                                                 |
 | One account per e-mail, case-insensitively              | `users_email_key` on a `CITEXT` column                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+### Retiring a course a live window offers
+
+A course cannot be retired while a window that is `OPEN` or later offers it:
+that would change what students are registering for mid-flight.
+`adminCatalogueService.setActive` refuses it first, with a `409` naming the
+windows, and migration 0012's `courses_refuse_deactivating_offered` trigger is
+the backstop — in the same spirit as the freeze triggers below, it holds even if
+the application code is wrong or the row is updated by hand.
 
 ### The frozen registration policy
 

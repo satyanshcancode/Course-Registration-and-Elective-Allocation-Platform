@@ -27,9 +27,9 @@ add/drop, and a personal registration history.
 | 2   | Eligibility pre-check before the window opens | **Done** (see below) |
 | 3   | Registration cart with atomic submit          | **Done** (see below) |
 | 4   | Fair allocation for oversubscribed electives  | **Done** (see below) |
-| 5   | Waitlist with automatic promotion             | Planned              |
-| 6   | Add/drop                                      | Planned              |
-| 7   | Registration status and history               | Planned              |
+| 5   | Waitlist with automatic promotion             | **Done** (see below) |
+| 6   | Add/drop                                      | **Done** (see below) |
+| 7   | Registration status and history               | **Done** (see below) |
 
 **Course catalogue** (`/student/courses`):
 
@@ -121,6 +121,13 @@ add/drop, and a personal registration history.
 - The full rule book, with a worked example and the fairness argument:
   [docs/ALLOCATION.md](docs/ALLOCATION.md).
 
+**Accounts and records** (`/admin/students`, `/admin/course-catalogue`) — the
+platform no longer relies on seeded data. Administrators create student
+accounts and the students activate them from an e-mailed, single-use link;
+courses and their rules are maintained by hand or imported from a CSV, in a
+preview-then-confirm flow that writes every valid row in one transaction. The
+whole lifecycle is described under [Accounts](#accounts).
+
 **Dashboards** — the student dashboard loads the window, the eligibility
 summary and the notification count together with `Promise.allSettled`, so one
 failing section shows its own Retry while the rest of the page still works. It
@@ -132,13 +139,13 @@ How the JavaScript and TypeScript concepts are used is written up in
 
 ## Stack
 
-| Layer    | Technology                                                                             |
-| -------- | -------------------------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript, Vite 6, React Router 7, CSS Modules                              |
-| Backend  | Node 20.12+ (developed on 20 and 24), Express 5, TypeScript, `pg` (PostgreSQL 16), zod |
-| Shared   | `@course-reg/shared` — typed API contracts (`ApiResponse<T>`, …)                       |
-| Tooling  | ESLint (type-aware), Prettier, Vitest, React Testing Library, supertest                |
-| Runtime  | Docker, Docker Compose                                                                 |
+| Layer    | Technology                                                                                         |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| Frontend | React 19, TypeScript, Vite 6, React Router 7, CSS Modules                                          |
+| Backend  | Node 20.12+ (developed on 20 and 24), Express 5, TypeScript, `pg` (PostgreSQL 16), zod, nodemailer |
+| Shared   | `@course-reg/shared` — typed API contracts (`ApiResponse<T>`, …)                                   |
+| Tooling  | ESLint (type-aware), Prettier, Vitest, React Testing Library, supertest                            |
+| Runtime  | Docker, Docker Compose, Mailpit (development mail)                                                 |
 
 ```text
 .
@@ -160,11 +167,13 @@ cp .env.example .env          # then change POSTGRES_PASSWORD / DATABASE_URL
 npm run docker:up             # docker compose up --build -d
 ```
 
-| URL                              | What                            |
-| -------------------------------- | ------------------------------- |
-| http://localhost:5173            | Frontend (Vite, hot reload)     |
-| http://localhost:4000/api/health | Backend health (API + database) |
-| localhost:5432                   | PostgreSQL                      |
+| URL                              | What                                            |
+| -------------------------------- | ----------------------------------------------- |
+| http://localhost:5173            | Frontend (Vite, hot reload)                     |
+| http://localhost:4000/api/health | Backend health (API + database)                 |
+| http://localhost:8025            | **Mailpit** — every invitation and reset e-mail |
+| localhost:5432                   | PostgreSQL                                      |
+| localhost:1025                   | Mailpit's SMTP, which the backend sends through |
 
 The backend waits for PostgreSQL to be healthy, applies migrations
 (`npm run migrate`), then starts with hot reload. Source folders are
@@ -172,14 +181,15 @@ bind-mounted; `node_modules` live in named volumes so host and container
 dependencies never mix. File watching uses polling so hot reload works on
 Windows and macOS bind mounts.
 
-| Script                     | Does                                                 |
-| -------------------------- | ---------------------------------------------------- |
-| `npm run docker:up`        | Build and start the dev stack in the background      |
-| `npm run docker:logs`      | Follow logs                                          |
-| `npm run docker:down`      | Stop the dev stack (keeps data)                      |
-| `npm run docker:reset`     | Stop and **delete volumes** (database, node_modules) |
-| `npm run docker:prod`      | Build and start the production stack on :8080        |
-| `npm run docker:prod:down` | Stop the production stack                            |
+| Script                        | Does                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `npm run docker:up`           | Build and start the dev stack in the background      |
+| `npm run docker:logs`         | Follow logs                                          |
+| `npm run docker:down`         | Stop the dev stack (keeps data)                      |
+| `npm run docker:reset`        | Stop and **delete volumes** (database, node_modules) |
+| `npm run docker:prod`         | Build and start the production stack on :8080        |
+| `npm run docker:prod:down`    | Stop the production stack                            |
+| `npm run docker:admin:create` | Create an administrator account interactively        |
 
 After changing dependencies, refresh the `node_modules` volumes with
 `npm run docker:reset && npm run docker:up`.
@@ -188,10 +198,145 @@ After changing dependencies, refresh the `node_modules` volumes with
 nginx serves the built frontend and proxies `/api` to the backend; only port
 8080 is published.
 
+## Accounts
+
+**Administrators create student accounts; students never self-register and never
+choose their own academic data.** Programme, semester, credits and completed
+courses are what eligibility and priority are judged on, so they belong to the
+registrar — a student who could edit them would be deciding their own place in
+the allocation.
+
+### The lifecycle
+
+1. **Invitation.** An administrator creates the student at `/admin/students`.
+   The account is created and the invitation e-mailed in **one transaction**: if
+   the e-mail cannot be sent, nothing is created, because an account nobody can
+   be told about is worse than no account.
+2. **Activation.** The link opens `/activate?token=…`, where the student chooses
+   a password (at least 10 characters, with a strength hint) and is signed in
+   straight away. The link works **once** and expires after 48 hours.
+3. **Resending.** "Resend invitation" mints a new link and spends the old one,
+   so the previous e-mail stops working the moment the new one is sent.
+4. **Forgotten passwords.** `/forgot-password` answers with the **same message
+   whether or not the address exists** — same status, same body, and the same
+   answer when sending fails, so a mail outage cannot become a way of
+   discovering which addresses exist. The link behaves exactly like an
+   activation link.
+5. **Changing a password.** `/student/account` and `/admin/account` (linked from
+   the user menu) take the current password and set a new one.
+6. **Deactivation.** A deactivated account cannot sign in and its open sessions
+   end on their next request. **Nothing is deleted** — every submission,
+   enrolment, waitlist place and history row is kept, and reactivating restores
+   access with the same password.
+
+### What the security rests on
+
+- **Links are stored as hashes.** Only the SHA-256 of a token reaches
+  `account_tokens`, so a leaked table cannot be turned back into working links.
+  Unknown, spent and expired links are **one answer**, so a guess learns nothing.
+- **Redeeming a link is one transaction** over a locked token row, so two
+  requests carrying the same link cannot both set a password.
+- **Setting a password ends every other session.** `users.password_changed_at`
+  is the cut-off, compared against each session token's `iat`; the device that
+  made the change gets a fresh cookie in the same response, so it stays signed
+  in while the others are signed out. Every outstanding link dies with it.
+- **Deactivated and never-activated accounts are refused**, the first only
+  _after_ the password has been checked — so a guesser who does not know the
+  password learns nothing, while the person who does is told why they are out.
+- **The public account endpoints are rate limited** per IP (20 per 15 minutes),
+  keyed on the address alone: keying on the e-mail would turn the limiter itself
+  into the oracle `/forgot-password` refuses to be.
+
+### Reading the e-mail in development
+
+The Docker stack runs [Mailpit](https://mailpit.axllent.org/), which accepts
+every message and shows it instead of delivering it:
+
+| URL                   | What                                       |
+| --------------------- | ------------------------------------------ |
+| http://localhost:8025 | **The inbox** — every invitation and reset |
+| localhost:1025        | SMTP, which the backend is pointed at      |
+
+Running on the host without `SMTP_HOST` set, account e-mails are written to the
+backend log instead (link included) so the flow still works. `NODE_ENV=production`
+refuses to start without a real `SMTP_HOST`.
+
+### The first administrator
+
+Production starts with an **empty database plus the migrations**: the seed and
+every demo script refuse to run there, with no override. The first
+administrator is created on the server:
+
+```bash
+npm run admin:create              # or: npm run docker:admin:create
+```
+
+It prompts for an e-mail and a password (hidden while typed), re-asks on
+anything invalid, refuses an address that already has an account, and writes an
+`ADMIN_CREATED` audit row. From there, students are invited from
+`/admin/students`.
+
+Demo-seeded accounts count as already activated, so `npm run demo:reset` works
+exactly as before, and the sign-in page shows the demo credentials **only in a
+development build** — the component holding them is removed by the bundler
+otherwise, along with the `/dev/components` gallery route.
+
+That guarantee does not depend on the environment: Vite decides
+`import.meta.env.DEV` from `NODE_ENV`, not from the build mode, so
+`npm run build` on a machine with `NODE_ENV=development` exported used to
+produce a deployable bundle that rendered them. `vite.config.ts` now forces
+`NODE_ENV=production` for `vite build`; `vite build --mode development` still
+opts out, because that mode is asked for rather than inherited.
+
+### Managing students and courses
+
+| Page                      | What                                                                                                                         |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `/admin/students`         | Every account, searchable and filterable by programme, semester and status (invited / active / inactive). Create, and import |
+| `/admin/students/:roll`   | One student's record, their standing and their timeline, plus resend invitation and deactivate / reactivate                  |
+| `/admin/course-catalogue` | The course records and their rules: create, edit, retire, reinstate, and import                                              |
+| `/admin/courses`          | The current window's **offerings** — seats and demand (unchanged)                                                            |
+
+A course is **retired, never deleted**, and cannot be retired while a window
+that is `OPEN` or later offers it: the button says so, the server answers `409`
+naming the windows, and a trigger is the final guard. A new course can be added
+to a window's offerings only while that window is a `DRAFT`.
+
+Every create, edit, import, invitation, deactivation and retirement writes an
+`audit_logs` row with its old and new values.
+
+### CSV import
+
+Both `/admin/students` and `/admin/course-catalogue` import a CSV in two steps:
+**upload → preview → confirm**. The preview judges every row and writes
+nothing; the confirm re-judges the file (the verdicts the browser saw are not a
+credential) and writes every valid row in **one transaction**, reporting what
+each row became. Nothing is ever imported halfway and silently.
+
+Download the template from the panel. The columns, in any order — extra columns
+are ignored, and lists inside a cell are separated by spaces:
+
+| File     | Columns                                                                                                                                      |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Students | `rollNumber`, `name`, `email`, `program`, `semester`, `creditsCompleted`, `expectedGraduationTerm`, `completedCourses`                       |
+| Courses  | `code`, `name`, `credits`, `department`, `description`, `minSemester`, `minCredits`, `prerequisites`, `eligiblePrograms`, `relevantPrograms` |
+
+```csv
+rollNumber,name,email,program,semester,creditsCompleted,expectedGraduationTerm,completedCourses
+CSE26001,Asha Menon,asha.menon@university.edu,BTECH-CSE,5,88,2028-SPRING,MA201 CS201
+```
+
+Each imported student is invited by e-mail. Unlike a single create, a failing
+invitation does **not** roll the import back — thirty accounts should not be
+lost to one bounced address — and the report says how many went out, so the rest
+can be invited again from their own page. A course import may name a
+prerequisite that an earlier row of the same file creates.
+
 ## Authentication
 
-Sign in at `/login` with one of the [demo accounts](#demo-accounts). Students land
-on `/student`, administrators on `/admin`.
+Sign in at `/login`. In development the page lists the
+[demo accounts](#demo-accounts); students land on `/student`, administrators on
+`/admin`.
 
 - **Session cookie.** `POST /api/auth/login` checks the password with bcrypt and
   sets a signed JWT (HS256, user id + role, 8 hours) in the `cr_session` cookie:
@@ -219,6 +364,39 @@ on `/student`, administrators on `/admin`.
 | `GET /api/auth/me`      | signed in | Current user (plus profile summary for students)   |
 | `GET /api/students/me`  | student   | The caller's own student profile                   |
 | `GET /api/admin/ping`   | admin     | Role check                                         |
+
+| Account endpoint                  | Access    | Purpose                                                                                       |
+| --------------------------------- | --------- | --------------------------------------------------------------------------------------------- |
+| `GET /api/auth/activation/:token` | public    | Is this link usable, and whose is it? Always `200`; spent, expired and unknown are one answer |
+| `POST /api/auth/activate`         | public    | `{ token, password }`: sets the first password and signs in                                   |
+| `POST /api/auth/forgot-password`  | public    | `{ email }`: the same `200` and message whether or not the address exists                     |
+| `POST /api/auth/reset-password`   | public    | `{ token, password }`: replaces the password, signs other devices out, signs this one in      |
+| `PUT /api/account/password`       | signed in | `{ currentPassword, newPassword }`, either role. Signs every other device out                 |
+
+The four public ones share one rate limit, per IP (20 per 15 minutes).
+
+| Student records endpoint                          | Access | Purpose                                                       |
+| ------------------------------------------------- | ------ | ------------------------------------------------------------- |
+| `GET /api/admin/students`                         | admin  | `search`, `program`, `semester`, `status`, `page`, `pageSize` |
+| `POST /api/admin/students`                        | admin  | Creates the account and e-mails the invitation, atomically    |
+| `GET /api/admin/students/:rollNumber`             | admin  | The record, their standing and their timeline                 |
+| `PATCH /api/admin/students/:rollNumber`           | admin  | Saves every field together; audited with old and new values   |
+| `POST /api/admin/students/:rollNumber/invitation` | admin  | Mints a new link and spends the outstanding one               |
+| `POST /api/admin/students/:rollNumber/deactivate` | admin  | Blocks sign-in; keeps every row                               |
+| `POST /api/admin/students/:rollNumber/reactivate` | admin  | Restores access with the same password                        |
+| `POST /api/admin/students/import/preview`         | admin  | Judges every row of a CSV; writes nothing                     |
+| `POST /api/admin/students/import`                 | admin  | Re-judges it and writes every valid row in one transaction    |
+| `GET /api/admin/reference-data`                   | admin  | Programmes, departments and courses for the forms' pickers    |
+
+| Course catalogue endpoint                           | Access | Purpose                                                            |
+| --------------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| `GET /api/admin/course-catalogue`                   | admin  | Every course with its rules and where it is offered                |
+| `POST /api/admin/course-catalogue`                  | admin  | Creates a course and its three rule lists                          |
+| `PATCH /api/admin/course-catalogue/:code`           | admin  | Replaces the rules. The code itself cannot change                  |
+| `POST /api/admin/course-catalogue/:code/deactivate` | admin  | Retires it. `409` while a window that is `OPEN` or later offers it |
+| `POST /api/admin/course-catalogue/:code/reactivate` | admin  | Lets it be offered again                                           |
+| `POST /api/admin/course-catalogue/import/preview`   | admin  | Judges every row; writes nothing                                   |
+| `POST /api/admin/course-catalogue/import`           | admin  | Re-judges it and writes every valid row in one transaction         |
 
 | Catalogue endpoint                        | Access    | Purpose                                                                                                                                                      |
 | ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -328,7 +506,9 @@ to run with `NODE_ENV=production`.
 ### Demo accounts
 
 > **Demo-only credentials.** They are published here so the app can be
-> demonstrated. Never reuse them anywhere real.
+> demonstrated, and the sign-in page lists them in a **development build only**.
+> Never reuse them anywhere real. A real deployment starts with an empty
+> database and its first administrator from `npm run admin:create`.
 
 | Role    | E-mail                        | Password      | Situation                                                                                                                    |
 | ------- | ----------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |

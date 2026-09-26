@@ -371,6 +371,46 @@ Measured on the demo data:
   PASS  waitlist positions consecutive 1–90 for 90 entries
 ```
 
+## Single-use links: why redeeming is a transaction
+
+An activation or reset link must work exactly **once**. Two requests can carry
+the same token at the same moment — a double-clicked button, a retried request,
+a link opened in two tabs — and only one of them may set a password.
+
+Redeeming is therefore one transaction over a **locked token row**:
+
+```text
+BEGIN
+  SELECT … FROM account_tokens t JOIN users u ON u.id = t.user_id
+   WHERE t.token_hash = $1
+   FOR UPDATE OF t                 -- the token row, not the user's
+  …judge it: purpose, consumed_at, expires_at, the account's is_active…
+  UPDATE account_tokens SET consumed_at = now()
+   WHERE id = $1 AND consumed_at IS NULL     -- 0 rows = somebody else won
+  UPDATE users SET password_hash = $2, password_changed_at = now()
+  UPDATE account_tokens SET consumed_at = now() WHERE user_id = … -- every other link
+COMMIT
+```
+
+**The lock is on the token, not the user.** Two people redeeming _different_
+links for the same account is fine and should not serialise; the same link
+twice is what must not happen. The second request blocks on the row until the
+first commits, then reads `consumed_at` set and is refused.
+
+**The `WHERE consumed_at IS NULL` is not redundant.** It is the guard that
+would still hold if the lock were ever dropped or the isolation level changed:
+the spend either changes exactly one row or the redemption fails. Belt and
+braces, in the same spirit as the freeze triggers backing up the window rules.
+
+**Setting a password spends every outstanding link**, not just the one used. A
+reset requested while an invitation was pending must not still work afterwards.
+
+The same shape covers the **CSV import**: every valid row is created inside one
+transaction, so a failure part-way through leaves the file entirely unimported
+rather than half applied. The invitations that follow are the deliberate
+exception — a bounced address must not cost thirty created accounts — and the
+report says how many were sent so the rest can be invited again.
+
 ## The pool deadlock this caught
 
 The first version of step 4 re-validated the cart through the **pool-bound**
