@@ -145,6 +145,37 @@ describe('AdminStudentsPage list', () => {
     expect(filter('Semester')).toHaveValue('5');
   });
 
+  it('stops searching when the box is cleared, even if the URL named a term', async () => {
+    // The box owns the search once loaded. Merging the URL's value in as well
+    // would leave the list filtered by a term no longer on screen.
+    const user = userEvent.setup();
+    await openList('/admin/students?search=asha');
+    expect(api.getStudents).toHaveBeenCalledWith(
+      expect.objectContaining({ search: 'asha' }),
+      expect.any(AbortSignal),
+    );
+
+    await user.clear(screen.getByLabelText('Search'));
+
+    await waitFor(() => {
+      expect(api.getStudents).toHaveBeenLastCalledWith({}, expect.any(AbortSignal));
+    });
+  });
+
+  it('keeps the other filters while the search changes', async () => {
+    const user = userEvent.setup();
+    await openList('/admin/students?status=INVITED&program=BTECH-CSE');
+
+    await user.type(screen.getByLabelText('Search'), 'ravi');
+
+    await waitFor(() => {
+      expect(api.getStudents).toHaveBeenLastCalledWith(
+        { status: 'INVITED', program: 'BTECH-CSE', search: 'ravi' },
+        expect.any(AbortSignal),
+      );
+    });
+  });
+
   it('ignores a nonsense filter in the URL rather than sending it', async () => {
     await openList('/admin/students?status=NOPE&semester=99');
 

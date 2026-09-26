@@ -41,6 +41,11 @@ export interface AccountTokenRepository {
    * when no row has that hash at all.
    */
   lockByHash(tokenHash: string): Promise<LockedAccountToken | null>;
+  /**
+   * The same read WITHOUT a lock, for the read-only "is this link usable?"
+   * check. Opening an activation page must not contend with a redemption.
+   */
+  findByHash(tokenHash: string): Promise<LockedAccountToken | null>;
   /** Marks one token spent. Returns false when it was already consumed. */
   consume(tokenId: string): Promise<boolean>;
   /**
@@ -65,6 +70,42 @@ function toPurpose(value: string): AccountTokenPurpose {
   return value;
 }
 
+/** The token and its owner, optionally locking the token row. */
+async function readByHash(
+  client: Pick<Pool | PoolClient, 'query'>,
+  tokenHash: string,
+  lock: boolean,
+): Promise<LockedAccountToken | null> {
+  const result = await client.query<AccountTokenRow>(
+    `SELECT t.id, t.user_id, t.purpose, t.expires_at, t.consumed_at,
+            u.email, u.is_active, u.password_hash IS NOT NULL AS has_password
+     FROM account_tokens t
+     JOIN users u ON u.id = t.user_id
+     WHERE t.token_hash = $1
+     ${lock ? 'FOR UPDATE OF t' : ''}`,
+    [tokenHash],
+  );
+  const row = result.rows[0];
+  if (!row) {
+    return null;
+  }
+  return {
+    token: {
+      id: row.id,
+      userId: row.user_id,
+      purpose: toPurpose(row.purpose),
+      expiresAt: row.expires_at,
+      consumedAt: row.consumed_at,
+    },
+    owner: {
+      userId: row.user_id,
+      email: row.email,
+      isActive: row.is_active,
+      hasPassword: row.has_password,
+    },
+  };
+}
+
 export function createAccountTokenRepository(
   client: Pick<Pool | PoolClient, 'query'>,
 ): AccountTokenRepository {
@@ -86,34 +127,11 @@ export function createAccountTokenRepository(
     async lockByHash(tokenHash) {
       // The token row is locked, not the user's: two people redeeming DIFFERENT
       // links for the same account is fine, the same link twice is not.
-      const result = await client.query<AccountTokenRow>(
-        `SELECT t.id, t.user_id, t.purpose, t.expires_at, t.consumed_at,
-                u.email, u.is_active, u.password_hash IS NOT NULL AS has_password
-         FROM account_tokens t
-         JOIN users u ON u.id = t.user_id
-         WHERE t.token_hash = $1
-         FOR UPDATE OF t`,
-        [tokenHash],
-      );
-      const row = result.rows[0];
-      if (!row) {
-        return null;
-      }
-      return {
-        token: {
-          id: row.id,
-          userId: row.user_id,
-          purpose: toPurpose(row.purpose),
-          expiresAt: row.expires_at,
-          consumedAt: row.consumed_at,
-        },
-        owner: {
-          userId: row.user_id,
-          email: row.email,
-          isActive: row.is_active,
-          hasPassword: row.has_password,
-        },
-      };
+      return readByHash(client, tokenHash, true);
+    },
+
+    async findByHash(tokenHash) {
+      return readByHash(client, tokenHash, false);
     },
 
     async consume(tokenId) {
