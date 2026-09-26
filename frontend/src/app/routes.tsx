@@ -31,7 +31,7 @@ const EligibilityPage = lazyNamed(
 const CartPage = lazyNamed(() => import('../pages/student/cart/CartPage'), 'CartPage');
 const ResultsPage = lazyNamed(() => import('../pages/student/ResultsPage'), 'ResultsPage');
 const WaitlistPage = lazyNamed(() => import('../pages/student/WaitlistPage'), 'WaitlistPage');
-const AddDropPage = lazyNamed(() => import('../pages/student/AddDropPage'), 'AddDropPage');
+const AddDropPage = lazyNamed(() => import('../pages/student/addDrop/AddDropPage'), 'AddDropPage');
 const HistoryPage = lazyNamed(() => import('../pages/student/HistoryPage'), 'HistoryPage');
 const NotificationsPage = lazyNamed(
   () => import('../pages/student/NotificationsPage'),

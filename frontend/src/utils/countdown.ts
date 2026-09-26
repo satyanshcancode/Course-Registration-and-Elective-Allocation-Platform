@@ -46,6 +46,10 @@ export interface RegistrationCountdown {
  * What the banner says, given the window and the server's idea of "now".
  * A window whose status still says OPEN after its end time reads "Closing",
  * because the status only changes when an admin closes it.
+ *
+ * Once the window is ALLOCATED the interesting deadline is the add/drop period,
+ * so the countdown follows that instead — and says so in its own words, because
+ * "Closes in 3h" beside a window that closed weeks ago would be a lie.
  */
 export function describeCountdown(
   window: RegistrationWindowSummary,
@@ -73,6 +77,27 @@ export function describeCountdown(
     case 'CLOSED':
       return { label: '', remaining: null, text: 'Registration is closed' };
     case 'ALLOCATED':
-      return { label: '', remaining: null, text: 'Allocation complete' };
+      return describeAddDropCountdown(window, time);
   }
+}
+
+/** The add/drop period's countdown, for a window that has been allocated. */
+function describeAddDropCountdown(
+  window: RegistrationWindowSummary,
+  time: number,
+): RegistrationCountdown {
+  const opensAt = window.addDropOpensAt === null ? null : Date.parse(window.addDropOpensAt);
+  const closesAt = window.addDropClosesAt === null ? null : Date.parse(window.addDropClosesAt);
+  if (opensAt === null || closesAt === null) {
+    return { label: '', remaining: null, text: 'Allocation complete' };
+  }
+  if (time < opensAt) {
+    const remaining = formatCountdown(opensAt - time);
+    return { label: 'Add/drop opens in', remaining, text: `Add/drop opens in ${remaining}` };
+  }
+  if (time < closesAt) {
+    const remaining = formatCountdown(closesAt - time);
+    return { label: 'Add/drop closes in', remaining, text: `Add/drop closes in ${remaining}` };
+  }
+  return { label: '', remaining: null, text: 'Add/drop is closed' };
 }

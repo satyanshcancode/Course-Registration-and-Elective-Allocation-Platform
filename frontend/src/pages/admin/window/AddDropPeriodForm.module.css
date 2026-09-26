@@ -1,0 +1,36 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.lead {
+  max-width: 72ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.dates {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hint {
+  max-width: 48ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}

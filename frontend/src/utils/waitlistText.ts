@@ -44,9 +44,18 @@ export function describeRemoval(reason: WaitlistRemovalReason): string {
       return 'you no longer met the course’s requirements when the seat was offered';
     case 'RANKED_BELOW_SEAT':
       return 'you were given a course you ranked higher, so waiting here could only have been a downgrade';
+    case 'STUDENT_LEFT':
+      return 'you left this waitlist yourself';
+    case 'SEAT_ELSEWHERE':
+      return 'you took a seat in another course, and this was a waitlist you joined during add/drop rather than one you ranked — so there was no way to tell whether moving you here would be an improvement';
     default:
       return unhandled(reason);
   }
+}
+
+/** "your 2nd choice", or how a queue joined during add/drop got there. */
+export function describeChoice(rank: PreferenceRank | null): string {
+  return rank === null ? 'Joined in add/drop' : ordinal(rank);
 }
 
 /** Why an entry is no longer in the queue. */

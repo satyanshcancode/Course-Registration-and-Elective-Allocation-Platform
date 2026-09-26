@@ -56,6 +56,10 @@ export function describeOutcome(explanation: AllocationExplanation): string {
       return 'Promoted';
     case 'SEAT_WITHDRAWN':
       return 'Seat released';
+    case 'SEAT_DROPPED':
+      return 'You dropped it';
+    case 'ADDED':
+      return 'Added in add/drop';
     case 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED':
     case 'NOT_ALLOCATED_FULL':
     case 'NOT_ALLOCATED_INELIGIBLE':
@@ -139,6 +143,19 @@ export function explainResult(explanation: AllocationExplanation): string[] {
         ranked,
         'You were given this seat, and an administrator has since released it.',
         'Your notifications say why. If that looks wrong, speak to the registrar.',
+      ];
+
+    case 'SEAT_DROPPED':
+      return [
+        ranked,
+        'You were given this seat and dropped it yourself during add/drop.',
+        'It went to the next student waiting for it, so it is not yours to take back.',
+      ];
+
+    case 'ADDED':
+      return [
+        'You took this seat yourself during add/drop, so the allocation round did not decide it.',
+        'You can drop or swap it until add/drop closes.',
       ];
 
     default:

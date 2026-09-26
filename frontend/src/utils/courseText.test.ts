@@ -26,6 +26,8 @@ describe('describeWindow', () => {
     name: 'Fall 2026',
     term: '2026-FALL',
     status: 'DRAFT',
+    addDropOpensAt: null,
+    addDropClosesAt: null,
     startsAt: '2026-09-21T10:00:00.000Z',
     endsAt: '2026-10-13T17:00:00.000Z',
   };

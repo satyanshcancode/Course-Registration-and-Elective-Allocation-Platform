@@ -15,6 +15,8 @@ export const fallWindow: RegistrationWindowSummary = {
   name: 'Fall 2026',
   term: '2026-FALL',
   status: 'OPEN',
+  addDropOpensAt: null,
+  addDropClosesAt: null,
   startsAt: '2026-09-21T04:30:00.000Z',
   endsAt: '2026-10-13T11:30:00.000Z',
 };

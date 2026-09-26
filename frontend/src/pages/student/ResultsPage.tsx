@@ -77,7 +77,7 @@ function Pending({ data }: { data: StudentAllocationResults }) {
 function Published({ data }: { data: StudentAllocationResults }) {
   return (
     <>
-      <Headline allocated={data.allocated} ranAt={data.ranAt ?? ''} />
+      <Headline allocated={data.allocated} held={data.held} ranAt={data.ranAt ?? ''} />
       <section aria-labelledby="results-heading" className={styles.list}>
         <h2 id="results-heading" className={styles.heading}>
           Every course you ranked
@@ -103,25 +103,33 @@ function Published({ data }: { data: StudentAllocationResults }) {
 /** The one thing a student wants first: did I get a seat, and in what? */
 function Headline({
   allocated,
+  held,
   ranAt,
 }: {
   allocated: AllocationExplanation | null;
+  /** The seat held now, which add/drop can make a course the run never saw. */
+  held: StudentAllocationResults['held'];
   ranAt: string;
 }) {
+  // A seat added during add/drop has no stored explanation: the run did not
+  // decide it. It is still a seat, and saying "no seat this round" would be
+  // wrong.
+  const seat = allocated?.course ?? held?.course ?? null;
   return (
-    <section className={styles.headline} data-allocated={allocated ? 'true' : 'false'}>
+    <section className={styles.headline} data-allocated={seat ? 'true' : 'false'}>
       <p className={styles.mark}>
-        <Icon icon={allocated ? CircleCheck : Hourglass} />
-        <span>{allocated ? 'You have a seat' : 'No seat this round'}</span>
+        <Icon icon={seat ? CircleCheck : Hourglass} />
+        <span>{seat ? 'You have a seat' : 'No seat this round'}</span>
       </p>
-      {allocated ? (
+      {seat ? (
         <>
           <h2 className={styles.headlineTitle}>
-            <CourseCode code={allocated.course.code} /> {allocated.course.name}
+            <CourseCode code={seat.code} /> {seat.name}
           </h2>
           <p className={styles.headlineNote}>
-            Your {ordinalWord(allocated.preferenceRank)} choice. Allocation ran on{' '}
-            {formatDateTime(ranAt)}.
+            {allocated
+              ? `Your ${ordinalWord(allocated.preferenceRank)} choice. Allocation ran on ${formatDateTime(ranAt)}.`
+              : `You took this seat yourself during add/drop, so it is not part of the allocation round below. Allocation ran on ${formatDateTime(ranAt)}.`}
           </p>
         </>
       ) : (

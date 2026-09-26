@@ -27,6 +27,7 @@ import { useToast } from '../../components/Toast';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatDateTime } from '../../utils/formatDate';
+import { AddDropPeriodForm } from './window/AddDropPeriodForm';
 import { WindowPolicyForm } from './window/WindowPolicyForm';
 import styles from './RegistrationWindowPage.module.css';
 
@@ -160,6 +161,19 @@ export function RegistrationWindowPage() {
               </Card>
             ) : (
               <FrozenPolicy detail={detail} />
+            )}
+
+            {/* Add/drop follows allocation, so the period only exists here. */}
+            {detail.window.status === 'ALLOCATED' && (
+              <Card title="Add/drop period" kicker="After allocation" headingLevel={2}>
+                <AddDropPeriodForm
+                  detail={detail}
+                  onSaved={(updated, message) => {
+                    setSaved(updated);
+                    toast.show({ tone: 'success', title: message });
+                  }}
+                />
+              </Card>
             )}
           </>
         )}

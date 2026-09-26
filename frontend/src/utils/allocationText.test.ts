@@ -47,6 +47,8 @@ const EXAMPLES: Record<(typeof ALLOCATION_EXPLANATION_TYPES)[number], Allocation
     ...facts,
   },
   SEAT_WITHDRAWN: { type: 'SEAT_WITHDRAWN', ...facts },
+  SEAT_DROPPED: { type: 'SEAT_DROPPED', ...facts },
+  ADDED: { type: 'ADDED', ...facts },
 };
 
 describe('ordinal', () => {

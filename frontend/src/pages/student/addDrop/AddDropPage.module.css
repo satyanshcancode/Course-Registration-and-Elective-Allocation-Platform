@@ -1,0 +1,225 @@
+/*
+ * Add/drop reads as one column of decisions: the period first, then the seat
+ * you hold, then what you could move to. Same card as the waitlist and results
+ * pages; the left rule carries the tone and the words carry the meaning.
+ */
+.body {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Announcements for screen readers; it takes no space when empty. */
+.announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+.period[data-open='true'] {
+  border-left-color: var(--color-accent);
+}
+
+.readOnly {
+  max-width: 68ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* A lost race: stated plainly, with the one useful next step beside it. */
+.race {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+}
+
+.raceTitle {
+  font-weight: var(--weight-medium);
+}
+
+.raceBody,
+.retryNote {
+  max-width: 60ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.retryNote {
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.heading {
+  flex: 1 1 18ch;
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-md);
+}
+
+.lead {
+  max-width: 68ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.card[data-tone='held'] {
+  border-left-color: var(--color-accent);
+}
+
+.card[data-tone='open'] {
+  border-left-color: var(--color-success);
+}
+
+.card[data-tone='full'],
+.card[data-tone='waiting'] {
+  border-left-color: var(--color-warning);
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.ranked {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.queueNote,
+.problem {
+  max-width: 60ch;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.queueNote {
+  color: var(--color-ink-muted);
+}
+
+.problem {
+  color: var(--color-danger);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 56ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.checkbox {
+  margin-top: var(--space-3);
+}
+
+@media (width < 40rem) {
+  .cardHeader,
+  .sectionHeader {
+    flex-direction: column;
+    align-items: start;
+  }
+}
