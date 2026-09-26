@@ -52,6 +52,16 @@ describe('describeUpgrade', () => {
   it('says a first seat needs nothing given up', () => {
     expect(describeUpgrade(null)).toContain('You have no seat yet');
   });
+
+  it('still explains the trade for a seat taken during add/drop', () => {
+    // No rank to compare against, but every queue below IS one they ranked,
+    // so a promotion is still an improvement — and the page has to say so
+    // rather than claiming they hold nothing.
+    const text = describeUpgrade({ course: { code: 'MG301', name: 'Finance' }, rank: null });
+    expect(text).toContain('took during add/drop rather than ranking');
+    expect(text).toContain('a course you did rank');
+    expect(text).toContain('your MG301 seat would be released');
+  });
 });
 
 describe('describeEnded', () => {

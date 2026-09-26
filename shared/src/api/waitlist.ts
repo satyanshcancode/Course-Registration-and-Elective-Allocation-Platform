@@ -39,8 +39,12 @@ export interface StudentWaitlistEntry {
 /** GET /api/students/me/waitlist — the caller's own queues, nobody else's. */
 export interface StudentWaitlist {
   window: RegistrationWindowSummary | null;
-  /** The seat they hold now, so "what happens next" can name it. */
-  held: { course: CourseRef; rank: PreferenceRank } | null;
+  /**
+   * The seat they hold now, so "what happens next" can name it. `rank` is null
+   * for a seat taken during add/drop, which was never ranked — and which any
+   * course they DID rank still improves on.
+   */
+  held: { course: CourseRef; rank: PreferenceRank | null } | null;
   waiting: StudentWaitlistEntry[];
   /** Entries that ended: promoted, or removed with a reason. */
   ended: StudentWaitlistEntry[];
