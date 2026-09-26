@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { PasswordField } from '../components/PasswordField';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../hooks/useAuth';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import styles from './AccountPage.module.css';
 
 interface Errors {
@@ -28,6 +29,7 @@ interface Errors {
  * the eligibility check.
  */
 export function AccountPage() {
+  useDocumentTitle('Account');
   const { state, adopt } = useAuth();
   const toast = useToast();
 

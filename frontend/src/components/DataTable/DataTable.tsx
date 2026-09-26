@@ -48,6 +48,12 @@ export interface DataTableProps<T> {
    * one page from the server, which then also owns sorting and paging.
    */
   paginated?: boolean;
+  /**
+   * How many rows exist in total, for a server-paged table. Without it the
+   * summary can only count the rows it was handed, and a page of 20 out of 300
+   * reads as "of 20" beside a pager offering 15 pages.
+   */
+  totalRows?: number;
   /** Marks a row, e.g. 'warning' for an oversubscribed course (pair with text). */
   getRowTone?: (row: T) => 'warning' | undefined;
   /**
@@ -80,6 +86,7 @@ export function DataTable<T>({
   emptyTitle = 'Nothing to show yet',
   emptyMessage,
   paginated = true,
+  totalRows,
   getRowTone,
   onBodyClick,
 }: DataTableProps<T>) {
@@ -114,11 +121,13 @@ export function DataTable<T>({
   }
 
   const loading = status.kind === 'loading';
+  // Server-paged tables hold one page; only the caller knows the real total.
+  const total = totalRows ?? visible.length;
   const summary = loading
     ? `Loading ${itemName.other}…`
     : visible.length === 0
       ? `No ${itemName.other} match “${query}”.`
-      : `Showing ${slice.firstRow}–${slice.lastRow} of ${visible.length} ${noun(visible.length)}` +
+      : `Showing ${slice.firstRow}–${slice.lastRow} of ${total} ${noun(total)}` +
         (query ? ` matching “${query}”` : '');
 
   return (

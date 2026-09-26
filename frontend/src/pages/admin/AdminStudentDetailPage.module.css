@@ -11,17 +11,6 @@
   gap: var(--space-3);
 }
 
-.back {
-  font-size: var(--text-sm);
-}
-
-.backIcon {
-  width: 1em;
-  height: 1em;
-  vertical-align: -0.1em;
-  margin-right: var(--space-1);
-}
-
 .statusRow {
   display: flex;
   flex-wrap: wrap;

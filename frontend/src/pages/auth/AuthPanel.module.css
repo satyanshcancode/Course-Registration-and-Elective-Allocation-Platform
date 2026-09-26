@@ -1,7 +1,12 @@
-/* One narrow card, centred in the public layout's main area. */
+/*
+ * One narrow card, centred in the public layout's main area. Centring the CARD
+ * is not the banned "centring everything": its kicker, heading, copy and every
+ * field inside it stay left-aligned. Left-aligned, a 30rem card sits in the
+ * corner of a 1280px page with nothing beside it.
+ */
 .layout {
   display: grid;
-  justify-content: start;
+  justify-content: center;
   padding-top: var(--space-4);
 }
 
