@@ -39,6 +39,8 @@ describe('mappers', () => {
       email: 'a@university.edu',
       password_hash: '$2b$10$secret',
       role: 'ADMIN',
+      is_active: true,
+      password_changed_at: at,
       created_at: at,
       updated_at: at,
     };

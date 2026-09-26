@@ -7,17 +7,38 @@ const tokens = createTokenService({ secret: SECRET, ttlSeconds: 60 });
 const claims = { userId: '6f1c9a9e-2d1b-4b4a-9a55-2b9f0a1c0d11', role: 'STUDENT' } as const;
 
 describe('tokenService', () => {
-  it('round-trips user id and role only', () => {
+  it('round-trips user id and role only, plus the issued-at', () => {
     const token = tokens.sign(claims);
     const decoded = jwt.decode(token);
 
-    expect(tokens.verify(token)).toEqual(claims);
+    // issuedAt is read back because a password change ends every session
+    // issued before it (see services/accountTokens.ts).
+    expect(tokens.verify(token)).toEqual({ ...claims, issuedAt: expect.any(Number) as number });
     expect(decoded).toEqual({
       sub: claims.userId,
       role: 'STUDENT',
       iat: expect.any(Number) as number,
       exp: expect.any(Number) as number,
     });
+  });
+
+  it('reports the issued-at the signer set, in whole seconds', () => {
+    const before = Math.floor(Date.now() / 1000);
+    const issuedAt = tokens.verify(tokens.sign(claims))?.issuedAt ?? 0;
+
+    expect(Number.isInteger(issuedAt)).toBe(true);
+    expect(issuedAt).toBeGreaterThanOrEqual(before);
+    expect(issuedAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
+  });
+
+  it('rejects a token with no iat: a session must be placeable in time', () => {
+    // noTimestamp omits iat, which would leave the password-change cut-off with
+    // nothing to compare against.
+    const undated = jwt.sign({ role: 'STUDENT' }, SECRET, {
+      subject: claims.userId,
+      noTimestamp: true,
+    });
+    expect(tokens.verify(undated)).toBeNull();
   });
 
   it('rejects a token signed with another secret', () => {

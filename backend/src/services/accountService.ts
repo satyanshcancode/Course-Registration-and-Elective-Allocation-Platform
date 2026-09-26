@@ -22,7 +22,6 @@ import type {
   AccountTokenPurpose,
   ActivationCheck,
   ChangePasswordRequest,
-  CurrentUser,
   SetPasswordRequest,
 } from '@course-reg/shared';
 import bcrypt from 'bcryptjs';
