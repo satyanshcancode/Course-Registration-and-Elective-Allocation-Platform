@@ -102,7 +102,16 @@ export function CsvImport({
     }
 
     setPhase({ kind: 'previewing' });
-    const csv = await file.text();
+    let csv: string;
+    try {
+      csv = await file.text();
+    } catch {
+      // A file the browser cannot read (removed from disk, or a permission
+      // change since it was chosen) must not leave the panel stuck on "checking".
+      setError('That file could not be read. Choose it again.');
+      setPhase({ kind: 'choosing' });
+      return;
+    }
     const response = await onPreview(csv);
     if (!response.success) {
       setError(response.message);

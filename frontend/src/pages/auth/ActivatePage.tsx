@@ -9,7 +9,7 @@ import { PasswordField } from '../../components/PasswordField';
 import { Skeleton } from '../../components/Skeleton';
 import { useAsync } from '../../hooks/useAsync';
 import { useAuth } from '../../hooks/useAuth';
-import { postLoginPath } from '../../utils/authRedirects';
+import { homePathFor } from '../../utils/authRedirects';
 import { AuthPanel } from './AuthPanel';
 import styles from './ActivatePage.module.css';
 
@@ -74,9 +74,11 @@ export function ActivatePage({ mode }: ActivatePageProps) {
     }
   }, [usable]);
 
-  // Signed in — either already, or by the submit that just succeeded.
+  // Signed in — either already, or by the submit that just succeeded. There is
+  // no "page they asked for" here: an invitation link is the start of a session,
+  // so it always lands on their own home.
   if (state.status === 'authenticated') {
-    return <Navigate to={postLoginPath(state.user.role)} replace />;
+    return <Navigate to={homePathFor(state.user.role)} replace />;
   }
 
   const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
