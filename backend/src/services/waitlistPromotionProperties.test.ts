@@ -741,7 +741,11 @@ describe('waitlist promotion, over random worlds', () => {
       }),
       RUNS,
     );
-    expect(promotions).toBeGreaterThan(50);
+    // The floor sits well under what the generator produces (around 90), and
+    // is only here to fail loudly if a change ever makes promotion
+    // unreachable. It came down when add/drop added five more action types to
+    // the same budget, which left fewer withdrawals per world.
+    expect(promotions).toBeGreaterThan(25);
   });
 
   it('actually adds, swaps and queues, so the add/drop cases are not vacuous either', async () => {
