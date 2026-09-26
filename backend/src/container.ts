@@ -4,7 +4,11 @@
  */
 import type { Pool } from 'pg';
 import { SESSION_TTL_SECONDS } from './config/session.js';
+import type { Mailer } from './mail/mailer.js';
+import { createAccountTokenRepository } from './repositories/accountTokenRepository.js';
 import { createAddDropRequestRepository } from './repositories/addDropRequestRepository.js';
+import { createAdminCourseRepository } from './repositories/adminCourseRepository.js';
+import { createAdminStudentRepository } from './repositories/adminStudentRepository.js';
 import { createAllocationRepository } from './repositories/allocationRepository.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
 import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
@@ -18,9 +22,12 @@ import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import { createWaitlistRepository } from './repositories/waitlistRepository.js';
 import type { ApiServices } from './routes/index.js';
+import { createAccountService } from './services/accountService.js';
 import { createActivityService } from './services/activityService.js';
 import { createAddDropService } from './services/addDropService.js';
+import { createAdminCatalogueService } from './services/adminCatalogueService.js';
 import { createAdminCourseService } from './services/adminCourseService.js';
+import { createAdminStudentService } from './services/adminStudentService.js';
 import { createAllocationService } from './services/allocationService.js';
 import { createAuthService } from './services/authService.js';
 import { createCartService } from './services/cartService.js';
@@ -36,6 +43,11 @@ import { createWaitlistService } from './services/waitlistService.js';
 
 export interface ServiceConfig {
   jwtSecret: string;
+  /** Origin the activation and reset links point at. */
+  appBaseUrl: string;
+  mailer: Mailer;
+  /** Tests lower the bcrypt cost; production uses the default. */
+  passwordHashRounds?: number;
 }
 
 export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
@@ -53,21 +65,61 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
     notificationsFor: createNotificationRepository,
     auditLogsFor: createAuditLogRepository,
   });
+  const users = createUserRepository(pool);
+  const accountTokens = createAccountTokenRepository(pool);
+  const adminStudents = createAdminStudentRepository(pool);
+  const adminCourses = createAdminCourseRepository(pool);
+
+  const authService = createAuthService({
+    users,
+    auditLogs: createAuditLogRepository(pool),
+    tokens: createTokenService({ secret: config.jwtSecret, ttlSeconds: SESSION_TTL_SECONDS }),
+  });
+  const accountService = createAccountService({
+    pool,
+    users,
+    tokens: accountTokens,
+    usersFor: createUserRepository,
+    tokensFor: createAccountTokenRepository,
+    auditLogsFor: createAuditLogRepository,
+    mailer: config.mailer,
+    authService,
+    appBaseUrl: config.appBaseUrl,
+    ...(config.passwordHashRounds !== undefined && {
+      passwordHashRounds: config.passwordHashRounds,
+    }),
+  });
+  const activityService = createActivityService({
+    windows,
+    waitlists,
+    preferences,
+    history: createRegistrationHistoryRepository(pool),
+    notifications: createNotificationRepository(pool),
+  });
+
   return {
     healthService: createHealthService(createHealthRepository(pool)),
-    authService: createAuthService({
-      users: createUserRepository(pool),
-      auditLogs: createAuditLogRepository(pool),
-      tokens: createTokenService({ secret: config.jwtSecret, ttlSeconds: SESSION_TTL_SECONDS }),
+    authService,
+    accountService,
+    adminStudentService: createAdminStudentService({
+      pool,
+      students: adminStudents,
+      tokens: accountTokens,
+      activityService,
+      accountService,
+      studentsFor: createAdminStudentRepository,
+      auditLogsFor: createAuditLogRepository,
+      listAllCourses: () => adminCourses.listCourseRefs(),
+      listDepartments: () => adminCourses.listDepartments(),
+    }),
+    adminCatalogueService: createAdminCatalogueService({
+      pool,
+      courses: adminCourses,
+      coursesFor: createAdminCourseRepository,
+      auditLogsFor: createAuditLogRepository,
     }),
     studentService: createStudentService(students, createNotificationRepository(pool)),
-    activityService: createActivityService({
-      windows,
-      waitlists,
-      preferences,
-      history: createRegistrationHistoryRepository(pool),
-      notifications: createNotificationRepository(pool),
-    }),
+    activityService,
     catalogueService: createCatalogueService({ windows, catalogue, students }),
     eligibilityService: createEligibilityService({ windows, catalogue, students }),
     cartService: createCartService({

@@ -48,6 +48,39 @@ export function createLoginRateLimiter(options: RateLimitOptions): RequestHandle
   });
 }
 
+/**
+ * The public account endpoints: forgot-password, activate, reset-password and
+ * the token check.
+ *
+ * Tighter than sign-in and counted per IP ALONE, because there is no account to
+ * key on — the whole point of /forgot-password is that it says nothing about
+ * which addresses exist, and keying on the e-mail would turn the rate limiter
+ * itself into the oracle the endpoint refuses to be.
+ */
+export const DEFAULT_ACCOUNT_RATE_LIMIT: RateLimitOptions = {
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+};
+
+/**
+ * Successful requests count here, unlike sign-in: sending mail and hashing
+ * passwords is work whether or not it succeeded, and a "success" carries no
+ * information about whether anything happened.
+ */
+export function createAccountRateLimiter(options: RateLimitOptions): RequestHandler {
+  const minutes = Math.ceil(options.windowMs / 60_000);
+  return rateLimit({
+    windowMs: options.windowMs,
+    limit: options.limit,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
+    handler: (_req, res: Response<ApiFailure>) => {
+      sendFailure(res, 429, `Too many requests. Please wait ${minutes} minutes and try again.`);
+    },
+  });
+}
+
 export const DEFAULT_SUBMIT_RATE_LIMIT: RateLimitOptions = {
   windowMs: 60 * 1000,
   limit: 10,

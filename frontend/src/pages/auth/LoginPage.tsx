@@ -1,11 +1,12 @@
 import type { LoginRequest } from '@course-reg/shared';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react';
-import { Navigate, useLocation } from 'react-router';
+import { Link, Navigate, useLocation } from 'react-router';
 import { Button } from '../../components/Button';
 import { FormField } from '../../components/FormField';
 import { Input } from '../../components/Input';
 import { ServiceStatus } from '../../components/ServiceStatus';
+import { DemoAccountHints } from './DemoAccountHints';
 import { useAuth } from '../../hooks/useAuth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../../hooks/useFocusOnMount';
@@ -132,7 +133,10 @@ export function LoginPage() {
         <h1 id="login-title" ref={headingRef} tabIndex={-1} className={styles.title}>
           Sign in
         </h1>
-        <p className={styles.lead}>Use your university e-mail address and password.</p>
+        <p className={styles.lead}>
+          Use your university e-mail address and password. Accounts are created by the registrar —
+          if you have an invitation e-mail, open its link to set your password.
+        </p>
 
         {notice && (
           <p className={styles.notice} role="status">
@@ -201,6 +205,10 @@ export function LoginPage() {
             {submitting ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>
+
+        <p className={styles.forgot}>
+          <Link to="/forgot-password">Forgot your password?</Link>
+        </p>
       </section>
 
       <aside className={styles.aside} aria-labelledby="how-it-works">
@@ -221,6 +229,9 @@ export function LoginPage() {
           ))}
         </ol>
         <ServiceStatus />
+        {/* In a production build this is the literal `false`, so the component
+            and its credentials are never bundled. */}
+        {import.meta.env.DEV && <DemoAccountHints />}
       </aside>
     </div>
   );

@@ -151,3 +151,9 @@
   font-size: var(--text-sm);
   line-height: var(--leading-dense);
 }
+
+.forgot {
+  padding-top: var(--space-2);
+  border-top: var(--border-hairline);
+  font-size: var(--text-sm);
+}

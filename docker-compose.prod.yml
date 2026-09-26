@@ -31,10 +31,22 @@ services:
       NODE_ENV: production
       PORT: 4000
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      CORS_ORIGIN: http://localhost:8080
+      CORS_ORIGIN: ${APP_BASE_URL:-http://localhost:8080}
       JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-100kb}
+      CSV_BODY_LIMIT: ${CSV_BODY_LIMIT:-2mb}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      # Invitation and reset links are built from this, so it must be the address
+      # students open in a browser.
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      # Required with NODE_ENV=production: without a mail server nobody can
+      # activate an account or reset a password.
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST in .env (production needs a mail server)}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-Course Registration <no-reply@university.edu>}
     depends_on:
       postgres:
         condition: service_healthy
