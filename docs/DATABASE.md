@@ -264,7 +264,26 @@ erDiagram
   `ALLOCATED`, `WAITLISTED`, `PROMOTED`, `ADDED`, `DROPPED`, `SWAPPED`,
   `WAITLIST_JOINED`, `WAITLIST_LEFT`, `WAITLIST_REMOVED`, …) with JSON details.
   Append-only.
-- **`notifications`** — messages to a user; `read_at` marks them read.
+  Its `details` JSON is a CONTRACT, not a scratch pad: one shape per
+  `event_type`, published as the `HistoryEventDetail` union in
+  `shared/src/api/activity.ts` and read by `backend/src/services/historyEvents.ts`.
+  Several services write these rows — submit, allocation, promotion, add/drop,
+  the admin withdrawal — and a writer that invents its own shape produces a
+  timeline event the student's page cannot describe. (The demo seed did exactly
+  that until Phase 11.) The reader is deliberately tolerant: a missing or
+  malformed field becomes `null` rather than an exception, because these rows
+  outlive the code that wrote them.
+
+  The student's timeline is read newest-first by keyset on `id`, not `OFFSET`:
+  `id` is the insert order, and a bulk allocation write gives hundreds of rows
+  one `created_at`, so ordering on the timestamp could not break ties the way
+  paging needs.
+
+- **`notifications`** — messages to a user; `read_at` marks them read. Paged by
+  keyset on `(created_at, id)` — exactly the ORDER BY and the
+  `notifications_user_idx` prefix — so a message arriving mid-read cannot make
+  a page repeat or skip a row. `read_at` is set by an `UPDATE … WHERE user_id`
+  scoped in the SQL, never filtered afterwards.
 - **`audit_logs`** — who changed what (old/new JSON values and a reason). Append-only.
   Capacity edits, window transitions, `ALLOCATION_RUN`, `ALLOCATION_VERIFY`,
   `WAITLIST_PROMOTION`, `ENROLLMENT_WITHDRAWN` and `ADD_DROP_PERIOD_UPDATED` are

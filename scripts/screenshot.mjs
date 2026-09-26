@@ -44,6 +44,39 @@ const ACCOUNTS = {
 
 /** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
 const SHOTS = [
+  // Phase 11 — the student's own record. The promoted student is the one with
+  // a timeline worth showing: submitted, allocated, upgraded, moved up.
+  {
+    name: 'student-history-1280-light',
+    as: 'promoted',
+    path: '/student/history',
+    w: 1280,
+    h: 1300,
+  },
+  {
+    name: 'student-history-390-dark',
+    as: 'promoted',
+    path: '/student/history',
+    w: 390,
+    h: 1400,
+    dark: true,
+  },
+  {
+    name: 'student-notifications-1280-light',
+    as: 'promoted',
+    path: '/student/notifications',
+    w: 1280,
+    h: 900,
+  },
+  {
+    name: 'student-notifications-390-dark',
+    as: 'promoted',
+    path: '/student/notifications',
+    w: 390,
+    h: 1000,
+    dark: true,
+  },
+
   // Phase 10 — add/drop. Two shapes the page has to handle: a student holding
   // a seat (Drop and Swap), and one holding nothing (Add and Join waitlist).
   {
@@ -315,6 +348,13 @@ async function main() {
         )
       ORDER BY s.roll_number LIMIT 1`,
   );
+  // A student who was moved up off a waitlist: the fullest timeline the demo
+  // produces. Null before anybody has been promoted, and the shot is skipped.
+  const promoted = await database.query(
+    `SELECT student_id AS id FROM enrollments
+      WHERE status = 'ACTIVE' AND source = 'WAITLIST_PROMOTION'
+      ORDER BY enrolled_at DESC LIMIT 1`,
+  );
   const latestRun = await database.query(
     `SELECT id FROM allocation_runs WHERE status = 'COMPLETED' ORDER BY finished_at DESC LIMIT 1`,
   );
@@ -331,7 +371,7 @@ async function main() {
     return `/admin/allocation-runs/${runId}`;
   };
 
-  const generated = { draft, allocated, waitlisted, nonSubmitter };
+  const generated = { draft, allocated, waitlisted, nonSubmitter, promoted };
 
   const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
   /**

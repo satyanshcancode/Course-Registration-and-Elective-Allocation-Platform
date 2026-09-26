@@ -59,6 +59,15 @@ describe('describeHistoryEvent', () => {
     );
   });
 
+  it('names what was submitted, and still reads when the list is missing', () => {
+    expect(
+      say({ type: 'SUBMITTED', reference: 'REF-3F9A2C71', courseCodes: ['CS401', 'CS402'] }),
+    ).toBe('You submitted 2 preferences — CS401 and CS402 (REF-3F9A2C71).');
+    expect(say({ type: 'SUBMITTED', reference: null, courseCodes: [] })).toBe(
+      'You submitted your preferences.',
+    );
+  });
+
   it('mentions the waitlists an allocation also put the student on', () => {
     expect(
       say({

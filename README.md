@@ -257,6 +257,16 @@ on `/student`, administrators on `/admin`.
 | `POST /api/admin/enrollments/:id/withdraw`   | admin   | `{ reason }`; releases a seat and promotes whoever is next, cascade included |
 | `POST /api/admin/waitlists/process`          | admin   | The safety sweep: offers every free seat in the window to its waitlist       |
 
+### The student's own record
+
+| Endpoint                                        | Who     | What                                                                                                             |
+| ----------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `GET /api/students/me/status`                   | student | Where they stand now: window, submission, seat and how it was obtained, live waitlist positions, add/drop period |
+| `GET /api/students/me/history`                  | student | Their timeline, newest first. `type`, `course`, `cursor`, `limit`; events carry structured facts, not sentences  |
+| `GET /api/students/me/notifications`            | student | Their messages. `filter=unread\|all`, `cursor`                                                                   |
+| `PATCH /api/students/me/notifications/:id/read` | student | Marks one read; idempotent, `404` for anybody else's. Returns the new unread count                               |
+| `POST /api/students/me/notifications/read-all`  | student | Marks every unread one read. Returns the new unread count                                                        |
+
 `JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
 The server refuses to start in production with the example value.
 
