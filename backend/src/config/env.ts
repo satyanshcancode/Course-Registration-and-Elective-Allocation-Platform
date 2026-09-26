@@ -17,6 +17,9 @@ export const EXAMPLE_JWT_SECRET = 'replace-with-a-long-random-secret-of-at-least
 
 export const JWT_SECRET_MIN_LENGTH = 32;
 
+/** How long an activation or password-reset link stays usable. */
+export const ACCOUNT_TOKEN_TTL_HOURS = 48;
+
 export const appEnvSchema = databaseEnvSchema
   .extend({
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
@@ -38,6 +41,25 @@ export const appEnvSchema = databaseEnvSchema
       .enum(['true', 'false'])
       .optional()
       .transform((value) => (value === undefined ? undefined : value === 'true')),
+    /** Bodies of CSV imports, which are far larger than any other request. */
+    CSV_BODY_LIMIT: z.string().min(1).default('2mb'),
+    /**
+     * Where the app is reached from a browser. Activation and reset links are
+     * built from it, so it must be the address students actually open — not the
+     * container's own hostname.
+     */
+    APP_BASE_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:5173'),
+    /** Unset means "no mail server": development logs the e-mails instead. */
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
+    /** TLS from the first byte (port 465); 587 upgrades with STARTTLS instead. */
+    SMTP_SECURE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    MAIL_FROM: z.string().min(1).default('Course Registration <no-reply@university.edu>'),
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV === 'production' && env.JWT_SECRET === EXAMPLE_JWT_SECRET) {
@@ -47,10 +69,31 @@ export const appEnvSchema = databaseEnvSchema
         message: 'is still the example value from .env.example; generate a real secret',
       });
     }
+    // Without a mail server nobody can activate an account or reset a password,
+    // and the fallback mailer writes the link to the log — so production must
+    // not start without one rather than fail quietly later.
+    if (env.NODE_ENV === 'production' && env.SMTP_HOST === undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['SMTP_HOST'],
+        message:
+          'is required in production: invitation and password-reset e-mails cannot be sent without it',
+      });
+    }
+    // Half a credential is a misconfiguration, not a passwordless server.
+    if ((env.SMTP_USER === undefined) !== (env.SMTP_PASSWORD === undefined)) {
+      context.addIssue({
+        code: 'custom',
+        path: [env.SMTP_USER === undefined ? 'SMTP_USER' : 'SMTP_PASSWORD'],
+        message: 'SMTP_USER and SMTP_PASSWORD must be set together, or both left unset',
+      });
+    }
   })
-  .transform(({ COOKIE_SECURE, ...env }) => ({
+  .transform(({ COOKIE_SECURE, APP_BASE_URL, ...env }) => ({
     ...env,
     COOKIE_SECURE: COOKIE_SECURE ?? env.NODE_ENV === 'production',
+    // Normalised without a trailing slash, so links are built by concatenation.
+    APP_BASE_URL: APP_BASE_URL.replace(/\/+$/, ''),
   }));
 
 export type DatabaseEnv = z.infer<typeof databaseEnvSchema>;

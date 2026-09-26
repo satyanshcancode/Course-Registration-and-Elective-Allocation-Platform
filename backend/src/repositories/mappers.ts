@@ -198,7 +198,10 @@ export function mapCompletedCourseRow(row: CompletedCourseRow): CompletedCourse 
   return {
     studentId: row.student_id,
     courseId: row.course_id,
-    completedTerm: term(row.completed_term, 'student_completed_courses.completed_term'),
+    completedTerm:
+      row.completed_term === null
+        ? null
+        : term(row.completed_term, 'student_completed_courses.completed_term'),
   };
 }
 

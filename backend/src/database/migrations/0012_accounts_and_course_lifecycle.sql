@@ -116,3 +116,14 @@ $$;
 CREATE TRIGGER courses_refuse_deactivating_offered
   BEFORE UPDATE OF is_active ON courses
   FOR EACH ROW EXECUTE FUNCTION refuse_deactivating_offered_course();
+
+-- ---------------------------------------------------------------------------
+-- student_completed_courses: an unknown completion term
+--
+-- The seed knows which term each course was passed in. An administrator
+-- recording a student's record by hand does not: the create/edit form and the
+-- CSV take a list of course CODES, because "they have passed CS201" is the fact
+-- the prerequisite check needs and the only one the registrar is asserting.
+-- So the term becomes nullable rather than being filled with a made-up value.
+-- ---------------------------------------------------------------------------
+ALTER TABLE student_completed_courses ALTER COLUMN completed_term DROP NOT NULL;
