@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { appEnvSchema, loadEnv } from './config/env.js';
 import { createServices } from './container.js';
 import { createPool } from './database/pool.js';
+import { createMailer } from './mail/createMailer.js';
 import { logger } from './utils/logger.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -10,11 +11,25 @@ function start(): void {
   const env = loadEnv(appEnvSchema);
   const pool = createPool(env.DATABASE_URL);
 
+  const mailer = createMailer({
+    smtpHost: env.SMTP_HOST,
+    smtpPort: env.SMTP_PORT,
+    smtpSecure: env.SMTP_SECURE,
+    smtpUser: env.SMTP_USER,
+    smtpPassword: env.SMTP_PASSWORD,
+    mailFrom: env.MAIL_FROM,
+  });
+
   const app = createApp({
     corsOrigins: env.CORS_ORIGIN,
     jsonBodyLimit: env.JSON_BODY_LIMIT,
+    csvBodyLimit: env.CSV_BODY_LIMIT,
     cookieSecure: env.COOKIE_SECURE,
-    services: createServices(pool, { jwtSecret: env.JWT_SECRET }),
+    services: createServices(pool, {
+      jwtSecret: env.JWT_SECRET,
+      appBaseUrl: env.APP_BASE_URL,
+      mailer,
+    }),
   });
 
   const server = app.listen(env.PORT, () => {

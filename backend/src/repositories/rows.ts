@@ -10,10 +10,62 @@
 export interface UserRow {
   id: string;
   email: string;
-  password_hash: string;
+  /** Null while an account is still invited: no password has been set yet. */
+  password_hash: string | null;
   role: string;
+  is_active: boolean;
+  password_changed_at: Date;
   created_at: Date;
   updated_at: Date;
+}
+
+/** account_tokens JOIN users: the link and the account it belongs to. */
+export interface AccountTokenRow {
+  id: string;
+  user_id: string;
+  purpose: string;
+  expires_at: Date;
+  consumed_at: Date | null;
+  email: string;
+  is_active: boolean;
+  has_password: boolean;
+}
+
+export interface OutstandingTokenRow {
+  user_id: string;
+  expires_at: Date;
+}
+
+/** One row of the administrator's students list. */
+export interface AdminStudentRow {
+  roll_number: string;
+  name: string;
+  email: string;
+  program_code: string;
+  program_name: string;
+  semester: number;
+  credits_completed: number;
+  expected_graduation_term: string;
+  is_active: boolean;
+  has_password: boolean;
+}
+
+/** courses plus its rule lists and where it is offered, for the admin catalogue. */
+export interface AdminCourseRow {
+  id: string;
+  code: string;
+  name: string;
+  credits: number;
+  description: string;
+  min_semester: number;
+  min_credits: number;
+  is_active: boolean;
+  department_code: string;
+  department_name: string;
+  prerequisites: { code: string; name: string }[];
+  eligible_programs: { code: string; name: string }[];
+  relevant_programs: { code: string; name: string }[];
+  offered_in: { windowName: string; status: string }[];
 }
 
 /** users LEFT JOIN students/programs: the student columns are null for admins. */
@@ -72,7 +124,8 @@ export interface StudentRow {
 export interface CompletedCourseRow {
   student_id: string;
   course_id: string;
-  completed_term: string;
+  /** Null when an administrator recorded the course without a term. */
+  completed_term: string | null;
 }
 
 export interface CourseRow {

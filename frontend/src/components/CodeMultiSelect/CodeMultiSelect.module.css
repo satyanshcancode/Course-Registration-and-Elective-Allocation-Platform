@@ -1,0 +1,129 @@
+.select {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---- Chosen chips -------------------------------------------------------- */
+.chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-accent-soft);
+  font-size: var(--text-xs);
+}
+
+.chipCode {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+
+.chipName {
+  color: var(--color-ink-muted);
+}
+
+.remove {
+  display: grid;
+  place-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--color-danger);
+}
+
+.summary {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+/* ---- Options ------------------------------------------------------------- */
+.options {
+  display: grid;
+  gap: 0;
+  max-height: 14rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  list-style: none;
+}
+
+.options:empty {
+  display: none;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: 1rem 5.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-bottom: var(--border-hairline);
+  background: none;
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.options li:last-child .option {
+  border-bottom: 0;
+}
+
+.option:hover {
+  background-color: var(--color-surface-sunken);
+}
+
+.option[aria-pressed='true'] {
+  background-color: var(--color-accent-soft);
+  font-weight: var(--weight-medium);
+}
+
+.optionIcon {
+  color: var(--color-ink-muted);
+}
+
+.option[aria-pressed='true'] .optionIcon {
+  color: var(--color-accent);
+}
+
+.optionCode {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.optionName {
+  color: var(--color-ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (width < 34rem) {
+  .option {
+    grid-template-columns: 1rem minmax(0, 1fr);
+  }
+
+  .optionName {
+    grid-column: 2;
+  }
+}

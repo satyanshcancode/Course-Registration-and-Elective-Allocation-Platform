@@ -23,6 +23,26 @@ if (typeof HTMLDialogElement !== 'undefined') {
   }
 }
 
+/*
+ * jsdom's File has no text() (or arrayBuffer()/stream()), though every browser
+ * does. The CSV import reads an uploaded file with it, so it is polyfilled here
+ * rather than avoided in the component.
+ */
+if (typeof File !== 'undefined' && typeof File.prototype.text !== 'function') {
+  File.prototype.text = function text(this: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(typeof reader.result === 'string' ? reader.result : '');
+      };
+      reader.onerror = () => {
+        reject(reader.error ?? new Error('Could not read the file'));
+      };
+      reader.readAsText(this);
+    });
+  };
+}
+
 /* jsdom has no matchMedia; report "no match" unless a test overrides it. */
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string): MediaQueryList => ({
