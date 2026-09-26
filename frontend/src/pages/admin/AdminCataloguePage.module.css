@@ -1,0 +1,68 @@
+.body {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.summary {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---- Rule columns -------------------------------------------------------- */
+.requires,
+.programs {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.prereqs,
+.relevance {
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* ---- Delegated row buttons ---------------------------------------------- */
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rowButton {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rowButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.rowButton:disabled {
+  color: var(--color-ink-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rowIcon {
+  width: 1em;
+  height: 1em;
+}

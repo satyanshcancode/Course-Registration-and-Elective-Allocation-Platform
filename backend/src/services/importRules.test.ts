@@ -111,7 +111,7 @@ describe('judgeStudentRow', () => {
     const judgement = judgeStudentRow({ ...studentRow, completedCourses: 'CS201 CS777' }, context);
     expect(judgement.verdict).toMatchObject({
       kind: 'invalid',
-      errors: [{ column: 'completedCourses', message: expect.stringContaining('CS777') }],
+      errors: [{ column: 'completedCourses', message: expect.stringContaining('CS777') as string }],
     });
   });
 
@@ -233,7 +233,9 @@ describe('judgeCourseRow', () => {
     );
     expect(judgement.verdict).toMatchObject({
       kind: 'invalid',
-      errors: [{ column: 'relevantPrograms', message: expect.stringContaining('BTECH-ECE') }],
+      errors: [
+        { column: 'relevantPrograms', message: expect.stringContaining('BTECH-ECE') as string },
+      ],
     });
   });
 
@@ -252,7 +254,12 @@ describe('judgeCourseRow', () => {
     );
     expect(judgement.verdict).toMatchObject({
       kind: 'invalid',
-      errors: [{ column: 'eligiblePrograms', message: expect.stringContaining('more than once') }],
+      errors: [
+        {
+          column: 'eligiblePrograms',
+          message: expect.stringContaining('more than once') as string,
+        },
+      ],
     });
   });
 

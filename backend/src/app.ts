@@ -15,10 +15,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { createApiRouter, type ApiServices } from './routes/index.js';
 
 /** Paths that accept an uploaded CSV, and so a much larger body. */
-const CSV_UPLOAD_PATHS = [
-  '/api/admin/students/import',
-  '/api/admin/course-catalogue/import',
-];
+const CSV_UPLOAD_PATHS = ['/api/admin/students/import', '/api/admin/course-catalogue/import'];
 
 export interface AppOptions {
   corsOrigins: string[];
