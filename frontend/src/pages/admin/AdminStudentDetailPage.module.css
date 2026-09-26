@@ -1,0 +1,124 @@
+.body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+.expiry {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---- Record ------------------------------------------------------------- */
+.record {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-hairline);
+}
+
+.entry:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.entry dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.entry dd {
+  margin: 0;
+}
+
+@media (width < 34rem) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.muted {
+  color: var(--color-ink-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.courses {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+/* ---- Standing and history ----------------------------------------------- */
+.standing {
+  line-height: var(--leading-body);
+}
+
+.history {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-hairline);
+}
+
+.event:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.when {
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.what {
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+.more {
+  margin-top: var(--space-3);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}

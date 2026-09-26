@@ -17,6 +17,7 @@ import { createServices } from '../container.js';
 import { createPool } from '../database/pool.js';
 import { seedDatabase } from '../database/seeds/seedDatabase.js';
 import { seedDemoSubmissions } from '../database/seeds/demoSubmissions.js';
+import { createMailer } from '../mail/createMailer.js';
 import { logger } from '../utils/logger.js';
 
 export const DEMO_STAGES = ['draft', 'open', 'closed', 'allocated', 'add-drop'] as const;
@@ -87,7 +88,20 @@ async function reachStage(pool: Pool, stage: DemoStage): Promise<void> {
     return;
   }
 
-  const services = createServices(pool, { jwtSecret: env.JWT_SECRET });
+  // The demo stages close a window and run an allocation; neither sends mail,
+  // but the service graph is the real one, so it gets the real mailer.
+  const services = createServices(pool, {
+    jwtSecret: env.JWT_SECRET,
+    appBaseUrl: env.APP_BASE_URL,
+    mailer: createMailer({
+      smtpHost: env.SMTP_HOST,
+      smtpPort: env.SMTP_PORT,
+      smtpSecure: env.SMTP_SECURE,
+      smtpUser: env.SMTP_USER,
+      smtpPassword: env.SMTP_PASSWORD,
+      mailFrom: env.MAIL_FROM,
+    }),
+  });
   const adminId = await findAdminId(pool);
 
   // closed: through the real service, so the audit row and the notifications

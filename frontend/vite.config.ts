@@ -40,30 +40,53 @@ const apiProxy: Record<string, ProxyOptions> = {
   },
 };
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    // Bundle @course-reg/shared from its TypeScript source.
-    conditions: ['source', ...defaultClientConditions],
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    strictPort: true,
-    proxy: apiProxy,
-    // Bind mounts on Windows/macOS do not deliver file events into containers.
-    watch: readSetting('WATCH_POLLING') === 'true' ? { usePolling: true, interval: 300 } : {},
-  },
-  preview: {
-    host: '0.0.0.0',
-    port: 4173,
-    strictPort: true,
-    proxy: apiProxy,
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
-    maxWorkers: vitestMaxWorkers,
-  },
+/**
+ * Forces a real production build for `vite build`.
+ *
+ * Vite decides `import.meta.env.DEV` from `process.env.NODE_ENV`, NOT from the
+ * build mode. A developer with `NODE_ENV=development` exported in their shell
+ * therefore got a bundle where `import.meta.env.DEV` was `true`: the sign-in
+ * page's demo credentials rendered and the `/dev/components` gallery route was
+ * registered, in a build meant to be deployed. The `.env` half of this hazard is
+ * already handled by `readSetting` above; this is the ambient half.
+ *
+ * `vite build --mode development` still opts out, because the mode is explicit
+ * there rather than inherited from the environment.
+ */
+function forceProductionBuild(command: string, mode: string): void {
+  if (command === 'build' && mode === 'production') {
+    process.env.NODE_ENV = 'production';
+  }
+}
+
+export default defineConfig(({ command, mode }) => {
+  forceProductionBuild(command, mode);
+
+  return {
+    plugins: [react()],
+    resolve: {
+      // Bundle @course-reg/shared from its TypeScript source.
+      conditions: ['source', ...defaultClientConditions],
+    },
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      strictPort: true,
+      proxy: apiProxy,
+      // Bind mounts on Windows/macOS do not deliver file events into containers.
+      watch: readSetting('WATCH_POLLING') === 'true' ? { usePolling: true, interval: 300 } : {},
+    },
+    preview: {
+      host: '0.0.0.0',
+      port: 4173,
+      strictPort: true,
+      proxy: apiProxy,
+    },
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}'],
+      maxWorkers: vitestMaxWorkers,
+    },
+  };
 });

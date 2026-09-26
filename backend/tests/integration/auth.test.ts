@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { SESSION_COOKIE_NAME } from '../../src/config/session.js';
 import { createServices } from '../../src/container.js';
+import { createMemoryMailer } from '../../src/mail/memoryMailer.js';
 import { INVALID_CREDENTIALS_MESSAGE } from '../../src/services/authService.js';
 import {
   createDepartment,
@@ -28,7 +29,12 @@ function buildApp(loginRateLimit = { windowMs: 60_000, limit: 10 }) {
     jsonBodyLimit: '100kb',
     cookieSecure: false,
     loginRateLimit,
-    services: createServices(getTestPool(), { jwtSecret: JWT_SECRET }),
+    services: createServices(getTestPool(), {
+      jwtSecret: JWT_SECRET,
+      appBaseUrl: 'http://localhost:5173',
+      mailer: createMemoryMailer(),
+      passwordHashRounds: 4,
+    }),
   });
 }
 
@@ -104,7 +110,12 @@ describe('POST /api/auth/login', () => {
       corsOrigins: [ALLOWED_ORIGIN],
       jsonBodyLimit: '100kb',
       cookieSecure: true,
-      services: createServices(getTestPool(), { jwtSecret: JWT_SECRET }),
+      services: createServices(getTestPool(), {
+        jwtSecret: JWT_SECRET,
+        appBaseUrl: 'http://localhost:5173',
+        mailer: createMemoryMailer(),
+        passwordHashRounds: 4,
+      }),
     });
 
     expect(sessionSetCookie(await login(app, 'ada@test.edu'))).toMatch(/; Secure/);

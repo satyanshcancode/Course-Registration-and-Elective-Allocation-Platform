@@ -1,5 +1,8 @@
 import { Router } from 'express';
+import { createAccountController } from '../controllers/accountController.js';
 import { createActivityController } from '../controllers/activityController.js';
+import { createAdminCatalogueController } from '../controllers/adminCatalogueController.js';
+import { createAdminStudentController } from '../controllers/adminStudentController.js';
 import { createAddDropController } from '../controllers/addDropController.js';
 import { createAdminController } from '../controllers/adminController.js';
 import { createAuthController } from '../controllers/authController.js';
@@ -11,13 +14,17 @@ import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
 import { createWaitlistController } from '../controllers/waitlistController.js';
 import {
+  createAccountRateLimiter,
   createAddDropRateLimiter,
   createLoginRateLimiter,
   createSubmitRateLimiter,
   type RateLimitOptions,
 } from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
+import type { AccountService } from '../services/accountService.js';
 import type { ActivityService } from '../services/activityService.js';
+import type { AdminCatalogueService } from '../services/adminCatalogueService.js';
+import type { AdminStudentService } from '../services/adminStudentService.js';
 import type { AddDropService } from '../services/addDropService.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AllocationService } from '../services/allocationService.js';
@@ -30,8 +37,10 @@ import type { RegistrationWindowService } from '../services/registrationWindowSe
 import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
 import type { WaitlistService } from '../services/waitlistService.js';
+import { createAccountRouter, createPublicAccountRouter } from './accountRoutes.js';
 import { createAddDropRouter } from './addDropRoutes.js';
 import { createAdminRouter } from './adminRoutes.js';
+import { createAdminCatalogueRouter, createAdminStudentRouter } from './adminRecordRoutes.js';
 import { createAdminAllocationRouter, createAllocationRouter } from './allocationRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createCartRouter, createRegistrationRouter } from './cartRoutes.js';
@@ -46,6 +55,9 @@ import { createAdminWaitlistRouter } from './waitlistRoutes.js';
 export interface ApiServices {
   healthService: HealthService;
   authService: AuthService;
+  accountService: AccountService;
+  adminStudentService: AdminStudentService;
+  adminCatalogueService: AdminCatalogueService;
   studentService: StudentService;
   activityService: ActivityService;
   catalogueService: CatalogueService;
@@ -62,6 +74,7 @@ export interface ApiServices {
 export interface ApiRouterOptions {
   cookieSecure: boolean;
   loginRateLimit: RateLimitOptions;
+  accountRateLimit: RateLimitOptions;
   submitRateLimit: RateLimitOptions;
   addDropRateLimit: RateLimitOptions;
 }
@@ -72,6 +85,18 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
   const router = Router();
 
   router.use('/health', createHealthRouter(createHealthController(services.healthService)));
+
+  const accountController = createAccountController(services.accountService, {
+    cookieSecure: options.cookieSecure,
+  });
+  // Mounted on /auth BEFORE the sign-in router, so the account endpoints get
+  // their own, tighter rate limit rather than the sign-in one.
+  router.use(
+    '/auth',
+    createPublicAccountRouter(accountController, {
+      accountRateLimiter: createAccountRateLimiter(options.accountRateLimit),
+    }),
+  );
   router.use(
     '/auth',
     createAuthRouter(
@@ -79,6 +104,7 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
       { requireAuth, loginRateLimiter: createLoginRateLimiter(options.loginRateLimit) },
     ),
   );
+  router.use('/account', createAccountRouter(accountController, requireAuth));
   const waitlistController = createWaitlistController(services.waitlistService);
   router.use(
     '/students',
@@ -123,6 +149,20 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
   const allocationController = createAllocationController(services.allocationService);
   router.use('/allocation', createAllocationRouter(allocationController, requireAuth));
   router.use('/admin', createAdminAllocationRouter(allocationController, requireAuth));
+  router.use(
+    '/admin',
+    createAdminStudentRouter(
+      createAdminStudentController(services.adminStudentService),
+      requireAuth,
+    ),
+  );
+  router.use(
+    '/admin',
+    createAdminCatalogueRouter(
+      createAdminCatalogueController(services.adminCatalogueService),
+      requireAuth,
+    ),
+  );
   router.use('/admin', createAdminWaitlistRouter(waitlistController, requireAuth));
   router.use(
     '/admin',

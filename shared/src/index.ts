@@ -12,6 +12,60 @@ export type {
   UnreadNotificationCount,
 } from './api/auth.js';
 export type {
+  AccountTokenPurpose,
+  ActivationCheck,
+  ActivationResult,
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  SetPasswordRequest,
+} from './api/accounts.js';
+export { ACCOUNT_TOKEN_PURPOSES } from './api/accounts.js';
+export type {
+  AdminCatalogue,
+  AdminCourseRecord,
+  CourseActivationChangeRequest,
+  CourseWindowUse,
+  CreateCourseRequest,
+  UpdateCourseRequest,
+} from './api/adminCatalogue.js';
+export { COURSE_DESCRIPTION_MAX_LENGTH, COURSE_NAME_MAX_LENGTH } from './api/adminCatalogue.js';
+export type {
+  AdminReferenceData,
+  AdminStudentDetail,
+  AdminStudentListItem,
+  AdminStudentPage,
+  AdminStudentQuery,
+  AdminStudentStatus,
+  CreateStudentRequest,
+  CreateStudentResult,
+  StudentActivationChangeRequest,
+  UpdateStudentRequest,
+} from './api/adminStudents.js';
+export {
+  ADMIN_STUDENT_MAX_PAGE_SIZE,
+  ADMIN_STUDENT_PAGE_SIZE,
+  ADMIN_STUDENT_STATUSES,
+} from './api/adminStudents.js';
+export type {
+  CsvCellError,
+  CsvImportReport,
+  CsvImportRequest,
+  CsvImportRow,
+  CsvRowVerdict,
+} from './api/csvImport.js';
+export {
+  buildCsvTemplate,
+  COURSE_CSV_COLUMNS,
+  COURSE_CSV_EXAMPLE,
+  CSV_LIST_SEPARATOR,
+  CSV_MAX_BYTES,
+  CSV_MAX_ROWS,
+  STUDENT_CSV_COLUMNS,
+  STUDENT_CSV_EXAMPLE,
+  toCsvCell,
+  toCsvLine,
+} from './api/csvImport.js';
+export type {
   AdminCourseList,
   AdminCourseOffering,
   CatalogueCourse,
@@ -164,3 +218,4 @@ export * from './domain/allocationConfig.js';
 export type * from './domain/models.js';
 export type * from './domain/refs.js';
 export * from './domain/eligibility.js';
+export * from './domain/password.js';

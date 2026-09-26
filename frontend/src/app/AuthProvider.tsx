@@ -1,4 +1,4 @@
-import type { LoginRequest } from '@course-reg/shared';
+import type { CurrentUser, LoginRequest } from '@course-reg/shared';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { isAbortError, setUnauthorizedHandler } from '../api/apiClient';
@@ -75,6 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response;
   }, []);
 
+  // Activation, a reset and a password change all answer like login does, so
+  // the session is adopted from that response rather than probed for again.
+  const adopt = useCallback((user: CurrentUser) => {
+    setState({ status: 'authenticated', user });
+  }, []);
+
   const logout = useCallback(async () => {
     // Even if the request fails, forget the session locally.
     await authApi.logout();
@@ -83,7 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await navigate('/login', { replace: true, state: loginState });
   }, [navigate]);
 
-  const value = useMemo<AuthContextValue>(() => ({ state, login, logout }), [state, login, logout]);
+  const value = useMemo<AuthContextValue>(
+    () => ({ state, login, logout, adopt }),
+    [state, login, logout, adopt],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

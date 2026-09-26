@@ -42,8 +42,127 @@ const ACCOUNTS = {
   admin: { role: 'ADMIN', email: 'admin@university.edu' },
 };
 
+const MAILPIT_URL = process.env.MAILPIT_URL ?? 'http://localhost:8025';
+/** Whose reset link the ActivatePage shots use. Any seeded student will do. */
+const RESET_LINK_EMAIL = 'aarav.sharma@university.edu';
+
+/**
+ * A real, working password-reset link: asks the public endpoint for one and
+ * reads it out of Mailpit, exactly as a student would out of their inbox.
+ * Nothing is faked, and the token stays single-use.
+ */
+async function resetTokenFor(email) {
+  const before = Date.now();
+  const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok) {
+    throw new Error(`forgot-password answered ${response.status}`);
+  }
+  // Mailpit delivers in milliseconds, but not synchronously with the reply.
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const inbox = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`,
+    )
+      .then((r) => (r.ok ? r.json() : { messages: [] }))
+      .catch(() => ({ messages: [] }));
+    const latest = inbox.messages?.[0];
+    if (latest && Date.parse(latest.Created) + 2000 >= before) {
+      const body = await fetch(`${MAILPIT_URL}/api/v1/message/${latest.ID}`).then((r) => r.json());
+      const token = /[?&]token=([^\s&"'<>]+)/.exec(`${body.Text ?? ''}${body.HTML ?? ''}`)?.[1];
+      if (token) {
+        return token;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`No reset e-mail for ${email} in Mailpit at ${MAILPIT_URL}`);
+}
+
 /** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
 const SHOTS = [
+  // Phase 12 — accounts, student records and the catalogue.
+  {
+    name: 'auth-reset-password-1280-light',
+    public: true,
+    path: 'RESET_LINK',
+    w: 1280,
+    h: 800,
+  },
+  {
+    name: 'auth-reset-password-390-dark',
+    public: true,
+    path: 'RESET_LINK',
+    w: 390,
+    h: 700,
+    dark: true,
+  },
+  {
+    name: 'auth-forgot-password-1280-light',
+    public: true,
+    path: '/forgot-password',
+    w: 1280,
+    h: 800,
+  },
+  {
+    name: 'auth-forgot-password-390-dark',
+    public: true,
+    path: '/forgot-password',
+    w: 390,
+    h: 700,
+    dark: true,
+  },
+  { name: 'student-account-1280-light', as: 'rohan', path: '/student/account', w: 1280, h: 1000 },
+  {
+    name: 'student-account-390-dark',
+    as: 'rohan',
+    path: '/student/account',
+    w: 390,
+    h: 1100,
+    dark: true,
+  },
+  { name: 'admin-students-1280-light', as: 'admin', path: '/admin/students', w: 1280, h: 1200 },
+  {
+    name: 'admin-students-390-dark',
+    as: 'admin',
+    path: '/admin/students',
+    w: 390,
+    h: 1200,
+    dark: true,
+  },
+  {
+    name: 'admin-student-detail-1280-light',
+    as: 'admin',
+    path: '/admin/students/CSE23903',
+    w: 1280,
+    h: 1200,
+  },
+  {
+    name: 'admin-student-detail-390-dark',
+    as: 'admin',
+    path: '/admin/students/CSE23903',
+    w: 390,
+    h: 1300,
+    dark: true,
+  },
+  {
+    name: 'admin-course-catalogue-1280-light',
+    as: 'admin',
+    path: '/admin/course-catalogue',
+    w: 1280,
+    h: 1200,
+  },
+  {
+    name: 'admin-course-catalogue-390-dark',
+    as: 'admin',
+    path: '/admin/course-catalogue',
+    w: 390,
+    h: 1300,
+    dark: true,
+  },
+
   // Phase 11 — the student's own record. The promoted student is the one with
   // a timeline worth showing: submitted, allocated, upgraded, moved up.
   {
@@ -361,7 +480,11 @@ async function main() {
   await database.end();
 
   const runId = latestRun.rows[0]?.id;
-  const pathFor = (shot) => {
+  const pathFor = async (shot) => {
+    if (shot.path === 'RESET_LINK') {
+      const token = await resetTokenFor(RESET_LINK_EMAIL);
+      return `/reset-password?token=${encodeURIComponent(token)}`;
+    }
     if (shot.path !== 'RUN_DETAIL') {
       return shot.path;
     }
@@ -424,8 +547,9 @@ async function main() {
     }
 
     for (const shot of shots) {
-      const session = sessionFor(shot.as);
-      if (!session) {
+      // A public page (sign in, activate, reset) has no session by definition.
+      const session = shot.public ? null : sessionFor(shot.as);
+      if (!shot.public && !session) {
         process.stdout.write(`  (skipped ${shot.name}: no "${shot.as}" student in this stage)
 `);
         continue;
@@ -446,15 +570,17 @@ async function main() {
         await devtools.send('Emulation.setEmulatedMedia', {
           features: [{ name: 'prefers-color-scheme', value: shot.dark ? 'dark' : 'light' }],
         });
-        await devtools.send('Network.setCookie', {
-          name: 'cr_session',
-          value: session,
-          url: `${BASE_URL}/api`,
-          path: '/api',
-          httpOnly: true,
-          sameSite: 'Strict',
-        });
-        await devtools.send('Page.navigate', { url: `${BASE_URL}${pathFor(shot)}` });
+        if (session) {
+          await devtools.send('Network.setCookie', {
+            name: 'cr_session',
+            value: session,
+            url: `${BASE_URL}/api`,
+            path: '/api',
+            httpOnly: true,
+            sameSite: 'Strict',
+          });
+        }
+        await devtools.send('Page.navigate', { url: `${BASE_URL}${await pathFor(shot)}` });
         await waitForIdle(devtools);
 
         const { data } = await devtools.send('Page.captureScreenshot', {

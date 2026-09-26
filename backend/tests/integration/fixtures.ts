@@ -71,9 +71,16 @@ export function createUser(
   overrides: { email?: string; role?: 'STUDENT' | 'ADMIN' } = {},
 ): Promise<string> {
   const n = nextId();
+  // password_changed_at is backdated a minute because that is what real
+  // accounts look like: one is created, and its sessions come later. Left at
+  // now(), a session token minted by a test in the same second would carry an
+  // `iat` below the account's cut-off and be refused — correctly, but for a
+  // situation that only a test can create (see services/accountTokens.ts).
   return insertReturningId(
     pool,
-    'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id',
+    `INSERT INTO users (email, password_hash, role, password_changed_at)
+     VALUES ($1, $2, $3, now() - interval '1 minute')
+     RETURNING id`,
     [overrides.email ?? `user${n}@university.edu`, TEST_PASSWORD_HASH, overrides.role ?? 'STUDENT'],
   );
 }
