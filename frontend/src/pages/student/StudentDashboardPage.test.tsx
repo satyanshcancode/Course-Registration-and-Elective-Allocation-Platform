@@ -1,17 +1,20 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as activityApi from '../../api/activityApi';
 import * as apiClientModule from '../../api/apiClient';
 import * as allocationApi from '../../api/allocationApi';
 import * as courseApi from '../../api/courseApi';
 import * as eligibilityApi from '../../api/eligibilityApi';
 import { expectNoA11yViolations } from '../../test/axe';
 import { fallWindow, ok, SERVER_TIME } from '../../test/catalogueFixtures';
+import { historyEvent, historyPage } from '../../test/activityFixtures';
 import { eligibilityOverview, pendingResults } from '../../test/registrationFixtures';
 import { renderRoute } from '../../test/renderRoute';
 import { StudentDashboardPage } from './StudentDashboardPage';
 
 vi.mock('../../api/courseApi', () => ({ getCurrentWindow: vi.fn() }));
+vi.mock('../../api/activityApi', () => ({ getMyHistory: vi.fn() }));
 vi.mock('../../api/allocationApi', () => ({ getMyAllocationResults: vi.fn() }));
 vi.mock('../../api/eligibilityApi', () => ({ getEligibility: vi.fn() }));
 vi.mock('../../api/apiClient', () => ({
@@ -34,6 +37,7 @@ const windowApi = vi.mocked(courseApi);
 const eligibility = vi.mocked(eligibilityApi);
 const client = vi.mocked(apiClientModule.apiClient);
 const allocation = vi.mocked(allocationApi);
+const activity = vi.mocked(activityApi);
 
 const failure = (message: string) => ({ success: false as const, data: null, message });
 
@@ -63,6 +67,39 @@ describe('StudentDashboardPage', () => {
     eligibility.getEligibility.mockResolvedValue(ok(eligibilityOverview));
     client.get.mockResolvedValue({ success: true, data: { unread: 3 } });
     allocation.getMyAllocationResults.mockResolvedValue(ok(pendingResults));
+    activity.getMyHistory.mockResolvedValue(ok(historyPage()));
+  });
+
+  it('shows the last few events, in the same words the history page uses', async () => {
+    activity.getMyHistory.mockResolvedValue(
+      ok(
+        historyPage({
+          events: [
+            historyEvent({ type: 'PROMOTED', rank: 1, fromPosition: 2, releasedCourse: 'CS402' }),
+            historyEvent(
+              { type: 'SUBMITTED', reference: 'REF-3F9A2C71', courseCodes: ['CS401'] },
+              { course: null },
+            ),
+          ],
+        }),
+      ),
+    );
+    renderDashboard();
+
+    const recent = card('Recent activity');
+    expect(await recent.findByText(/You were moved up from CS402 to CS401/)).toBeVisible();
+    expect(recent.getByRole('link', { name: /full history/ })).toHaveAttribute(
+      'href',
+      '/student/history',
+    );
+    // Five is all the dashboard asks for; the rest live on the history page.
+    expect(activity.getMyHistory).toHaveBeenCalledWith({ limit: 5 }, expect.anything());
+  });
+
+  it('says so plainly when nothing has happened yet', async () => {
+    renderDashboard();
+
+    expect(await screen.findByText(/Nothing has happened yet/)).toBeVisible();
   });
 
   it('loads every section together, not one after another', async () => {
