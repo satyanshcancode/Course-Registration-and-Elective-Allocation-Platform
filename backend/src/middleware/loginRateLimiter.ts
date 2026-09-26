@@ -53,12 +53,18 @@ export const DEFAULT_SUBMIT_RATE_LIMIT: RateLimitOptions = {
   limit: 10,
 };
 
+/** Add/drop actions move a real seat, so they get their own, tighter budget. */
+export const DEFAULT_ADD_DROP_RATE_LIMIT: RateLimitOptions = {
+  windowMs: 60 * 1000,
+  limit: 20,
+};
+
 /**
- * Limits submits per signed-in student. Keyed on the session's user id, not
+ * Limits an action per signed-in student. Keyed on the session's user id, not
  * the IP: students on one campus network must not throttle each other, and a
  * retry with the same idempotency key is harmless anyway.
  */
-export function createSubmitRateLimiter(options: RateLimitOptions): RequestHandler {
+function createUserRateLimiter(options: RateLimitOptions, noun: string): RequestHandler {
   const seconds = Math.ceil(options.windowMs / 1000);
   return rateLimit({
     windowMs: options.windowMs,
@@ -67,7 +73,15 @@ export function createSubmitRateLimiter(options: RateLimitOptions): RequestHandl
     legacyHeaders: false,
     keyGenerator: (req) => req.auth?.userId ?? ipKeyGenerator(req.ip ?? 'unknown'),
     handler: (_req, res: Response<ApiFailure>) => {
-      sendFailure(res, 429, `Too many submissions. Please wait ${seconds} seconds and try again.`);
+      sendFailure(res, 429, `Too many ${noun}. Please wait ${seconds} seconds and try again.`);
     },
   });
+}
+
+export function createSubmitRateLimiter(options: RateLimitOptions): RequestHandler {
+  return createUserRateLimiter(options, 'submissions');
+}
+
+export function createAddDropRateLimiter(options: RateLimitOptions): RequestHandler {
+  return createUserRateLimiter(options, 'changes');
 }

@@ -212,11 +212,7 @@ export function createWaitlistPromotionService({
                 )
             ).map((entry) => ({ entry, reason: 'RANKED_BELOW_SEAT' as const })),
             ...(
-              await waitlists.removeUnrankedEntries(
-                windowId,
-                candidate.studentId,
-                'SEAT_ELSEWHERE',
-              )
+              await waitlists.removeUnrankedEntries(windowId, candidate.studentId, 'SEAT_ELSEWHERE')
             ).map((entry) => ({ entry, reason: 'SEAT_ELSEWHERE' as const })),
           ];
           for (const { entry, reason } of stale) {
@@ -291,11 +287,15 @@ function staleEntryReason(
   if (candidate.preferenceRank === null) {
     return 'SEAT_ELSEWHERE';
   }
-  return held.courseId === courseId ||
-    held.preferenceRank === null ||
-    held.preferenceRank <= candidate.preferenceRank
-    ? 'RANKED_BELOW_SEAT'
-    : null;
+  if (held.courseId === courseId) {
+    return 'RANKED_BELOW_SEAT';
+  }
+  // A seat taken during add/drop carries no rank of its own. A course they DID
+  // rank is what they asked for first, so it is still an upgrade on it.
+  if (held.preferenceRank === null) {
+    return null;
+  }
+  return held.preferenceRank <= candidate.preferenceRank ? 'RANKED_BELOW_SEAT' : null;
 }
 
 function removalHistory(

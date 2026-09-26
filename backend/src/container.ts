@@ -4,6 +4,7 @@
  */
 import type { Pool } from 'pg';
 import { SESSION_TTL_SECONDS } from './config/session.js';
+import { createAddDropRequestRepository } from './repositories/addDropRequestRepository.js';
 import { createAllocationRepository } from './repositories/allocationRepository.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
 import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
@@ -17,6 +18,7 @@ import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import { createWaitlistRepository } from './repositories/waitlistRepository.js';
 import type { ApiServices } from './routes/index.js';
+import { createAddDropService } from './services/addDropService.js';
 import { createAdminCourseService } from './services/adminCourseService.js';
 import { createAllocationService } from './services/allocationService.js';
 import { createAuthService } from './services/authService.js';
@@ -97,6 +99,20 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       historyFor: createRegistrationHistoryRepository,
       notificationsFor: createNotificationRepository,
       auditLogsFor: createAuditLogRepository,
+    }),
+    addDropService: createAddDropService({
+      pool,
+      windows,
+      catalogue,
+      students,
+      waitlists,
+      promotions,
+      requestsFor: createAddDropRequestRepository,
+      waitlistsFor: createWaitlistRepository,
+      catalogueFor: createCourseCatalogueRepository,
+      studentsFor: createStudentRepository,
+      historyFor: createRegistrationHistoryRepository,
+      notificationsFor: createNotificationRepository,
     }),
     allocationService: createAllocationService({
       pool,

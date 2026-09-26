@@ -219,62 +219,63 @@ export function createAllocationRepository(
         return null;
       }
 
-      const [offerings, eligible, relevant, prerequisites, submissions, items, completed] =
-        await Promise.all([
-          pool.query<{
-            course_id: string;
-            code: string;
-            name: string;
-            capacity: number;
-            allocated_count: number;
-            min_semester: number;
-            min_credits: number;
-          }>(
-            `SELECT o.course_id, c.code, c.name, o.capacity, o.allocated_count,
-                    c.min_semester, c.min_credits
-             FROM registration_window_courses o
-             JOIN courses c ON c.id = o.course_id
-             WHERE o.window_id = $1
-             ORDER BY c.code`,
-            [windowId],
-          ),
-          pool.query<{ course_id: string; program_id: string }>(
-            'SELECT course_id, program_id FROM course_eligible_programs',
-          ),
-          pool.query<{ course_id: string; program_id: string }>(
-            'SELECT course_id, program_id FROM course_program_relevance',
-          ),
-          pool.query<{ course_id: string; prerequisite_course_id: string }>(
-            'SELECT course_id, prerequisite_course_id FROM course_prerequisites',
-          ),
-          pool.query<{
-            student_id: string;
-            submission_sequence: string;
-            semester: number;
-            credits_completed: number;
-            program_id: string;
-            expected_graduation_term: string;
-          }>(
-            `SELECT ps.student_id, ps.submission_sequence, s.semester, s.credits_completed,
-                    s.program_id, s.expected_graduation_term
-             FROM preference_submissions ps
-             JOIN students s ON s.user_id = ps.student_id
-             WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED'
-             ORDER BY ps.submission_sequence`,
-            [windowId],
-          ),
-          pool.query<{ student_id: string; course_id: string; rank: number }>(
-            `SELECT ps.student_id, pi.course_id, pi.rank
-             FROM preference_items pi
-             JOIN preference_submissions ps ON ps.id = pi.submission_id
-             WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED'
-             ORDER BY ps.student_id, pi.rank`,
-            [windowId],
-          ),
-          pool.query<{ student_id: string; course_id: string }>(
-            'SELECT student_id, course_id FROM student_completed_courses',
-          ),
-        ]);
+      // Awaited one at a time, not with Promise.all: an allocation run passes
+      // its OWN transaction client, and one pg client cannot run two queries at
+      // once (deprecated today, an error from pg@9). The snapshot is built once
+      // per run, so seven round trips cost nothing.
+      const offerings = await pool.query<{
+        course_id: string;
+        code: string;
+        name: string;
+        capacity: number;
+        allocated_count: number;
+        min_semester: number;
+        min_credits: number;
+      }>(
+        `SELECT o.course_id, c.code, c.name, o.capacity, o.allocated_count,
+                c.min_semester, c.min_credits
+         FROM registration_window_courses o
+         JOIN courses c ON c.id = o.course_id
+         WHERE o.window_id = $1
+         ORDER BY c.code`,
+        [windowId],
+      );
+      const eligible = await pool.query<{ course_id: string; program_id: string }>(
+        'SELECT course_id, program_id FROM course_eligible_programs',
+      );
+      const relevant = await pool.query<{ course_id: string; program_id: string }>(
+        'SELECT course_id, program_id FROM course_program_relevance',
+      );
+      const prerequisites = await pool.query<{ course_id: string; prerequisite_course_id: string }>(
+        'SELECT course_id, prerequisite_course_id FROM course_prerequisites',
+      );
+      const submissions = await pool.query<{
+        student_id: string;
+        submission_sequence: string;
+        semester: number;
+        credits_completed: number;
+        program_id: string;
+        expected_graduation_term: string;
+      }>(
+        `SELECT ps.student_id, ps.submission_sequence, s.semester, s.credits_completed,
+                s.program_id, s.expected_graduation_term
+         FROM preference_submissions ps
+         JOIN students s ON s.user_id = ps.student_id
+         WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED'
+         ORDER BY ps.submission_sequence`,
+        [windowId],
+      );
+      const items = await pool.query<{ student_id: string; course_id: string; rank: number }>(
+        `SELECT ps.student_id, pi.course_id, pi.rank
+         FROM preference_items pi
+         JOIN preference_submissions ps ON ps.id = pi.submission_id
+         WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED'
+         ORDER BY ps.student_id, pi.rank`,
+        [windowId],
+      );
+      const completed = await pool.query<{ student_id: string; course_id: string }>(
+        'SELECT student_id, course_id FROM student_completed_courses',
+      );
 
       const eligibleByCourse = group(
         eligible.rows,

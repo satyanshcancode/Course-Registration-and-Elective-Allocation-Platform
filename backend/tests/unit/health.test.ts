@@ -54,6 +54,15 @@ function buildApp(repository: HealthRepository) {
         updateWindow: notUsed,
         open: notUsed,
         close: notUsed,
+        setAddDropPeriod: notUsed,
+      },
+      addDropService: {
+        getView: notUsed,
+        drop: notUsed,
+        add: notUsed,
+        swap: notUsed,
+        joinWaitlist: notUsed,
+        leaveWaitlist: notUsed,
       },
     },
   });
