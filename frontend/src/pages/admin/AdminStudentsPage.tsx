@@ -83,7 +83,17 @@ export function AdminStudentsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
-  const query: AdminStudentQuery = { ...filters, ...(search ? { search } : {}) };
+  // The debounced box owns `search` once the page is loaded, so the URL's value
+  // is deliberately NOT merged in: keeping it would let a `?search=` survive the
+  // box being cleared, leaving the list filtered by a term nobody can see. It is
+  // read once, as the box's initial value, and that is all.
+  const query: AdminStudentQuery = {
+    ...(filters.program !== undefined && { program: filters.program }),
+    ...(filters.semester !== undefined && { semester: filters.semester }),
+    ...(filters.status !== undefined && { status: filters.status }),
+    ...(filters.page !== undefined && { page: filters.page }),
+    ...(search ? { search } : {}),
+  };
   const queryKey = JSON.stringify(query);
 
   const { state, retry } = useAsync(async (signal) => unwrap(await getStudents(query, signal)), {
