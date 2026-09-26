@@ -7,17 +7,23 @@ import type { AccountController } from '../controllers/accountController.js';
  * No requireAuth: somebody activating an account or resetting a forgotten
  * password has no session yet, by definition. The link's token is the
  * credential, and the rate limiter is what keeps these open endpoints cheap.
+ *
+ * The limiter is attached PER ROUTE, not with `router.use`. This router shares
+ * the /api/auth mount with the sign-in router, and `router.use` runs for every
+ * request that enters a router — including the ones it does not handle. Sign-in
+ * would then spend this budget as well as its own, and one busy campus address
+ * could lock everybody out of signing in by asking for password resets.
  */
 export function createPublicAccountRouter(
   controller: AccountController,
   middleware: { accountRateLimiter: RequestHandler },
 ): Router {
   const router = Router();
-  router.use(middleware.accountRateLimiter);
-  router.get('/activation/:token', controller.checkToken);
-  router.post('/activate', controller.activate);
-  router.post('/forgot-password', controller.forgotPassword);
-  router.post('/reset-password', controller.resetPassword);
+  const limit = middleware.accountRateLimiter;
+  router.get('/activation/:token', limit, controller.checkToken);
+  router.post('/activate', limit, controller.activate);
+  router.post('/forgot-password', limit, controller.forgotPassword);
+  router.post('/reset-password', limit, controller.resetPassword);
   return router;
 }
 

@@ -13,8 +13,17 @@ export interface VerifiedSessionClaims extends SessionClaims {
   issuedAt: number;
 }
 
+export interface SignOptions {
+  /**
+   * The `iat` to stamp, in whole seconds. Passed when a token must not fall
+   * below the account's password-change cut-off (see accountTokens.ts);
+   * omitted, the current time is used.
+   */
+  issuedAt?: number;
+}
+
 export interface TokenService {
-  sign(claims: SessionClaims): string;
+  sign(claims: SessionClaims, options?: SignOptions): string;
   /** Returns the claims, or null for any invalid, tampered or expired token. */
   verify(token: string): VerifiedSessionClaims | null;
 }
@@ -25,12 +34,14 @@ export function createTokenService(options: { secret: string; ttlSeconds: number
   const { secret, ttlSeconds } = options;
 
   return {
-    sign({ userId, role }) {
-      return jwt.sign({ role }, secret, {
-        algorithm: ALGORITHM,
-        subject: userId,
-        expiresIn: ttlSeconds,
-      });
+    sign({ userId, role }, options = {}) {
+      // An `iat` in the payload is respected by jsonwebtoken, and `exp` is then
+      // computed relative to it, so the session still lasts its full TTL.
+      return jwt.sign(
+        { role, ...(options.issuedAt !== undefined && { iat: options.issuedAt }) },
+        secret,
+        { algorithm: ALGORITHM, subject: userId, expiresIn: ttlSeconds },
+      );
     },
 
     verify(token) {

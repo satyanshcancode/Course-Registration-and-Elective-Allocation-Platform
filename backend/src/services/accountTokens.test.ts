@@ -5,6 +5,8 @@ import {
   generateAccountToken,
   hashAccountToken,
   looksLikeAccountToken,
+  sessionCutoffSeconds,
+  sessionIssuedAtSeconds,
   sessionPredatesPasswordChange,
 } from './accountTokens.js';
 
@@ -73,10 +75,24 @@ describe('accountTokenExpiry', () => {
   });
 });
 
-describe('sessionPredatesPasswordChange', () => {
-  /** A JWT iat: whole seconds. */
-  const seconds = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
+/** A JWT iat: whole seconds, rounded down. */
+const seconds = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 
+describe('sessionCutoffSeconds', () => {
+  it('rounds a change up to the next whole second', () => {
+    expect(sessionCutoffSeconds(new Date('2026-09-01T10:00:00.400Z'))).toBe(
+      seconds('2026-09-01T10:00:01.000Z'),
+    );
+  });
+
+  it('leaves a change exactly on a second where it is', () => {
+    expect(sessionCutoffSeconds(new Date('2026-09-01T10:00:00.000Z'))).toBe(
+      seconds('2026-09-01T10:00:00.000Z'),
+    );
+  });
+});
+
+describe('sessionPredatesPasswordChange', () => {
   it('refuses a token issued before the change', () => {
     expect(
       sessionPredatesPasswordChange(
@@ -95,23 +111,53 @@ describe('sessionPredatesPasswordChange', () => {
     ).toBe(false);
   });
 
-  it('keeps the token minted in the same second as the change', () => {
-    // The whole reason this compares seconds: activation writes
-    // password_changed_at at .400 and signs a token whose iat is that second.
+  it('refuses a token issued EARLIER in the same second as the change', () => {
+    // The window this closes: an iat is rounded down, so a token minted at
+    // .100 and a change at .400 both live in the same second. Rounding the
+    // cut-off up is what stops the older one surviving the change.
     expect(
       sessionPredatesPasswordChange(
-        seconds('2026-09-01T10:00:00.000Z'),
+        seconds('2026-09-01T10:00:00.100Z'),
         new Date('2026-09-01T10:00:00.400Z'),
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it('still refuses the second before, however late in it the change happened', () => {
+  it('refuses the second before, however late in it the change happened', () => {
     expect(
       sessionPredatesPasswordChange(
         seconds('2026-09-01T09:59:59.000Z'),
         new Date('2026-09-01T10:00:00.999Z'),
       ),
     ).toBe(true);
+  });
+});
+
+describe('sessionIssuedAtSeconds', () => {
+  it("pushes a session created in the change's own second past the cut-off", () => {
+    const changedAt = new Date('2026-09-01T10:00:00.400Z');
+    const issuedAt = sessionIssuedAtSeconds(new Date('2026-09-01T10:00:00.450Z'), changedAt);
+
+    // Without this, the very session activation hands back would be refused.
+    expect(issuedAt).toBe(seconds('2026-09-01T10:00:01.000Z'));
+    expect(sessionPredatesPasswordChange(issuedAt, changedAt)).toBe(false);
+  });
+
+  it('uses the current time when the change is safely in the past', () => {
+    const now = new Date('2026-09-01T12:00:00.700Z');
+    expect(sessionIssuedAtSeconds(now, new Date('2026-09-01T10:00:00.000Z'))).toBe(
+      seconds('2026-09-01T12:00:00.000Z'),
+    );
+  });
+
+  it('never issues a session its own account would reject', () => {
+    // The two halves of the rule, checked against each other across a second.
+    for (let offset = 0; offset < 1000; offset += 37) {
+      const changedAt = new Date(`2026-09-01T10:00:00.${String(offset).padStart(3, '0')}Z`);
+      const now = new Date(changedAt.getTime() + 5);
+      expect(sessionPredatesPasswordChange(sessionIssuedAtSeconds(now, changedAt), changedAt)).toBe(
+        false,
+      );
+    }
   });
 });

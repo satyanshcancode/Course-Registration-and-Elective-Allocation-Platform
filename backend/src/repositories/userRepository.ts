@@ -11,6 +11,8 @@ export interface UserCredentials {
   passwordHash: string | null;
   /** A deactivated account cannot sign in, but keeps all of its history. */
   isActive: boolean;
+  /** The session cut-off, so the token this sign-in mints clears it. */
+  passwordChangedAt: Date;
 }
 
 export interface SessionUser {
@@ -63,7 +65,11 @@ export function createUserRepository(pool: Pick<Pool | PoolClient, 'query'>): Us
         role: string;
         password_hash: string | null;
         is_active: boolean;
-      }>('SELECT id, role, password_hash, is_active FROM users WHERE email = $1', [email]);
+        password_changed_at: Date;
+      }>(
+        'SELECT id, role, password_hash, is_active, password_changed_at FROM users WHERE email = $1',
+        [email],
+      );
       const row = result.rows[0];
       return row
         ? {
@@ -71,6 +77,7 @@ export function createUserRepository(pool: Pick<Pool | PoolClient, 'query'>): Us
             role: toRole(row.role),
             passwordHash: row.password_hash,
             isActive: row.is_active,
+            passwordChangedAt: row.password_changed_at,
           }
         : null;
     },

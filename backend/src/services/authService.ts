@@ -7,7 +7,7 @@ import type { UserRepository } from '../repositories/userRepository.js';
 import type { AuthContext } from '../types/auth.js';
 import { AppError } from '../utils/appError.js';
 import { logger } from '../utils/logger.js';
-import { sessionPredatesPasswordChange } from './accountTokens.js';
+import { sessionIssuedAtSeconds, sessionPredatesPasswordChange } from './accountTokens.js';
 import type { TokenService } from './tokenService.js';
 
 /** Identical for unknown e-mail and wrong password, so accounts can't be enumerated. */
@@ -91,9 +91,24 @@ export function createAuthService({
     }
   }
 
-  async function issueSession(userId: string): Promise<LoginResult> {
+  /**
+   * Signs a session whose `iat` is at or after the account's cut-off, so a
+   * session created in the same second as a password change is not refused by
+   * that change. Every path that mints a token goes through here.
+   */
+  async function signFor(userId: string): Promise<LoginResult> {
     const user = await getCurrentUser(userId);
-    return { user, token: tokens.sign({ userId: user.id, role: user.role }) };
+    const session = await users.findSessionUser(userId);
+    if (!session) {
+      throw AppError.unauthorized();
+    }
+    return {
+      user,
+      token: tokens.sign(
+        { userId: user.id, role: user.role },
+        { issuedAt: sessionIssuedAtSeconds(new Date(), session.passwordChangedAt) },
+      ),
+    };
   }
 
   return {
@@ -115,11 +130,11 @@ export function createAuthService({
         throw AppError.forbidden(ACCOUNT_DEACTIVATED_MESSAGE);
       }
 
-      const user = await getCurrentUser(account.id);
-      if (user.role === 'ADMIN') {
-        await recordAdminLogin(user.id, context);
+      const result = await signFor(account.id);
+      if (result.user.role === 'ADMIN') {
+        await recordAdminLogin(result.user.id, context);
       }
-      return { user, token: tokens.sign({ userId: user.id, role: user.role }) };
+      return result;
     },
 
     async resolveSession(token) {
@@ -143,6 +158,6 @@ export function createAuthService({
     },
 
     getCurrentUser,
-    issueSession,
+    issueSession: signFor,
   };
 }

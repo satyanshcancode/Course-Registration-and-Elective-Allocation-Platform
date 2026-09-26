@@ -53,22 +53,43 @@ export function accountTokenExpiry(now: Date, ttlHours: number): Date {
 }
 
 /**
+ * The session cut-off in whole seconds: a token is accepted only if its `iat` is
+ * at least this.
+ *
+ * Rounded UP, because a JWT's `iat` is whole seconds rounded DOWN. A password
+ * change at 12:00:00.400 must invalidate a token issued at 12:00:00.100, whose
+ * `iat` is 12:00:00 — comparing against the truncated change time would call
+ * that token newer than the change and let it through for the rest of the
+ * second. Rounding the cut-off up to 12:00:01 closes that window exactly.
+ */
+export function sessionCutoffSeconds(passwordChangedAt: Date): number {
+  return Math.ceil(passwordChangedAt.getTime() / 1000);
+}
+
+/**
  * Whether a session token predates the account's last password change, and so
  * must be refused.
- *
- * Both sides are compared in WHOLE SECONDS, because a JWT's `iat` is whole
- * seconds rounded down. Without that, a password change at 12:00:00.400 would
- * invalidate the very token minted for it at 12:00:00.000 — activation would
- * set a password and then refuse the session it just created. Rounding the
- * cut-off down too makes "issued in the same second as the change" valid, which
- * is what the user experiences as staying signed in on this device.
- *
- * The one-second window this leaves is not a weakness worth closing: an attacker
- * holding a stolen token in that exact second already had it.
  */
 export function sessionPredatesPasswordChange(
   issuedAtSeconds: number,
   passwordChangedAt: Date,
 ): boolean {
-  return issuedAtSeconds < Math.floor(passwordChangedAt.getTime() / 1000);
+  return issuedAtSeconds < sessionCutoffSeconds(passwordChangedAt);
+}
+
+/**
+ * The `iat` to sign a NEW session with: now, or the cut-off if that is later.
+ *
+ * This is the other half of rounding the cut-off up. Without it, a session
+ * created in the same second as the password change — the one activation, a
+ * reset and a change each hand back, and any sign-in in that second — would
+ * carry an `iat` below the cut-off and be refused on its very first request.
+ *
+ * Pushing `iat` to the cut-off makes the rule exact in both directions: every
+ * session issued before the change is refused, and every session issued after
+ * it is accepted, with no window either way. `exp` stays relative to `iat`, so
+ * such a session lasts its full eight hours.
+ */
+export function sessionIssuedAtSeconds(now: Date, passwordChangedAt: Date): number {
+  return Math.max(Math.floor(now.getTime() / 1000), sessionCutoffSeconds(passwordChangedAt));
 }
