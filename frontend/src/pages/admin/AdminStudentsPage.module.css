@@ -9,11 +9,6 @@
   gap: var(--space-3);
 }
 
-.summary {
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-}
-
 /* Four filters across, collapsing to one column on a phone. */
 .filters {
   display: grid;
