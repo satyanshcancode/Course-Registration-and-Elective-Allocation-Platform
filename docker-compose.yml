@@ -24,6 +24,28 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Catches every e-mail the backend sends and shows it at http://localhost:8025
+  # instead of delivering it, so the whole invitation and password-reset flow can
+  # be walked through without sending mail to a real address.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    environment:
+      # Messages live only as long as the container: nothing to clean up, and no
+      # stale invitation links from a previous run.
+      MP_MAX_MESSAGES: '500'
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+    ports:
+      - '8025:8025' # web inbox
+      - '1025:1025' # SMTP
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -36,8 +58,15 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       CORS_ORIGIN: http://localhost:5173
       JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-100kb}
+      CSV_BODY_LIMIT: ${CSV_BODY_LIMIT:-2mb}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      # Links in e-mails must point at the browser's address, not the container's.
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_SECURE: 'false'
+      MAIL_FROM: ${MAIL_FROM:-Course Registration <no-reply@university.edu>}
       # Bind mounts from Windows/macOS hosts do not emit inotify events.
       CHOKIDAR_USEPOLLING: 'true'
       CHOKIDAR_INTERVAL: '500'
@@ -53,6 +82,8 @@ services:
       - backend-node-modules:/app/backend/node_modules
     depends_on:
       postgres:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
     healthcheck:
       test:
