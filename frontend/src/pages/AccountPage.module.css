@@ -1,0 +1,89 @@
+.body {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 34rem;
+}
+
+/* ---- Signed in as ------------------------------------------------------- */
+.record {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-hairline);
+}
+
+.entry:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.entry dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.entry dd {
+  margin: 0;
+}
+
+@media (width < 30rem) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.muted {
+  color: var(--color-ink-muted);
+}
+
+.note {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+/* ---- Change password ---------------------------------------------------- */
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.alert {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Stays in the DOM so inserted messages are announced; empty, it takes no space. */
+.alert:empty {
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
+}

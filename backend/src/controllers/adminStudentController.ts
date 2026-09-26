@@ -24,9 +24,7 @@ export interface AdminStudentController {
   referenceData: RequestHandler;
 }
 
-export function createAdminStudentController(
-  service: AdminStudentService,
-): AdminStudentController {
+export function createAdminStudentController(service: AdminStudentService): AdminStudentController {
   /** The roll number always comes from the path, validated before any query. */
   const rollNumberOf = (req: Parameters<RequestHandler>[0]): string =>
     parseInput(rollNumberSchema, req.params.rollNumber);

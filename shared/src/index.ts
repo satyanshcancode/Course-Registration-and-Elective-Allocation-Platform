@@ -28,10 +28,7 @@ export type {
   CreateCourseRequest,
   UpdateCourseRequest,
 } from './api/adminCatalogue.js';
-export {
-  COURSE_DESCRIPTION_MAX_LENGTH,
-  COURSE_NAME_MAX_LENGTH,
-} from './api/adminCatalogue.js';
+export { COURSE_DESCRIPTION_MAX_LENGTH, COURSE_NAME_MAX_LENGTH } from './api/adminCatalogue.js';
 export type {
   AdminReferenceData,
   AdminStudentDetail,

@@ -104,3 +104,21 @@
     display: none;
   }
 }
+
+/* Account link between the address and Sign out. */
+.accountLink {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-top: var(--border-hairline);
+  border-bottom: var(--border-hairline);
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.accountLink:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
