@@ -215,10 +215,22 @@ export function createAccountService({
     async invite(client, { userId, email, name, actorUserId, resent }) {
       const { token, expiresAt } = await issueLink(client, userId, 'ACTIVATION', actorUserId);
 
+      // Audited BEFORE the send, because what this row records is that a link
+      // was ISSUED — which has already happened, and is the security-relevant
+      // fact: it also means the previous link was just revoked. Auditing after
+      // the send would leave a failed delivery with no trace of either.
+      await auditLogsFor(client).record({
+        actorUserId,
+        action: ACCOUNT_ACTIONS.INVITED,
+        entityType: 'user',
+        entityId: userId,
+        newValue: { email, resent, expiresAt: expiresAt.toISOString() },
+      });
+
       // Sending inside the caller's transaction is deliberate: if the e-mail
-      // cannot be sent, the throw rolls the whole creation back rather than
-      // leaving an account nobody can reach. The caller decides whether to
-      // tolerate that (see adminStudentService's import).
+      // cannot be sent, the throw rolls the whole creation back — the audit row
+      // included — rather than leaving an account nobody can reach. The caller
+      // decides whether to tolerate that (see adminStudentService's import).
       await mailer.send(
         invitationEmail({
           to: email,
@@ -228,21 +240,15 @@ export function createAccountService({
           resent,
         }),
       );
-
-      await auditLogsFor(client).record({
-        actorUserId,
-        action: ACCOUNT_ACTIONS.INVITED,
-        entityType: 'user',
-        entityId: userId,
-        newValue: { email, resent, expiresAt: expiresAt.toISOString() },
-      });
     },
 
     async checkToken(token) {
       if (!looksLikeAccountToken(token)) {
         return { valid: false, reason: 'unusable' };
       }
-      const found = await tokens.lockByHash(hashAccountToken(token));
+      // A read-only check: no lock, so opening the page cannot contend with
+      // somebody redeeming a link.
+      const found = await tokens.findByHash(hashAccountToken(token));
       if (
         found?.token.consumedAt !== null ||
         found.token.expiresAt.getTime() <= Date.now() ||
