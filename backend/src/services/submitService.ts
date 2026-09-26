@@ -89,10 +89,11 @@ export function createSubmitService({
     courses: CourseCatalogueRepository,
     profiles: StudentRepository,
   ) {
-    const [offerings, facts] = await Promise.all([
-      courses.listOfferings(windowId),
-      profiles.findEligibilityFacts(studentId),
-    ]);
+    // Sequential, not Promise.all: the transaction passes its OWN client-bound
+    // repositories, and one pg client cannot run two queries at once (it is
+    // deprecated today and an error from pg@9).
+    const offerings = await courses.listOfferings(windowId);
+    const facts = await profiles.findEligibilityFacts(studentId);
     if (!facts) {
       throw AppError.notFound('Student profile not found.');
     }
@@ -193,10 +194,13 @@ export function createSubmitService({
         //    transaction's client throughout.
         const requested = [...courseCodes];
         const transactionCatalogue = catalogueFor(client);
-        const [candidates, existing] = await Promise.all([
-          loadCandidates(studentId, current.id, transactionCatalogue, studentsFor(client)),
-          transactionCatalogue.findExistingCodes(requested),
-        ]);
+        const candidates = await loadCandidates(
+          studentId,
+          current.id,
+          transactionCatalogue,
+          studentsFor(client),
+        );
+        const existing = await transactionCatalogue.findExistingCodes(requested);
         const validation = validateCart(requested, candidates, existing);
         if (validation.problems.length > 0) {
           throw cartProblemError(validation.problems, 409);

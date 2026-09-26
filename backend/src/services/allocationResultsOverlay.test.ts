@@ -40,10 +40,11 @@ const asAllocated: StudentAllocationResult[] = [
 const nothing: LiveStanding = { held: null, entries: new Map(), released: new Map() };
 
 /** A standing with no released seats, which is the usual case. */
-const standing = (
-  held: LiveStanding['held'],
-  entries: LiveStanding['entries'],
-): LiveStanding => ({ held, entries, released: new Map() });
+const standing = (held: LiveStanding['held'], entries: LiveStanding['entries']): LiveStanding => ({
+  held,
+  entries,
+  released: new Map(),
+});
 
 describe('applyLiveStanding', () => {
   it('re-points a lower course at the seat the student holds NOW', () => {
@@ -59,7 +60,13 @@ describe('applyLiveStanding', () => {
       }),
     ];
 
-    const [, , lower] = applyLiveStanding(withLower, standing({ ...AI, rank: 1, source: 'WAITLIST_PROMOTION' }, new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]])));
+    const [, , lower] = applyLiveStanding(
+      withLower,
+      standing(
+        { ...AI, rank: 1, source: 'WAITLIST_PROMOTION' },
+        new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]),
+      ),
+    );
 
     expect(lower?.explanation).toMatchObject({
       type: 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED',
@@ -69,20 +76,29 @@ describe('applyLiveStanding', () => {
   });
 
   it('leaves an untouched result exactly as the run recorded it', () => {
-    const live: LiveStanding = standing({ ...CS, rank: 2, source: 'ALLOCATION' }, new Map([['AI401', { status: 'WAITING', position: 7, reason: null }]]));
+    const live: LiveStanding = standing(
+      { ...CS, rank: 2, source: 'ALLOCATION' },
+      new Map([['AI401', { status: 'WAITING', position: 7, reason: null }]]),
+    );
 
     expect(applyLiveStanding(asAllocated, live)).toEqual(asAllocated);
   });
 
   it('moves a waiting student up as the queue in front of them empties', () => {
-    const live: LiveStanding = standing({ ...CS, rank: 2, source: 'ALLOCATION' }, new Map([['AI401', { status: 'WAITING', position: 2, reason: null }]]));
+    const live: LiveStanding = standing(
+      { ...CS, rank: 2, source: 'ALLOCATION' },
+      new Map([['AI401', { status: 'WAITING', position: 2, reason: null }]]),
+    );
 
     const [waiting] = applyLiveStanding(asAllocated, live);
     expect(waiting?.explanation).toMatchObject({ type: 'WAITLISTED', waitlistPosition: 2 });
   });
 
   it('says a promoted student moved, and names the seat they gave up', () => {
-    const live: LiveStanding = standing({ ...AI, rank: 1, source: 'WAITLIST_PROMOTION' }, new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]));
+    const live: LiveStanding = standing(
+      { ...AI, rank: 1, source: 'WAITLIST_PROMOTION' },
+      new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]),
+    );
 
     const [promoted, released] = applyLiveStanding(asAllocated, live);
     expect(promoted).toEqual({
@@ -101,7 +117,10 @@ describe('applyLiveStanding', () => {
     const fromWaitlistOnly: StudentAllocationResult[] = [
       result({ ...facts(AI, 1), type: 'WAITLISTED', waitlistPosition: 3 }),
     ];
-    const live: LiveStanding = standing({ ...AI, rank: 1, source: 'WAITLIST_PROMOTION' }, new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]));
+    const live: LiveStanding = standing(
+      { ...AI, rank: 1, source: 'WAITLIST_PROMOTION' },
+      new Map([['AI401', { status: 'PROMOTED', position: null, reason: null }]]),
+    );
 
     expect(applyLiveStanding(fromWaitlistOnly, live)[0]?.explanation).toMatchObject({
       type: 'PROMOTED',
@@ -154,12 +173,22 @@ describe('applyLiveStanding', () => {
   });
 
   it('explains a removed entry by the reason it was removed', () => {
-    const ineligible = applyLiveStanding(asAllocated, standing({ ...CS, rank: 2, source: 'ALLOCATION' }, new Map([['AI401', { status: 'REMOVED', position: null, reason: 'INELIGIBLE' }]])));
+    const ineligible = applyLiveStanding(
+      asAllocated,
+      standing(
+        { ...CS, rank: 2, source: 'ALLOCATION' },
+        new Map([['AI401', { status: 'REMOVED', position: null, reason: 'INELIGIBLE' }]]),
+      ),
+    );
     expect(ineligible[0]?.explanation.type).toBe('NOT_ALLOCATED_INELIGIBLE');
 
-    const outranked = applyLiveStanding(asAllocated, standing({ ...CS, rank: 2, source: 'ALLOCATION' }, new Map([
-        ['AI401', { status: 'REMOVED', position: null, reason: 'RANKED_BELOW_SEAT' }],
-      ])));
+    const outranked = applyLiveStanding(
+      asAllocated,
+      standing(
+        { ...CS, rank: 2, source: 'ALLOCATION' },
+        new Map([['AI401', { status: 'REMOVED', position: null, reason: 'RANKED_BELOW_SEAT' }]]),
+      ),
+    );
     expect(outranked[0]?.explanation).toMatchObject({
       type: 'NOT_ALLOCATED_HIGHER_CHOICE_GRANTED',
       grantedCourse: CS,

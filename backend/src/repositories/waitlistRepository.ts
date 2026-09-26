@@ -10,17 +10,26 @@
 import {
   ENROLLMENT_DROP_REASONS,
   ENROLLMENT_SOURCES,
+  REGISTRATION_WINDOW_STATUSES,
   WAITLIST_REMOVAL_REASONS,
   WAITLIST_STATUSES,
   type EnrollmentDropReason,
   type EnrollmentSource,
   type PreferenceRank,
+  type RegistrationWindowStatus,
   type WaitlistRemovalReason,
   type WaitlistStatus,
   type WaitlistStudentRef,
 } from '@course-reg/shared';
 import type { Pool, PoolClient } from 'pg';
 import { oneOf } from './mappers.js';
+
+/** The window state every add/drop action checks itself against. */
+export interface AddDropWindowRow {
+  status: RegistrationWindowStatus;
+  addDropOpensAt: Date | null;
+  addDropClosesAt: Date | null;
+}
 
 /** An offering locked FOR UPDATE, so its free seats cannot move underneath us. */
 export interface LockedCourseSeats {
@@ -52,6 +61,7 @@ export interface HeldSeat {
   courseId: string;
   code: string;
   name: string;
+  enrolledAt: Date;
   /** How they came by it: allocation, or a promotion since. */
   source: EnrollmentSource;
   /** Null when the held course was not one of their ranked preferences. */
@@ -111,6 +121,12 @@ export interface WaitlistRepository {
   lockWindowForPromotion(windowId: string): Promise<void>;
   /** The window's status, so promotion can refuse to run outside ALLOCATED. */
   findWindowStatus(windowId: string): Promise<string | null>;
+  /**
+   * The window's status and add/drop period, read FOR SHARE: many students act
+   * at once and must not block each other, but an admin changing the period
+   * (FOR UPDATE) waits for the ones already in flight.
+   */
+  lockWindowForShare(windowId: string): Promise<AddDropWindowRow | null>;
   lockOffering(windowId: string, courseId: string): Promise<LockedCourseSeats | null>;
   findOfferingByCode(windowId: string, code: string): Promise<LockedCourseSeats | null>;
   nextWaiting(windowId: string, courseId: string): Promise<WaitingCandidate | null>;
@@ -220,6 +236,27 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
         [windowId],
       );
       return result.rows[0]?.status ?? null;
+    },
+
+    async lockWindowForShare(windowId) {
+      const result = await db.query<{
+        status: string;
+        add_drop_opens_at: Date | null;
+        add_drop_closes_at: Date | null;
+      }>(
+        `SELECT status, add_drop_opens_at, add_drop_closes_at
+         FROM registration_windows WHERE id = $1
+         FOR SHARE`,
+        [windowId],
+      );
+      const row = result.rows[0];
+      return row
+        ? {
+            status: oneOf(REGISTRATION_WINDOW_STATUSES, row.status, 'registration_windows.status'),
+            addDropOpensAt: row.add_drop_opens_at,
+            addDropClosesAt: row.add_drop_closes_at,
+          }
+        : null;
     },
 
     async lockOffering(windowId, courseId) {
@@ -420,8 +457,9 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
         name: string;
         rank: number | null;
         source: string;
+        enrolled_at: Date;
       }>(
-        `SELECT e.id, e.course_id, c.code, c.name, pi.rank, e.source
+        `SELECT e.id, e.course_id, c.code, c.name, pi.rank, e.source, e.enrolled_at
          FROM enrollments e
          JOIN courses c ON c.id = e.course_id
          LEFT JOIN preference_submissions ps
@@ -439,6 +477,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
             courseId: row.course_id,
             code: row.code,
             name: row.name,
+            enrolledAt: row.enrolled_at,
             source: oneOf(ENROLLMENT_SOURCES, row.source, 'enrollments.source'),
             preferenceRank: asRank(row.rank),
           }
@@ -472,11 +511,12 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
           name: string;
           rank: number | null;
           source: string;
+          enrolled_at: Date;
           window_status: string;
         }
       >(
         `SELECT e.id, e.window_id, e.student_id, e.course_id, c.code, c.name, pi.rank,
-                e.source, rw.status AS window_status, ${STUDENT_COLUMNS}
+                e.source, e.enrolled_at, rw.status AS window_status, ${STUDENT_COLUMNS}
          FROM enrollments e
          ${studentJoins('e')}
          JOIN courses c ON c.id = e.course_id
@@ -499,6 +539,7 @@ export function createWaitlistRepository(db: Pick<Pool | PoolClient, 'query'>): 
             courseId: row.course_id,
             code: row.code,
             name: row.name,
+            enrolledAt: row.enrolled_at,
             source: oneOf(ENROLLMENT_SOURCES, row.source, 'enrollments.source'),
             preferenceRank: asRank(row.rank),
             windowStatus: row.window_status,

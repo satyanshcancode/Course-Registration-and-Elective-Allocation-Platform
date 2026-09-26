@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createAddDropController } from '../controllers/addDropController.js';
 import { createAdminController } from '../controllers/adminController.js';
 import { createAuthController } from '../controllers/authController.js';
 import { createCartController } from '../controllers/cartController.js';
@@ -9,11 +10,13 @@ import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
 import { createWaitlistController } from '../controllers/waitlistController.js';
 import {
+  createAddDropRateLimiter,
   createLoginRateLimiter,
   createSubmitRateLimiter,
   type RateLimitOptions,
 } from '../middleware/loginRateLimiter.js';
 import { createRequireAuth } from '../middleware/requireAuth.js';
+import type { AddDropService } from '../services/addDropService.js';
 import type { AdminCourseService } from '../services/adminCourseService.js';
 import type { AllocationService } from '../services/allocationService.js';
 import type { AuthService } from '../services/authService.js';
@@ -25,6 +28,7 @@ import type { RegistrationWindowService } from '../services/registrationWindowSe
 import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
 import type { WaitlistService } from '../services/waitlistService.js';
+import { createAddDropRouter } from './addDropRoutes.js';
 import { createAdminRouter } from './adminRoutes.js';
 import { createAdminAllocationRouter, createAllocationRouter } from './allocationRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
@@ -49,12 +53,14 @@ export interface ApiServices {
   registrationWindowService: RegistrationWindowService;
   allocationService: AllocationService;
   waitlistService: WaitlistService;
+  addDropService: AddDropService;
 }
 
 export interface ApiRouterOptions {
   cookieSecure: boolean;
   loginRateLimit: RateLimitOptions;
   submitRateLimit: RateLimitOptions;
+  addDropRateLimit: RateLimitOptions;
 }
 
 /** Mounts every feature router under /api. */
@@ -96,6 +102,14 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
       cartController,
       requireAuth,
       createSubmitRateLimiter(options.submitRateLimit),
+    ),
+  );
+  router.use(
+    '/add-drop',
+    createAddDropRouter(
+      createAddDropController(services.addDropService),
+      requireAuth,
+      createAddDropRateLimiter(options.addDropRateLimit),
     ),
   );
   router.use(

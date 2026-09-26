@@ -6,6 +6,7 @@ import type { RegistrationWindowService } from '../services/registrationWindowSe
 import { sendSuccess } from '../utils/apiResponse.js';
 import { courseCodeSchema, updateCapacitySchema } from '../validation/courseSchemas.js';
 import { parseInput } from '../validation/parse.js';
+import { addDropPeriodSchema } from '../validation/addDropSchemas.js';
 import { updateWindowSchema, windowActionSchema } from '../validation/windowSchemas.js';
 
 export interface AdminController {
@@ -16,6 +17,7 @@ export interface AdminController {
   updateWindow: RequestHandler;
   openWindow: RequestHandler;
   closeWindow: RequestHandler;
+  setAddDropPeriod: RequestHandler;
 }
 
 export interface AdminControllerServices {
@@ -72,6 +74,17 @@ export function createAdminController({
       const request = parseInput(windowActionSchema, req.body ?? {});
       const detail = await registrationWindowService.close(getAuth(req).userId, request);
       sendSuccess(res, detail, { message: 'Registration is closed.' });
+    },
+
+    async setAddDropPeriod(req, res) {
+      const change = parseInput(addDropPeriodSchema, req.body ?? {});
+      const detail = await registrationWindowService.setAddDropPeriod(getAuth(req).userId, change);
+      sendSuccess(res, detail, {
+        message:
+          change.opensAt === null
+            ? 'The add/drop period has been cleared, so no student changes are accepted.'
+            : 'The add/drop period has been saved.',
+      });
     },
   };
 }

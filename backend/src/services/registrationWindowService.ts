@@ -1,6 +1,7 @@
 import type {
   AdminWindowDetail,
   AllocationConfig,
+  UpdateAddDropPeriodRequest,
   UpdateWindowRequest,
   WindowActionRequest,
 } from '@course-reg/shared';
@@ -32,6 +33,15 @@ export interface RegistrationWindowService {
   /** Opens registration, freezing the policy and notifying every student. */
   open(actorUserId: string, request: WindowActionRequest): Promise<AdminWindowDetail>;
   close(actorUserId: string, request: WindowActionRequest): Promise<AdminWindowDetail>;
+  /**
+   * Schedules (or clears) the add/drop period. Only meaningful once allocation
+   * has run, and deliberately NOT part of the frozen policy: extending the
+   * period changes no allocation rule, so an ALLOCATED window allows it.
+   */
+  setAddDropPeriod(
+    actorUserId: string,
+    change: UpdateAddDropPeriodRequest,
+  ): Promise<AdminWindowDetail>;
 }
 
 interface RegistrationWindowServiceDependencies {
@@ -50,6 +60,7 @@ export const WINDOW_AUDIT_ACTIONS = {
   update: 'REGISTRATION_WINDOW_UPDATED',
   open: 'REGISTRATION_WINDOW_OPENED',
   close: 'REGISTRATION_WINDOW_CLOSED',
+  addDrop: 'ADD_DROP_PERIOD_UPDATED',
 } as const;
 
 const WINDOW_ENTITY_TYPE = 'registration_window';
@@ -220,6 +231,37 @@ export function createRegistrationWindowService({
           reason: change.reason,
         });
       }).catch(rethrowFrozenPolicy);
+      return buildDetail();
+    },
+
+    async setAddDropPeriod(actorUserId, change) {
+      await withTransaction(pool, async (client) => {
+        const { repository, window } = await requireLockedWindow(client);
+        if (window.summary.status !== 'ALLOCATED') {
+          throw new AppError(
+            409,
+            `Add/drop follows allocation, so the period can only be set on an allocated window. This one is ${window.summary.status.toLowerCase()}.`,
+          );
+        }
+        const opensAt = change.opensAt === null ? null : new Date(change.opensAt);
+        const closesAt = change.closesAt === null ? null : new Date(change.closesAt);
+        await repository.setAddDropPeriod(window.id, opensAt, closesAt);
+        await auditLogsFor(client).record({
+          actorUserId,
+          action: WINDOW_AUDIT_ACTIONS.addDrop,
+          entityType: WINDOW_ENTITY_TYPE,
+          entityId: window.id,
+          oldValue: {
+            addDropOpensAt: window.summary.addDropOpensAt,
+            addDropClosesAt: window.summary.addDropClosesAt,
+          },
+          newValue: {
+            addDropOpensAt: opensAt?.toISOString() ?? null,
+            addDropClosesAt: closesAt?.toISOString() ?? null,
+          },
+          reason: change.reason,
+        });
+      });
       return buildDetail();
     },
 

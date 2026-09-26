@@ -99,13 +99,15 @@ export interface AddRequest {
   waitlistIfFull?: boolean;
 }
 
-/** POST /api/add-drop/swap — atomic: either the new seat is taken, or nothing. */
+/**
+ * POST /api/add-drop/swap — atomic: either the new seat is taken, or nothing
+ * changes at all. There is no waitlist fallback: a queue can only be joined
+ * while holding no seat, so a swap that loses the race simply keeps the old one.
+ */
 export interface SwapRequest {
   /** The seat to give up; checked against the seat actually held. */
   fromCode: string;
   toCode: string;
-  /** Join the new course's queue instead, KEEPING the old seat, when it is full. */
-  waitlistIfFull?: boolean;
 }
 
 /** POST /api/add-drop/waitlist/join and /waitlist/leave. */
@@ -176,8 +178,12 @@ export type AddDropProblem =
   /** The last seat went to someone else between loading the page and acting. */
   | { type: 'SEAT_TAKEN'; code: string; capacity: number }
   | { type: 'ALREADY_ENROLLED'; code: string }
-  /** Adding needs an empty timetable; swapping is the action for a change. */
-  | { type: 'ALREADY_HOLDS_SEAT'; code: string }
+  /**
+   * Adding, and joining a queue, both need an empty timetable: swapping is the
+   * action for a change, and a queue place is only ever offered to somebody
+   * with nothing (or with a course they ranked lower).
+   */
+  | { type: 'ALREADY_HOLDS_SEAT'; code: string; heldCode: string }
   | { type: 'NO_SEAT_HELD' }
   /** The `code`/`fromCode` sent is not the seat they actually hold. */
   | { type: 'NOT_THE_HELD_SEAT'; code: string; heldCode: string }

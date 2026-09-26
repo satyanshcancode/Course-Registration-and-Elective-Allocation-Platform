@@ -3,6 +3,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler.js';
 import {
+  DEFAULT_ADD_DROP_RATE_LIMIT,
   DEFAULT_LOGIN_RATE_LIMIT,
   DEFAULT_SUBMIT_RATE_LIMIT,
   type RateLimitOptions,
@@ -19,6 +20,7 @@ export interface AppOptions {
   cookieSecure: boolean;
   loginRateLimit?: RateLimitOptions;
   submitRateLimit?: RateLimitOptions;
+  addDropRateLimit?: RateLimitOptions;
   services: ApiServices;
 }
 
@@ -32,6 +34,7 @@ export function createApp({
   cookieSecure,
   loginRateLimit = DEFAULT_LOGIN_RATE_LIMIT,
   submitRateLimit = DEFAULT_SUBMIT_RATE_LIMIT,
+  addDropRateLimit = DEFAULT_ADD_DROP_RATE_LIMIT,
   services,
 }: AppOptions): Express {
   const app = express();
@@ -46,7 +49,15 @@ export function createApp({
   app.use(express.json({ limit: jsonBodyLimit }));
   app.use(requestLogger);
 
-  app.use('/api', createApiRouter(services, { cookieSecure, loginRateLimit, submitRateLimit }));
+  app.use(
+    '/api',
+    createApiRouter(services, {
+      cookieSecure,
+      loginRateLimit,
+      submitRateLimit,
+      addDropRateLimit,
+    }),
+  );
 
   app.use(notFoundHandler);
   app.use(errorHandler);

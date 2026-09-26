@@ -15,5 +15,6 @@ export function createAdminRouter(
   router.patch('/registration-window', controller.updateWindow);
   router.post('/registration-window/open', controller.openWindow);
   router.post('/registration-window/close', controller.closeWindow);
+  router.put('/registration-window/add-drop', controller.setAddDropPeriod);
   return router;
 }
