@@ -73,7 +73,14 @@ export function AdminCataloguePage() {
   const [submitting, setSubmitting] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
-  const catalogue = state.status === 'success' ? state.data : undefined;
+  // The last loaded catalogue is kept while a reload is in flight, so reloading
+  // after an import does not unmount the panel that is reporting what it did.
+  const catalogue =
+    state.status === 'success'
+      ? state.data
+      : state.status === 'loading'
+        ? state.previous
+        : undefined;
   const courses = catalogue?.courses ?? [];
   const retired = courses.filter((course) => !course.isActive).length;
 
@@ -92,8 +99,13 @@ export function AdminCataloguePage() {
   const handleSave = async (request: CreateCourseRequest, existing?: AdminCourseRecord) => {
     setFormErrors({});
     setSubmitting(true);
+    // An edit sends everything EXCEPT the code: the code identifies the course
+    // in the path, and every submission and stored result refers to it, so it
+    // is not something an edit can carry.
+    const { code, ...withoutCode } = request;
+    void code;
     const response = existing
-      ? await updateCourse(existing.code, request)
+      ? await updateCourse(existing.code, withoutCode)
       : await createCourse(request);
     setSubmitting(false);
 
