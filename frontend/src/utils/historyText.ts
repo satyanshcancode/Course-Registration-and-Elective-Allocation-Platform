@@ -57,10 +57,14 @@ export function describeHistoryEvent(event: HistoryEvent): string {
         ? 'You saved an empty draft.'
         : `You saved a draft ranking ${list(detail.courseCodes)}.`;
 
-    case 'SUBMITTED':
-      return `You submitted ${detail.courseCodes.length} ${
-        detail.courseCodes.length === 1 ? 'preference' : 'preferences'
-      } — ${list(detail.courseCodes)}${detail.reference ? ` (${detail.reference})` : ''}.`;
+    case 'SUBMITTED': {
+      const receipt = detail.reference ? ` (${detail.reference})` : '';
+      return detail.courseCodes.length === 0
+        ? `You submitted your preferences${receipt}.`
+        : `You submitted ${detail.courseCodes.length} ${
+            detail.courseCodes.length === 1 ? 'preference' : 'preferences'
+          } — ${list(detail.courseCodes)}${receipt}.`;
+    }
 
     case 'ALLOCATED': {
       const seat = `Allocation gave you a seat in ${course}${choice(detail.rank)}`;

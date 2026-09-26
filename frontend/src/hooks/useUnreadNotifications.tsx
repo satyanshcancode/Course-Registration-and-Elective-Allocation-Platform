@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useState, type ReactNode } from 'react';
+import { createContext, use, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { getUnreadCount } from '../api/activityApi';
 import { usePolling } from './usePolling';
 
@@ -36,7 +36,14 @@ export function UnreadNotificationsProvider({ children }: { children: ReactNode 
     });
   }, []);
 
-  usePolling(refresh, UNREAD_POLL_MS, { immediate: true });
+  // The first count is loaded whatever the tab is doing: usePolling's
+  // `immediate` never fires in a tab that MOUNTS hidden (restored from the
+  // back/forward cache, or opened in the background), and the badge would then
+  // stay empty until the student looked at it.
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+  usePolling(refresh, UNREAD_POLL_MS);
 
   return (
     <UnreadNotificationsContext value={{ unread, setUnread, refresh }}>

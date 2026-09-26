@@ -7,6 +7,7 @@
  * triggers apply. Re-running replaces the previous demo submissions.
  */
 import type { Pool, PoolClient } from 'pg';
+import { submissionReference } from '../../services/cartRules.js';
 import { evaluateEligibility, type EligibilityCourse } from '../../services/eligibilityRules.js';
 import { createNotificationRepository } from '../../repositories/notificationRepository.js';
 import type { Logger } from '../../utils/logger.js';
@@ -228,13 +229,10 @@ async function writeSubmission(
     [
       planned.studentId,
       windowId,
-      {
-        submissionId,
-        preferences: planned.courseCodes.map((code, index) => ({
-          rank: index + 1,
-          courseCode: code,
-        })),
-      },
+      // EXACTLY what submitService writes for a real submission. A seeded
+      // timeline that reads differently from a real one is a seed that lies,
+      // and the student's history page would show the difference.
+      { reference: submissionReference(submissionId), courseCodes: planned.courseCodes },
       submittedAt,
     ],
   );

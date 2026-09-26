@@ -136,4 +136,10 @@
     grid-template-columns: 1fr;
     gap: var(--space-2);
   }
+
+  /* Stacked, the action would otherwise centre itself across the row. */
+  .message > button {
+    justify-self: start;
+    margin-left: calc(-1 * var(--space-2));
+  }
 }
