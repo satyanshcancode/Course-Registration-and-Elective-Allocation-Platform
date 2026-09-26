@@ -230,6 +230,45 @@ course_id ORDER BY position)` over the entries still `WAITING`.
   (`frontend/src/utils/waitlistText.ts`), whose `default` branches take a
   `never`.
 
+## Accounts and records conventions (Phase 12)
+
+- **Administrators create student accounts; students never self-register** and
+  never edit their own academic data (it is what eligibility and priority are
+  judged on). Student endpoints stay read-only about the record.
+- Activation and reset links are single-use secrets: only their SHA-256 hash is
+  stored in `account_tokens`, and unknown, spent and expired are ONE answer so a
+  guess learns nothing. Issuing a link spends the outstanding one of that
+  purpose; setting a password spends them all.
+- **Redeeming a link goes through `accountService`**, never a repository or a
+  controller: one transaction over a `FOR UPDATE` token row, with the spend
+  guarded by `WHERE consumed_at IS NULL` as well (`docs/CONCURRENCY.md`).
+- `/forgot-password` answers identically for a known and an unknown address —
+  same status, same body, and the same answer when sending fails. Its rate
+  limiter is keyed on the IP ALONE; keying on the e-mail would make the limiter
+  the oracle the endpoint refuses to be. Attach it per route, never with
+  `router.use` on a shared mount.
+- **Session invalidation is `users.password_changed_at` vs the token's `iat`.**
+  `iat` is whole seconds rounded DOWN, so the cut-off rounds UP
+  (`sessionCutoffSeconds`) and every new session is stamped at or after it
+  (`sessionIssuedAtSeconds`). Both halves, or the rule is wrong in one direction.
+  Every path that mints a token goes through `authService`'s `signFor`.
+- Deactivation flips `users.is_active`; a course is retired with
+  `courses.is_active`. **Nothing is ever deleted** — history, submissions,
+  enrolments and stored results all refer to these rows. A course a window at
+  `OPEN` or later offers cannot be retired; migration 0012's trigger is the
+  final guard.
+- The mailer is one interface (`backend/src/mail/`) with three implementations
+  (SMTP, memory for tests, log for a dev machine with no mail server). Every
+  e-mail's wording lives in `mail/accountEmails.ts`, plain text only.
+- **CSV import is preview then confirm.** `importRules.ts` judges one row
+  purely, so the dry run and the confirm cannot disagree; the confirm RE-judges
+  the file (the client's verdicts are not a credential) and writes every valid
+  row in one transaction. A failing invitation during an import is the one
+  deliberate exception to rolling back.
+- Seeds and demo scripts refuse `NODE_ENV=production` with no override;
+  `npm run admin:create` is the only way an account is made without an
+  invitation. Demo credentials render only under `import.meta.env.DEV`.
+
 ## Code quality
 
 - TypeScript `strict` + `noUncheckedIndexedAccess` everywhere. No `any`; if one
