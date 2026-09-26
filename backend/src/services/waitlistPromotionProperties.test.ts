@@ -468,14 +468,22 @@ class World {
   }
 }
 
+const unread = () => Promise.reject(new Error('promotion never reads history or notifications'));
+
 const noHistory: RegistrationHistoryRepository = {
   record: () => Promise.resolve(),
   recordMany: () => Promise.resolve(),
+  listForStudent: unread,
+  listFilterOptions: unread,
+  findSeatOrigin: unread,
 };
 const noNotifications: NotificationRepository = {
   broadcast: () => Promise.resolve(0),
   sendMany: () => Promise.resolve(0),
   countUnread: () => Promise.resolve(0),
+  listForUser: unread,
+  markRead: unread,
+  markAllRead: unread,
 };
 const noAudit: AuditLogRepository = { record: () => Promise.resolve() };
 

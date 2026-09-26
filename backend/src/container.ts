@@ -18,6 +18,7 @@ import { createStudentRepository } from './repositories/studentRepository.js';
 import { createUserRepository } from './repositories/userRepository.js';
 import { createWaitlistRepository } from './repositories/waitlistRepository.js';
 import type { ApiServices } from './routes/index.js';
+import { createActivityService } from './services/activityService.js';
 import { createAddDropService } from './services/addDropService.js';
 import { createAdminCourseService } from './services/adminCourseService.js';
 import { createAllocationService } from './services/allocationService.js';
@@ -60,6 +61,13 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
       tokens: createTokenService({ secret: config.jwtSecret, ttlSeconds: SESSION_TTL_SECONDS }),
     }),
     studentService: createStudentService(students, createNotificationRepository(pool)),
+    activityService: createActivityService({
+      windows,
+      waitlists,
+      preferences,
+      history: createRegistrationHistoryRepository(pool),
+      notifications: createNotificationRepository(pool),
+    }),
     catalogueService: createCatalogueService({ windows, catalogue, students }),
     eligibilityService: createEligibilityService({ windows, catalogue, students }),
     cartService: createCartService({

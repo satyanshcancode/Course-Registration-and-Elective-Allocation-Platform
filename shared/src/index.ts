@@ -81,6 +81,30 @@ export {
   readAddDropProblems,
 } from './api/addDrop.js';
 export type {
+  HistoryEvent,
+  HistoryEventDetail,
+  HistoryEventDetailType,
+  EveryHistoryEventTypeHasFacts,
+  EveryHistoryFactHasAnEventType,
+  HistoryPage,
+  HistoryQuery,
+  NotificationFilter,
+  NotificationItem,
+  NotificationPage,
+  NotificationReadResult,
+  SeatOrigin,
+  StatusSeat,
+  StatusSubmission,
+  StudentStatus,
+} from './api/activity.js';
+export {
+  HISTORY_MAX_PAGE_SIZE,
+  HISTORY_PAGE_SIZE,
+  NOTIFICATION_FILTERS,
+  NOTIFICATION_PAGE_SIZE,
+  SEAT_ORIGINS,
+} from './api/activity.js';
+export type {
   AdminWaitlistView,
   EnrolledStudentRow,
   ProcessWaitlistsResult,
