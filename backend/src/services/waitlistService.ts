@@ -118,10 +118,11 @@ export function createWaitlistService({
 
       return {
         window: window.summary,
-        held:
-          held && held.preferenceRank !== null
-            ? { course: { code: held.code, name: held.name }, rank: held.preferenceRank }
-            : null,
+        // A seat taken during add/drop carries no rank, and dropping it from
+        // this field would tell the student they hold nothing at all.
+        held: held
+          ? { course: { code: held.code, name: held.name }, rank: held.preferenceRank }
+          : null,
         waiting: entries.filter((entry) => entry.status === 'WAITING'),
         ended: entries.filter((entry) => entry.status !== 'WAITING'),
         serverTime,

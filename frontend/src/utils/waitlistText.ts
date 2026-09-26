@@ -32,10 +32,19 @@ export function describeQueue(entry: StudentWaitlistEntry): string {
 }
 
 /** The upgrade rule, in the words that matter to this particular student. */
-export function describeUpgrade(held: { course: CourseRef; rank: PreferenceRank } | null): string {
-  return held
-    ? `You hold a seat in ${held.course.code} ${held.course.name}, your ${ordinal(held.rank)} choice. Everything below is a course you ranked higher, so being moved up is always an improvement — and your ${held.course.code} seat would be released for the next student waiting for it.`
-    : 'You have no seat yet, so any of these would be your first. You are moved in automatically as soon as one frees up — there is nothing to accept and nothing to claim.';
+export function describeUpgrade(
+  held: { course: CourseRef; rank: PreferenceRank | null } | null,
+): string {
+  if (!held) {
+    return 'You have no seat yet, so any of these would be your first. You are moved in automatically as soon as one frees up — there is nothing to accept and nothing to claim.';
+  }
+  const release = `Your ${held.course.code} seat would be released for the next student waiting for it.`;
+  // A seat taken during add/drop was never ranked, so "higher" has nothing to
+  // compare against — but every course below IS one they ranked, which is why
+  // promotion still offers them one (see docs/ALLOCATION.md).
+  return held.rank === null
+    ? `You hold a seat in ${held.course.code} ${held.course.name}, which you took during add/drop rather than ranking. Everything below is a course you did rank, so being moved up is still an improvement — and ${release.charAt(0).toLowerCase()}${release.slice(1)}`
+    : `You hold a seat in ${held.course.code} ${held.course.name}, your ${ordinal(held.rank)} choice. Everything below is a course you ranked higher, so being moved up is always an improvement — and ${release.charAt(0).toLowerCase()}${release.slice(1)}`;
 }
 
 export function describeRemoval(reason: WaitlistRemovalReason): string {
