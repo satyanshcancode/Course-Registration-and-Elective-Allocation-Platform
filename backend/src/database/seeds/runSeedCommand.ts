@@ -4,15 +4,23 @@ import { logger } from '../../utils/logger.js';
 import { createPool } from '../pool.js';
 
 /**
- * Shared CLI wrapper: loads config, refuses to wipe a production database
- * unless explicitly allowed, runs the command and always closes the pool.
+ * Shared CLI wrapper: loads config, REFUSES to run in production, runs the
+ * command and always closes the pool.
+ *
+ * The refusal has no override. Every seed truncates every application table
+ * first, and a production database holds real accounts, submissions and
+ * results: there is no argument that makes wiping it the right thing to do, so
+ * there is no flag for it. Production starts empty with the migrations applied
+ * and its first administrator from `npm run admin:create`.
  */
 export function runSeedCommand(name: string, command: (pool: Pool) => Promise<unknown>): void {
   const run = async (): Promise<void> => {
     const env = loadEnv(databaseEnvSchema);
-    if (env.NODE_ENV === 'production' && !process.argv.includes('--allow-production')) {
+    if (env.NODE_ENV === 'production') {
       throw new Error(
-        `${name} resets data; pass --allow-production to run it with NODE_ENV=production`,
+        `${name} deletes every row in every application table and will not run with ` +
+          'NODE_ENV=production. Apply the migrations and create the first administrator ' +
+          'with `npm run admin:create` instead.',
       );
     }
     const pool = createPool(env.DATABASE_URL);
