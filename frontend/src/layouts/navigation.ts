@@ -4,7 +4,6 @@ import {
   Bell,
   BookOpen,
   CalendarClock,
-  CircleHelp,
   History,
   Hourglass,
   LayoutDashboard,
@@ -43,7 +42,6 @@ export const STUDENT_NAV: readonly NavItem[] = [
   { to: '/student/add-drop', label: 'Add/Drop', icon: ArrowLeftRight },
   { to: '/student/history', label: 'History', icon: History },
   { to: '/student/notifications', label: 'Notifications', icon: Bell },
-  { to: '/student/help', label: 'Help', icon: CircleHelp },
 ];
 
 export const ADMIN_NAV: readonly NavItem[] = [

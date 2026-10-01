@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Icon } from '../components/Icon';
 import { PageLoading } from '../components/PageLoading';
@@ -19,7 +19,6 @@ export interface AppShellProps {
   items: readonly NavItem[];
   /** Small print in the footer. */
   footerNote?: string;
-  helpPath?: string;
   /** Optional count beside a nav item, e.g. how many courses are in the cart. */
   itemBadge?: (item: NavItem) => ReactNode;
 }
@@ -38,7 +37,6 @@ export function AppShell({
   homePath,
   items,
   footerNote,
-  helpPath,
   itemBadge,
 }: AppShellProps) {
   const { pathname } = useLocation();
@@ -86,7 +84,6 @@ export function AppShell({
 
       <footer className={styles.footer}>
         <p>{footerNote ?? 'Course Registration · University Registrar'}</p>
-        {helpPath && <Link to={helpPath}>How registration works</Link>}
       </footer>
     </div>
   );
