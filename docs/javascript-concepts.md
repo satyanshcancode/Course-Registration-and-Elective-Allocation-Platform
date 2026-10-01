@@ -3,6 +3,55 @@
 Where the syllabus's JavaScript topics appear in real, working code. Each
 section names the file, says what the code does and why the concept fits.
 
+## Scope — what a name can see
+
+[`backend/src/utils/random.ts`](../backend/src/utils/random.ts).
+
+Scope is the region of code where a name is visible. JavaScript has three that
+matter here, from outside in: **module** scope (anything declared at the top
+level of a file, private to that file unless exported), **function** scope, and
+**block** scope — the `{ … }` of an `if`, a loop or a bare block, which `let`
+and `const` respect and `var` does not.
+
+The seeded generator is built on exactly this. `state` is declared inside
+`mulberry32` and never leaves it:
+
+```ts
+function mulberry32(seed: number): () => number {
+  let state = seed >>> 0; // function scope: nothing outside can reach it
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0; // …but the returned function still can
+    /* … */
+  };
+}
+```
+
+There is no `generator.state` to tamper with, and two generators made from the
+same seed cannot interfere, because each call to `mulberry32` creates a fresh
+`state`. That is what makes an allocation run reproducible.
+
+Block scope is why `shuffle` is correct:
+
+```ts
+for (let i = result.length - 1; i > 0; i -= 1) {
+  const j = int(0, i); // a NEW j each iteration, not one shared binding
+  [result[i], result[j]] = [result[j] as T, result[i] as T];
+}
+```
+
+With `var j`, every iteration would share one binding — harmless here because
+`j` is used immediately, but the classic bug the moment a callback outlives the
+iteration:
+
+```js
+for (var i = 0; i < 3; i += 1) setTimeout(() => console.log(i)); // 3, 3, 3
+for (let i = 0; i < 3; i += 1) setTimeout(() => console.log(i)); // 0, 1, 2
+```
+
+`let` gives each iteration its own binding, so each callback closes over its
+own `i`. This codebase uses `const` by default, `let` only where a value really
+is reassigned, and `var` nowhere — ESLint's `no-var` enforces it.
+
 ## Closure-based `debounce()` — course search
 
 [`frontend/src/utils/debounce.ts`](../frontend/src/utils/debounce.ts), used by
@@ -80,6 +129,18 @@ to ignore buttons outside this table, skips disabled buttons, and returns
 `{ action, courseCode }`. The table then looks the action up in a map
 (`{ view: … }`), so a later action such as "Add to cart" is one more entry,
 not one more listener per row.
+
+**The three phases.** A click does not only bubble. It is dispatched in
+**capture** (window down to the target), then at the **target**, then **bubble**
+(target back up to the window). `addEventListener` listens in the bubble phase
+unless it is passed `{ capture: true }`, which is why one listener high up hears
+everything below it. Two ways to interfere, neither used in the row handlers:
+`event.stopPropagation()` ends the journey, so an ancestor's delegated listener
+never runs — the usual cause of a delegated handler that mysteriously does
+nothing — and `event.preventDefault()` leaves propagation alone but cancels the
+browser's own reaction (following a link, submitting a form). The cart's
+"unsaved changes" guard uses `preventDefault` on `beforeunload` for exactly
+that reason.
 
 Keyboard users get this for free: pressing Enter or Space on a `<button>`
 fires a `click` event, which bubbles the same way. Tests:
@@ -179,6 +240,58 @@ neighbours render normally. Retry re-runs **only that loader** — the healthy
 sections are never refetched. The RTL test proves both halves: one rejected
 loader leaves the others on screen, and retrying it calls one API function a
 second time while the other two stay at one call each.
+
+## The event loop — microtasks before macrotasks
+
+JavaScript runs on one thread with one call stack. Anything asynchronous is
+handed to the host (the browser or Node), which puts the callback in a queue;
+the **event loop** takes from a queue only when the stack is empty. There are
+two kinds of queue, and the difference is the ordering rule:
+
+- **Macrotasks** (the task queue): `setTimeout`, `setInterval`, I/O, a user
+  event. **One** is taken per turn of the loop.
+- **Microtasks**: promise reactions (`.then`, `catch`, `finally`, and
+  everything after an `await`) and `queueMicrotask`. After each macrotask —
+  and after the current synchronous script finishes — the loop drains the
+  **whole** microtask queue before touching the task queue again.
+
+So microtasks always run before the next macrotask, even one scheduled first
+with a zero delay. The classic ordering:
+
+```js
+console.log('1');
+setTimeout(() => console.log('2'), 0); // macrotask
+Promise.resolve().then(() => console.log('3')); // microtask
+console.log('4');
+// 1, 4, 3, 2
+```
+
+`1` and `4` are plain synchronous statements. The stack then empties, the loop
+drains the microtask queue (`3`), and only then runs the timer (`2`). It also
+means a microtask that queues another microtask is run in the same drain — an
+endless chain of promises can starve timers, whereas an endless chain of
+`setTimeout` cannot.
+
+**Where the app relies on it.** Nothing here schedules microtasks to exploit
+the ordering; this is one of the concepts explained rather than demonstrated.
+What the app does depend on is the first half of the rule — that an `await`
+resumes in a microtask, before any timer:
+
+```ts
+const current = await getCurrentWindow(signal);
+// Still the same turn of the loop as the response: no setTimeout, no render,
+// nothing else has moved Date.now() on.
+setWindow({ ...current, clockOffsetMs: Date.parse(current.serverTime) - Date.now() });
+```
+
+in [`useRegistrationWindow.tsx`](../frontend/src/hooks/useRegistrationWindow.tsx).
+The clock offset is measured **where the response arrives**, never during a
+render, precisely because that line runs before anything else gets a turn.
+
+The other half shows up in `usePolling`: `setInterval` is a macrotask, and a
+browser is free to throttle or stop timers in a hidden tab. The hook does not
+rely on the browser's goodwill — it clears the interval on `visibilitychange`
+and polls once on the way back.
 
 ## The countdown, and whose clock it uses
 
@@ -338,6 +451,83 @@ the transaction and the clock. Randomness is passed in as a **seed**, not
 taken from the environment, and `tieBreaksFor` draws one number per student
 from it — once, not per comparison, because a fresh draw each time would make
 the ordering non-transitive and the run unrepeatable.
+
+## `this`, and why this codebase rarely needs it
+
+`this` is not decided where a function is written — it is decided by **how it
+is called**. The same function body sees a different `this` for each call:
+
+```js
+const strategy = strategyFor('FCFS');
+strategy.algorithmVersion; // read through the receiver: the object before the dot
+strategy.allocate(input); // inside allocate, `this` is strategy
+
+const loose = strategy.allocate;
+loose(input); // `this` is undefined — modules are always strict mode
+```
+
+That last line is the classic bug: pulling a method out of its object loses its
+receiver. The fixes are `strategy.allocate.bind(strategy)` or a wrapper that
+keeps the dot, `(input) => strategy.allocate(input)`.
+
+**Arrow functions have no `this` of their own.** They close over the `this` of
+the scope they were written in, exactly like any other variable, which is what
+makes them safe as callbacks:
+
+```js
+send(method, params = {}) {
+  const id = this.#nextId++;
+  return new Promise((resolve, reject) => {
+    // Arrow: `this` is still the DevTools instance inside the executor.
+    this.#pending.set(id, { resolve, reject });
+    this.#socket.send(JSON.stringify({ id, method, params }));
+  });
+}
+```
+
+in [`scripts/screenshot.mjs`](../scripts/screenshot.mjs). Written
+`new Promise(function (resolve, reject) { this.#pending … })`, `this` would be
+`undefined` and the private field would throw. The same file shows the other
+way out: its `static attach()` has no instance yet, so it holds one in a
+`const client` and closes over that instead of reaching for `this`.
+
+**Where `this` actually earns its place here.**
+[`createAdmin.ts`](../backend/src/scripts/createAdmin.ts) extends Node's
+`Writable` so the password is not echoed while it is typed, and Node calls
+`_write` as a method on the stream:
+
+```ts
+override _write(chunk, encoding, callback): void {
+  if (!this.muted) {
+    process.stdout.write(chunk, encoding);
+  }
+  callback();
+}
+```
+
+`this.muted` is the whole point: the instance carries the state, and the
+framework decides when to call. The two allocation strategies are classes for a
+different reason — `method` and `algorithmVersion` are read off the instance by
+`strategyFor` and `runStrategy`, so two interchangeable implementations can be
+told apart. `allocate` itself is a pure function of its argument and touches no
+`this` at all.
+
+**Everywhere else the codebase sidesteps it.** Most "objects with methods" here
+are factory functions returning an object literal of closures, not classes:
+
+- `createSeededRandom` closes over `next` and `int`. `shuffle` calls `int(0, i)`
+  — a plain function it captured — not `this.int(0, i)`, so
+  `const { shuffle } = createSeededRandom(1)` keeps working, where the same
+  destructuring of a class instance would break.
+- Repositories and services are built the same way, closing over their `pool`,
+  so a controller can pass one of their functions around as a value.
+- Every React component is a function; state comes from hooks, so there is no
+  `this` to bind in a render.
+
+The rule this codebase follows: use a class when a type has several
+interchangeable implementations or a framework will call it as a method, and
+prefer a closure otherwise — a closure cannot lose its receiver, because it
+never had one.
 
 # TypeScript highlights
 
