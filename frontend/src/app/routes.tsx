@@ -39,7 +39,6 @@ const NotificationsPage = lazyNamed(
   () => import('../pages/student/NotificationsPage'),
   'NotificationsPage',
 );
-const HelpPage = lazyNamed(() => import('../pages/student/HelpPage'), 'HelpPage');
 
 const AdminDashboardPage = lazyNamed(
   () => import('../pages/admin/AdminDashboardPage'),
@@ -141,7 +140,8 @@ export const routes: RouteObject[] = [
               { path: 'history', element: <HistoryPage /> },
               { path: 'notifications', element: <NotificationsPage /> },
               { path: 'account', element: <AccountPage /> },
-              { path: 'help', element: <HelpPage /> },
+              // Retired: the written guide and video are future scope (see README).
+              { path: 'help', element: <Navigate to="/student/dashboard" replace /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

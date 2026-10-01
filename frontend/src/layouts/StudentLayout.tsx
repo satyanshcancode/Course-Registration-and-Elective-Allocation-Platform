@@ -54,7 +54,6 @@ function StudentShell() {
       areaLabel="Student"
       homePath="/student/dashboard"
       items={STUDENT_NAV}
-      helpPath="/student/help"
       itemBadge={badge}
     />
   );
