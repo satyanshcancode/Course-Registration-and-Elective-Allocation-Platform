@@ -1,6 +1,16 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+
+/*
+ * Testing Library's 1 s default for findBy and waitFor is a wall-clock budget,
+ * and the heaviest page files (the catalogue, the cart, the import dialog) render
+ * far more than that under two forks on a loaded machine — so they failed at
+ * random while the assertions themselves were fine. The timeout only bounds how
+ * long a WAITING query may take; a test that really is broken still fails, just
+ * a few seconds later.
+ */
+configure({ asyncUtilTimeout: 5_000 });
 
 /*
  * jsdom has <dialog> but not showModal()/close(). This polyfill mirrors the

@@ -12,6 +12,7 @@ import { cataloguePage, currentWindow, makeCourse, ok } from '../../../test/cata
 import { draftCart } from '../../../test/registrationFixtures';
 import { renderRoute } from '../../../test/renderRoute';
 import { StudentCoursesPage } from '../StudentCoursesPage';
+import { findLoadedTable } from '../../../test/tables';
 
 vi.mock('../../../api/courseApi', async (importOriginal) => ({
   ...(await importOriginal<typeof courseApi>()),
@@ -84,7 +85,7 @@ describe('adding to the cart from the catalogue', () => {
   it('adds from the table through the tbody’s single delegated listener', async () => {
     const user = userEvent.setup();
     renderCatalogue('/student/courses?view=table');
-    await screen.findByRole('table');
+    await findLoadedTable();
 
     const row = screen.getByRole('row', { name: /Renewable Energy Systems/ });
     await user.click(within(row).getByRole('button', { name: /Add to cart/ }));

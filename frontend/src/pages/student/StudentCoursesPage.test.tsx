@@ -14,6 +14,7 @@ import {
 import { renderRoute } from '../../test/renderRoute';
 import { SEARCH_DELAY_MS } from './catalogue/CatalogueFilterForm';
 import { StudentCoursesPage } from './StudentCoursesPage';
+import { findLoadedTable } from '../../test/tables';
 
 vi.mock('../../api/courseApi', async (importOriginal) => ({
   ...(await importOriginal<typeof courseApi>()),
@@ -65,7 +66,7 @@ describe('StudentCoursesPage', () => {
   it('writes filters to the URL, and reads them back on load', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
     const { router } = renderCatalogue('/student/courses?view=table&credits=4');
-    await screen.findByRole('table');
+    await findLoadedTable();
     expect(lastQuery()).toMatchObject({ credits: 4 });
 
     await user.selectOptions(screen.getByLabelText('Department'), 'ME');
@@ -116,7 +117,7 @@ describe('StudentCoursesPage', () => {
   it('handles row buttons with one delegated listener, even for clicks on the icon inside', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
     const { router } = renderCatalogue('/student/courses?view=table&department=CSE');
-    const table = await screen.findByRole('table');
+    const table = await findLoadedTable();
 
     const button = within(table).getByRole('button', {
       name: 'View details of Cloud Security',
