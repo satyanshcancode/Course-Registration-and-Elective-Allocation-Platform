@@ -6,7 +6,15 @@
  */
 .layout {
   display: grid;
+  /*
+   * `justify-items`, not `justify-content` alone: the column track is sized to
+   * the panel's max-content (over 700px for a page with a long sentence or an
+   * e-mail address in it), and the 30rem panel then sat at that track's left
+   * edge. Centring the track therefore left the card well short of centre,
+   * further on some pages than others. This centres the CARD in the track.
+   */
   justify-content: center;
+  justify-items: center;
   padding-top: var(--space-4);
 }
 

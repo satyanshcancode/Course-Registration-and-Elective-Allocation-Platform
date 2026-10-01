@@ -68,8 +68,13 @@ export function describeHistoryEvent(event: HistoryEvent): string {
 
     case 'ALLOCATED': {
       const seat = `Allocation gave you a seat in ${course}${choice(detail.rank)}`;
+      // "in line" is the waitlist's phrase, and the next sentence uses it for
+      // real queue positions. finalRank is a placing among everyone who asked
+      // for the course, not a place in a queue, so it says so.
       const place =
-        detail.finalRank === null ? '' : `, ${ordinal(detail.finalRank)} in line for it`;
+        detail.finalRank === null
+          ? ''
+          : `, ranked ${ordinal(detail.finalRank)} among its applicants`;
       return `${seat}${place}.${waitlistTail(detail.waitlisted)}`;
     }
 

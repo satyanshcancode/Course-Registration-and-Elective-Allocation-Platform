@@ -174,17 +174,7 @@ browser-blue links. In the final round no page scrolls sideways at any width
 or theme. On a 390px phone the toast region ends at 768px and the bottom nav
 starts at 779px, so toasts never cover it.
 
-Final screenshots, in [`docs/screenshots/`](screenshots/):
-
-| Page                      | Width, theme    | File                                                                             |
-| ------------------------- | --------------- | -------------------------------------------------------------------------------- |
-| Sign in                   | 1280, light     | [login-1280-light.png](screenshots/login-1280-light.png)                         |
-| Student dashboard         | 1280, light     | [student-dashboard-1280-light.png](screenshots/student-dashboard-1280-light.png) |
-| Student dashboard (rail)  | 820, light      | [student-dashboard-820-light.png](screenshots/student-dashboard-820-light.png)   |
-| Cart placeholder (phone)  | 390, dark (ink) | [student-cart-390-dark.png](screenshots/student-cart-390-dark.png)               |
-| Admin dashboard           | 1280, dark      | [admin-dashboard-1280-dark.png](screenshots/admin-dashboard-1280-dark.png)       |
-| Component gallery: table  | 820, light      | [gallery-table-820-light.png](screenshots/gallery-table-820-light.png)           |
-| Component gallery: dialog | 1280, light     | [gallery-modal-1280-light.png](screenshots/gallery-modal-1280-light.png)         |
+The screenshots this round was reviewed from have been replaced by the final set; see [Phase 14](#phase-14-final-review-of-every-page).
 
 ### Phase 5: course catalogue, course detail, admin courses
 
@@ -214,19 +204,7 @@ rule still marks oversubscribed rows while the Status column is out of view. A
 seat change flashes an ochre wash for 2 seconds. Its fade uses the duration
 tokens, so reduced motion switches it off.
 
-Final screenshots:
-
-| Page                                   | Width, theme | File                                                                                     |
-| -------------------------------------- | ------------ | ---------------------------------------------------------------------------------------- |
-| Catalogue, cards                       | 1280, light  | [catalogue-cards-1280-light.png](screenshots/catalogue-cards-1280-light.png)             |
-| Catalogue, cards (rail)                | 820, dark    | [catalogue-cards-820-dark.png](screenshots/catalogue-cards-820-dark.png)                 |
-| Catalogue, table (phone)               | 390, light   | [catalogue-table-390-light.png](screenshots/catalogue-table-390-light.png)               |
-| Course detail, eligible                | 1280, light  | [detail-1280-light.png](screenshots/detail-1280-light.png)                               |
-| Course detail, not eligible            | 1280, dark   | [detail-ineligible-1280-dark.png](screenshots/detail-ineligible-1280-dark.png)           |
-| Course detail (phone)                  | 390, dark    | [detail-390-dark.png](screenshots/detail-390-dark.png)                                   |
-| Admin courses                          | 1280, light  | [admin-courses-1280-light.png](screenshots/admin-courses-1280-light.png)                 |
-| Edit capacity, validation (phone)      | 390, light   | [admin-dialog-390-light.png](screenshots/admin-dialog-390-light.png)                     |
-| Live update, changed seats highlighted | 1280, light  | [catalogue-live-update-1280-light.png](screenshots/catalogue-live-update-1280-light.png) |
+The screenshots this round was reviewed from have been replaced by the final set; see [Phase 14](#phase-14-final-review-of-every-page).
 
 ### Phase 6: eligibility pre-check, registration window, dashboards
 
@@ -251,18 +229,7 @@ eligible on each group, and "Policy frozen" with a lock. Each ineligibility
 reason is a sentence with its own icon, never colour alone. In the final round
 no page scrolls sideways at any width or theme.
 
-Final screenshots:
-
-| Page                               | Width, theme | File                                                                             |
-| ---------------------------------- | ------------ | -------------------------------------------------------------------------------- |
-| Eligibility pre-check              | 1280, light  | [eligibility-1280-light.png](screenshots/eligibility-1280-light.png)             |
-| Eligibility pre-check (phone)      | 390, dark    | [eligibility-390-dark.png](screenshots/eligibility-390-dark.png)                 |
-| Student dashboard                  | 1280, light  | [student-dashboard-1280-light.png](screenshots/student-dashboard-1280-light.png) |
-| Student dashboard (rail)           | 820, dark    | [student-dashboard-820-dark.png](screenshots/student-dashboard-820-dark.png)     |
-| Registration window, draft form    | 1280, light  | [admin-window-1280-light.png](screenshots/admin-window-1280-light.png)           |
-| Registration window, policy frozen | 1280, dark   | [admin-window-1280-dark.png](screenshots/admin-window-1280-dark.png)             |
-| Admin dashboard                    | 1280, light  | [admin-dashboard-1280-light.png](screenshots/admin-dashboard-1280-light.png)     |
-| Admin dashboard (phone)            | 390, light   | [admin-dashboard-390-light.png](screenshots/admin-dashboard-390-light.png)       |
+The screenshots this round was reviewed from have been replaced by the final set; see [Phase 14](#phase-14-final-review-of-every-page).
 
 ### Phase 10: add/drop
 
@@ -284,10 +251,33 @@ starts on Cancel. Outside the period every action button is `disabled` and the
 reason is a sentence, not a greyed-out mystery. No sideways scroll at either
 width or theme.
 
-Final screenshots:
+The screenshots this round was reviewed from have been replaced by the final set; see [Phase 14](#phase-14-final-review-of-every-page).
 
-| Page                                 | Width, theme | File                                                                                     |
-| ------------------------------------ | ------------ | ---------------------------------------------------------------------------------------- |
-| Add/drop, holding a seat             | 1280, light  | [student-add-drop-1280-light.png](screenshots/student-add-drop-1280-light.png)           |
-| Add/drop, holding nothing            | 390, dark    | [student-add-drop-390-dark.png](screenshots/student-add-drop-390-dark.png)               |
-| Registration window, add/drop period | 1280, light  | [admin-add-drop-period-1280-light.png](screenshots/admin-add-drop-period-1280-light.png) |
+### Phase 14: final review of every page
+
+One pass over all 26 pages, each at 1280px in light mode and 390px in dark
+mode, against this document. The set is regenerated by
+[`scripts/screenshot.mjs`](../scripts/screenshot.mjs), which drives a headless
+Chrome over the DevTools Protocol and needs no extra dependency; a full pass
+spans two demo stages, because an editable cart only exists while the window is
+open and results, waitlists and add/drop only exist after allocation has run:
+
+```bash
+npm run docker:demo:reset -- --stage=add-drop
+node scripts/screenshot.mjs --stage=add-drop
+npm run docker:demo:reset -- --stage=open
+node scripts/screenshot.mjs --stage=open
+```
+
+| Finding                                                                                                                                                                                                                                                                                                                                                 | Fix                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| The activation, reset and forgot-password cards sat about 118px left of centre, by different amounts per page. `AuthPanel`'s grid used `justify-content: center`, which centres the TRACK — and the track was sized to the panel's max-content (over 700px once a page held a long sentence or an e-mail address), with the 30rem card at its left edge | `justify-items: center` as well, so the CARD is centred inside the track                                                         |
+| The 404 page kept a 44rem column hard against the left edge of a 1280px public page, the very thing `AuthPanel` centres its card to avoid                                                                                                                                                                                                               | A `centred` prop, passed only on the public route; inside the app shell it stays left-aligned like every other page there        |
+| On the admin dashboard, "Most demanded courses" printed the demand ratio twice in neighbouring columns — `describeDemand` renders "112 requests · 5.6×", and the next column is "Demand ÷ seats"                                                                                                                                                        | `describeRequests` for the count alone; `describeDemand` now composes it, so there is still one place that words a request count |
+| The timeline said "Allocation gave you a seat in CS404 …, 76th in line for it", then used "in line" again in the next sentence for real waitlist positions. `finalRank` is a placing among everyone who asked for the course, not a place in a queue, so a student who held a seat appeared to be 76th in a queue for it                                | "ranked 76th among its applicants". The dashboard's recent activity reads from the same function, so it is fixed in both         |
+| The activation shot had to create an account to have an unspent invitation, and that account was still there when the next shots counted students ("302 students")                                                                                                                                                                                      | The invitee is one fixed, realistic record, deleted as soon as its shot is taken                                                 |
+
+Checked against the banned list: none found on any page. No page scrolls
+sideways at either width or theme — wide tables scroll inside their own
+keyboard-focusable region. Status is never colour alone anywhere: every badge
+carries an icon and words, and every seat meter prints its numbers.

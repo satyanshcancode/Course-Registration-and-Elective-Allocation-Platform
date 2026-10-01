@@ -118,7 +118,7 @@ export const routes: RouteObject[] = [
           { path: 'reset-password', element: <ActivatePage mode="reset" /> },
           { path: 'forgot-password', element: <ForgotPasswordPage /> },
           ...devRoutes,
-          { path: '*', element: <NotFoundPage /> },
+          { path: '*', element: <NotFoundPage centred /> },
         ],
       },
       {

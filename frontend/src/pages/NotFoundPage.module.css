@@ -2,6 +2,10 @@
   max-width: var(--layout-narrow);
 }
 
+.page[data-centred] {
+  margin-inline: auto;
+}
+
 .body {
   padding-top: var(--space-5);
 }
