@@ -337,7 +337,7 @@ npm run seed            # optional demo data
 npm run dev             # backend on :4000, frontend on :5173
 ```
 
-`npm run docker:up postgres` runs just the database in Docker if that is
+`docker compose up -d postgres` runs just the database in Docker if that is
 easier. Without `SMTP_HOST` set, account e-mails are written to the backend log
 with the link included, so the invitation and reset flows still work.
 
