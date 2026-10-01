@@ -257,11 +257,15 @@ export function createAllocationRepository(
         program_id: string;
         expected_graduation_term: string;
       }>(
+        // A deactivated account's submission is left out: the student is no
+        // longer registering, and giving them a seat would hold it against a
+        // student who is. Their submission row stays as history.
         `SELECT ps.student_id, ps.submission_sequence, s.semester, s.credits_completed,
                 s.program_id, s.expected_graduation_term
          FROM preference_submissions ps
          JOIN students s ON s.user_id = ps.student_id
-         WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED'
+         JOIN users u ON u.id = ps.student_id
+         WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED' AND u.is_active
          ORDER BY ps.submission_sequence`,
         [windowId],
       );
@@ -536,8 +540,11 @@ export function createAllocationRepository(
 
     async countSubmissions(windowId) {
       const result = await pool.query<{ count: string }>(
-        `SELECT count(*) AS count FROM preference_submissions
-         WHERE window_id = $1 AND status = 'SUBMITTED'`,
+        // Counts exactly the submissions loadSnapshot would allocate, so the
+        // preview's number cannot disagree with what the run actually does.
+        `SELECT count(*) AS count FROM preference_submissions ps
+         JOIN users u ON u.id = ps.student_id
+         WHERE ps.window_id = $1 AND ps.status = 'SUBMITTED' AND u.is_active`,
         [windowId],
       );
       return Number(result.rows[0]?.count ?? 0);
