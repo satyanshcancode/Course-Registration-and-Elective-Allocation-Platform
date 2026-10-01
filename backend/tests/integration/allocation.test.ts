@@ -242,6 +242,42 @@ describe('POST /api/admin/allocation/run', () => {
     expect(status.rows[0]?.status).toBe('ALLOCATED');
   });
 
+  it('leaves a deactivated student out of the run', async () => {
+    const { admin, windowId, students, courses } = await buildAllocationWorld();
+    const pool = getTestPool();
+    const [excluded] = students;
+    await pool.query('UPDATE users SET is_active = FALSE WHERE id = $1', [excluded]);
+    await setWindowStatus(pool, windowId, 'CLOSED');
+
+    // The preview counts what the run will actually allocate, not every row.
+    const preview = dataOf(
+      await request(app()).post(PREVIEW_PATH).set('Cookie', adminCookie(admin)).expect(200),
+    ) as AllocationPreview;
+    expect(preview.submissions).toBe(students.length - 1);
+
+    const detail = dataOf(await runAllocation(admin).expect(200)) as AllocationRunDetail;
+    expect(detail.inputSize.students).toBe(students.length - 1);
+    expect(detail.metrics?.allocated).toBe(students.length - 1);
+
+    // Nothing was written for them: no seat, no queue place, no result row.
+    const theirs = await pool.query(
+      `SELECT
+         (SELECT count(*) FROM enrollments WHERE student_id = $1) AS enrollments,
+         (SELECT count(*) FROM waitlist_entries WHERE student_id = $1) AS waitlist,
+         (SELECT count(*) FROM allocation_results WHERE student_id = $1) AS results`,
+      [excluded],
+    );
+    expect(theirs.rows[0]).toEqual({ enrollments: '0', waitlist: '0', results: '0' });
+
+    // And the seat they would have taken went to an active student instead.
+    const seats = await pool.query<{ allocated_count: number }>(
+      `SELECT allocated_count FROM registration_window_courses
+        WHERE window_id = $1 AND course_id = $2`,
+      [windowId, courses.AI401],
+    );
+    expect(seats.rows[0]?.allocated_count).toBe(2);
+  });
+
   it('refuses a second run for the same window', async () => {
     const { admin, windowId } = await buildAllocationWorld();
     await setWindowStatus(getTestPool(), windowId, 'CLOSED');
