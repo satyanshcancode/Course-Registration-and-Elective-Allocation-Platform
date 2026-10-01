@@ -1,6 +1,12 @@
 import type { RegistrationWindowSummary } from '@course-reg/shared';
 import { describe, expect, it } from 'vitest';
-import { describeDemand, describeMyStatus, describeWindow, formatUpdatedAgo } from './courseText';
+import {
+  describeDemand,
+  describeMyStatus,
+  describeRequests,
+  describeWindow,
+  formatUpdatedAgo,
+} from './courseText';
 
 describe('describeMyStatus', () => {
   it('says where the course stands for the student', () => {
@@ -9,6 +15,14 @@ describe('describeMyStatus', () => {
     expect(describeMyStatus({ code: 'SUBMITTED', rank: 1 })).toBe('Choice 1 · submitted');
     expect(describeMyStatus({ code: 'ENROLLED' })).toBe('Enrolled');
     expect(describeMyStatus({ code: 'WAITLISTED', position: 7 })).toBe('Waitlisted · #7');
+  });
+});
+
+describe('describeRequests', () => {
+  it('counts the requests and nothing else, for a table with its own ratio column', () => {
+    expect(describeRequests(114)).toBe('114 requests');
+    expect(describeRequests(1)).toBe('1 request');
+    expect(describeRequests(0)).toBe('No requests yet');
   });
 });
 

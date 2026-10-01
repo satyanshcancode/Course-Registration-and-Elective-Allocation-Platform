@@ -20,11 +20,11 @@ export interface AuthPanelProps {
 }
 
 /**
- * The frame shared by the activation, forgot-password, reset and account pages:
- * one narrow card, the same heading structure, and one live region each for a
+ * The frame shared by the activation, reset and forgot-password pages: one
+ * narrow card, the same heading structure, and one live region each for a
  * notice and an error.
  *
- * Extracted rather than copied so all four pages announce and focus the same
+ * Extracted rather than copied so all three pages announce and focus the same
  * way — the heading takes focus on mount, as `PageHeader` does inside the app,
  * so a keyboard user lands on the page's name after navigating to it.
  */

@@ -8,14 +8,24 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { homePathFor } from '../utils/authRedirects';
 import styles from './NotFoundPage.module.css';
 
-export function NotFoundPage() {
+export interface NotFoundPageProps {
+  /**
+   * Centre the block, for the public layout, where a 44rem column would
+   * otherwise sit in the corner of a 1280px page with nothing beside it — the
+   * same reason AuthPanel centres its card. Inside the app shell it stays
+   * left-aligned, like every other page there.
+   */
+  centred?: boolean;
+}
+
+export function NotFoundPage({ centred = false }: NotFoundPageProps) {
   useDocumentTitle('Page not found');
   const { pathname } = useLocation();
   const { state } = useAuth();
   const home = state.status === 'authenticated' ? homePathFor(state.user.role) : '/login';
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-centred={centred || undefined}>
       <PageHeader title="Page not found" kicker="Error 404" sticky={false} />
       <div className={styles.body}>
         <EmptyState

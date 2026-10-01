@@ -22,12 +22,15 @@ export function describeMyStatus(status: MyCourseStatus): string {
 }
 
 /** "114 requests · 5.7×", "1 request · 0.1×", "No requests yet". */
+export function describeRequests(demand: number): string {
+  return demand === 0 ? 'No requests yet' : `${demand} ${demand === 1 ? 'request' : 'requests'}`;
+}
+
 export function describeDemand(demand: number, capacity: number): string {
-  if (demand === 0) {
-    return 'No requests yet';
+  if (demand === 0 || capacity === 0) {
+    return describeRequests(demand);
   }
-  const requests = `${demand} ${demand === 1 ? 'request' : 'requests'}`;
-  return capacity > 0 ? `${requests} · ${formatDemandRatio(demand, capacity)}` : requests;
+  return `${describeRequests(demand)} · ${formatDemandRatio(demand, capacity)}`;
 }
 
 /** More requests than seats. */

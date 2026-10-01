@@ -6,11 +6,19 @@
  * child_process). No Playwright, no Puppeteer, no extra dependency for a job
  * that runs a few times per phase.
  *
- *   node scripts/screenshot.mjs                 # every shot in SHOTS
- *   node scripts/screenshot.mjs cart            # only shots whose name matches
+ *   node scripts/screenshot.mjs                   # every shot in SHOTS
+ *   node scripts/screenshot.mjs cart              # only shots whose name matches
+ *   node scripts/screenshot.mjs --stage=add-drop  # only the shots that stage can take
  *
  * The dev stack must be running (`npm run docker:up`). Sessions are set as
  * cookies with the same JWT secret the API verifies, so no password is typed.
+ *
+ * The full set spans two demo stages, so a complete pass is:
+ *
+ *   npm run docker:demo:reset -- --stage=add-drop
+ *   node scripts/screenshot.mjs --stage=add-drop
+ *   npm run docker:demo:reset -- --stage=open
+ *   node scripts/screenshot.mjs --stage=open
  */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -47,9 +55,34 @@ const MAILPIT_URL = process.env.MAILPIT_URL ?? 'http://localhost:8025';
 const RESET_LINK_EMAIL = 'aarav.sharma@university.edu';
 
 /**
+ * The newest link e-mailed to `email`, read out of Mailpit exactly as the
+ * student would read it out of their inbox. Mailpit delivers in milliseconds,
+ * but not synchronously with the API's reply, hence the poll.
+ */
+async function tokenFromInbox(email, since = Date.now() - 2000) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const inbox = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`,
+    )
+      .then((r) => (r.ok ? r.json() : { messages: [] }))
+      .catch(() => ({ messages: [] }));
+    const latest = inbox.messages?.[0];
+    if (latest && Date.parse(latest.Created) + 2000 >= since) {
+      const body = await fetch(`${MAILPIT_URL}/api/v1/message/${latest.ID}`).then((r) => r.json());
+      const token = /[?&]token=([^\s&"'<>]+)/.exec(`${body.Text ?? ''}${body.HTML ?? ''}`)?.[1];
+      if (token) {
+        return token;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`No e-mail for ${email} in Mailpit at ${MAILPIT_URL}`);
+}
+
+/**
  * A real, working password-reset link: asks the public endpoint for one and
- * reads it out of Mailpit, exactly as a student would out of their inbox.
- * Nothing is faked, and the token stays single-use.
+ * reads it out of the inbox, exactly as a student would. Nothing is faked, and
+ * the token stays single-use.
  */
 async function resetTokenFor(email) {
   const before = Date.now();
@@ -61,265 +94,125 @@ async function resetTokenFor(email) {
   if (!response.ok) {
     throw new Error(`forgot-password answered ${response.status}`);
   }
-  // Mailpit delivers in milliseconds, but not synchronously with the reply.
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const inbox = await fetch(
-      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`,
-    )
-      .then((r) => (r.ok ? r.json() : { messages: [] }))
-      .catch(() => ({ messages: [] }));
-    const latest = inbox.messages?.[0];
-    if (latest && Date.parse(latest.Created) + 2000 >= before) {
-      const body = await fetch(`${MAILPIT_URL}/api/v1/message/${latest.ID}`).then((r) => r.json());
-      const token = /[?&]token=([^\s&"'<>]+)/.exec(`${body.Text ?? ''}${body.HTML ?? ''}`)?.[1];
-      if (token) {
-        return token;
-      }
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  throw new Error(`No reset e-mail for ${email} in Mailpit at ${MAILPIT_URL}`);
+  return tokenFromInbox(email, before);
 }
 
-/** name → what to capture. Widths follow DESIGN.md: 1280, 820, 390. */
+/**
+ * A real, unspent invitation link: creates a student through the admin API, as
+ * a registrar would, and reads the invitation out of Mailpit. Nothing is faked.
+ * The account is removed again as soon as the shot has been taken, so it never
+ * reaches a later shot's student list.
+ */
+const INVITEE = {
+  rollNumber: 'CSE26001',
+  name: 'Nikhil Rao',
+  email: 'nikhil.rao@university.edu',
+  program: 'BTECH-CSE',
+  semester: 5,
+  creditsCompleted: 88,
+  expectedGraduationTerm: '2028-SPRING',
+  completedCourses: [],
+};
+
+async function invitationFor(session) {
+  const response = await fetch(`${BASE_URL}/api/admin/students`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: BASE_URL,
+      Cookie: `cr_session=${session}`,
+    },
+    body: JSON.stringify(INVITEE),
+  });
+  if (!response.ok) {
+    throw new Error(`Creating ${INVITEE.rollNumber} answered ${response.status}`);
+  }
+  return tokenFromInbox(INVITEE.email);
+}
+
+/**
+ * A ranked draft cart, saved through the same endpoint the cart page uses, so
+ * the shot shows real rows rather than an empty state. Only courses the student
+ * is actually eligible for, or the page would (rightly) complain.
+ */
+async function saveCartFor(session, courseCodes) {
+  const response = await fetch(`${BASE_URL}/api/preferences`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: BASE_URL,
+      Cookie: `cr_session=${session}`,
+    },
+    body: JSON.stringify({ courseCodes }),
+  });
+  if (!response.ok) {
+    throw new Error(`Saving the draft cart answered ${response.status}`);
+  }
+}
+
+/** Tall enough that no in-scope page is cut off at either width. */
+const SIZES = {
+  '1280-light': { w: 1280, h: 1400 },
+  '390-dark': { w: 390, h: 1500, dark: true },
+};
+
+/** The two shots every page gets: 1280 light and 390 dark. */
+function pair(name, shot) {
+  return Object.entries(SIZES).map(([suffix, size]) => ({
+    ...shot,
+    ...size,
+    name: `${name}-${suffix}`,
+    stage: shot.stage ?? 'add-drop',
+  }));
+}
+
+/**
+ * The final documentation pass: every page of the app, at the two widths
+ * DESIGN.md reviews (1280 light and 390 dark).
+ *
+ * `stage` is the demo stage the shot needs, because no single database state
+ * shows every page at its best: an editable cart only exists while the window
+ * is still open, and results, waitlists and add/drop only exist after the
+ * allocation has run. Pass `--stage=<name>` to take just that stage's shots.
+ */
 const SHOTS = [
-  // Phase 12 — accounts, student records and the catalogue.
-  {
-    name: 'auth-reset-password-1280-light',
-    public: true,
-    path: 'RESET_LINK',
-    w: 1280,
-    h: 800,
-  },
-  {
-    name: 'auth-reset-password-390-dark',
-    public: true,
-    path: 'RESET_LINK',
-    w: 390,
-    h: 700,
-    dark: true,
-  },
-  {
-    name: 'auth-forgot-password-1280-light',
-    public: true,
-    path: '/forgot-password',
-    w: 1280,
-    h: 800,
-  },
-  {
-    name: 'auth-forgot-password-390-dark',
-    public: true,
-    path: '/forgot-password',
-    w: 390,
-    h: 700,
-    dark: true,
-  },
-  { name: 'student-account-1280-light', as: 'rohan', path: '/student/account', w: 1280, h: 1000 },
-  {
-    name: 'student-account-390-dark',
-    as: 'rohan',
-    path: '/student/account',
-    w: 390,
-    h: 1100,
-    dark: true,
-  },
-  { name: 'admin-students-1280-light', as: 'admin', path: '/admin/students', w: 1280, h: 1200 },
-  {
-    name: 'admin-students-390-dark',
-    as: 'admin',
-    path: '/admin/students',
-    w: 390,
-    h: 1200,
-    dark: true,
-  },
-  {
-    name: 'admin-student-detail-1280-light',
-    as: 'admin',
-    path: '/admin/students/CSE23903',
-    w: 1280,
-    h: 1200,
-  },
-  {
-    name: 'admin-student-detail-390-dark',
-    as: 'admin',
-    path: '/admin/students/CSE23903',
-    w: 390,
-    h: 1300,
-    dark: true,
-  },
-  {
-    name: 'admin-course-catalogue-1280-light',
-    as: 'admin',
-    path: '/admin/course-catalogue',
-    w: 1280,
-    h: 1200,
-  },
-  {
-    name: 'admin-course-catalogue-390-dark',
-    as: 'admin',
-    path: '/admin/course-catalogue',
-    w: 390,
-    h: 1300,
-    dark: true,
-  },
+  // ---- Public pages ------------------------------------------------------
+  ...pair('login', { public: true, path: '/login' }),
+  ...pair('forgot-password', { public: true, path: '/forgot-password' }),
+  ...pair('reset-password', { public: true, path: 'RESET_LINK' }),
+  ...pair('activate', { public: true, path: 'ACTIVATE_LINK' }),
+  ...pair('not-found', { public: true, path: '/no-such-page' }),
 
-  // Phase 11 — the student's own record. The promoted student is the one with
-  // a timeline worth showing: submitted, allocated, upgraded, moved up.
-  {
-    name: 'student-history-1280-light',
-    as: 'promoted',
-    path: '/student/history',
-    w: 1280,
-    h: 1300,
-  },
-  {
-    name: 'student-history-390-dark',
-    as: 'promoted',
-    path: '/student/history',
-    w: 390,
-    h: 1400,
-    dark: true,
-  },
-  {
-    name: 'student-notifications-1280-light',
-    as: 'promoted',
-    path: '/student/notifications',
-    w: 1280,
-    h: 900,
-  },
-  {
-    name: 'student-notifications-390-dark',
-    as: 'promoted',
-    path: '/student/notifications',
-    w: 390,
-    h: 1000,
-    dark: true,
-  },
+  // ---- Student ------------------------------------------------------------
+  ...pair('student-dashboard', { as: 'allocated', path: '/student/dashboard' }),
+  ...pair('student-courses', { as: 'allocated', path: '/student/courses' }),
+  ...pair('student-course-detail', { as: 'allocated', path: '/student/courses/CS401' }),
+  ...pair('student-eligibility', { as: 'aarav', path: '/student/eligibility' }),
+  // The cart is only editable while the window is open; afterwards it is a receipt.
+  ...pair('student-cart', {
+    as: 'aarav',
+    path: '/student/cart',
+    stage: 'open',
+    cart: ['CS401', 'CS405', 'CS403', 'CS402', 'CS406'],
+  }),
+  ...pair('student-results', { as: 'waitlisted', path: '/student/results' }),
+  ...pair('student-waitlist', { as: 'waitlisted', path: '/student/waitlist' }),
+  ...pair('student-add-drop', { as: 'allocated', path: '/student/add-drop' }),
+  ...pair('student-history', { as: 'waitlisted', path: '/student/history' }),
+  ...pair('student-notifications', { as: 'allocated', path: '/student/notifications' }),
+  ...pair('student-account', { as: 'rohan', path: '/student/account' }),
 
-  // Phase 10 — add/drop. Two shapes the page has to handle: a student holding
-  // a seat (Drop and Swap), and one holding nothing (Add and Join waitlist).
-  {
-    name: 'student-add-drop-1280-light',
-    as: 'waitlisted',
-    path: '/student/add-drop',
-    w: 1280,
-    h: 1300,
-  },
-  {
-    name: 'student-add-drop-390-dark',
-    as: 'nonSubmitter',
-    path: '/student/add-drop',
-    w: 390,
-    h: 1200,
-    dark: true,
-  },
-  {
-    name: 'admin-add-drop-period-1280-light',
-    as: 'admin',
-    path: '/admin/registration-window',
-    w: 1280,
-    h: 1300,
-  },
-
-  // Phase 9 — waitlists.
-  {
-    name: 'student-waitlist-1280-light',
-    as: 'waitlisted',
-    path: '/student/waitlist',
-    w: 1280,
-    h: 1000,
-  },
-  {
-    name: 'student-waitlist-390-dark',
-    as: 'waitlisted',
-    path: '/student/waitlist',
-    w: 390,
-    h: 900,
-    dark: true,
-  },
-  {
-    name: 'admin-waitlists-1280-light',
-    as: 'admin',
-    path: '/admin/waitlists?course=CS401',
-    w: 1280,
-    h: 1200,
-  },
-  {
-    name: 'admin-waitlists-390-dark',
-    as: 'admin',
-    path: '/admin/waitlists?course=CS401',
-    w: 390,
-    h: 1100,
-    dark: true,
-  },
-
-  // Phase 8 — allocation.
-  {
-    name: 'student-results-1280-light',
-    as: 'allocated',
-    path: '/student/results',
-    w: 1280,
-    h: 1000,
-  },
-  {
-    name: 'student-results-820-dark',
-    as: 'waitlisted',
-    path: '/student/results',
-    w: 820,
-    h: 1100,
-    dark: true,
-  },
-  { name: 'student-results-390-light', as: 'waitlisted', path: '/student/results', w: 390, h: 900 },
-  {
-    name: 'admin-allocation-runs-1280-light',
-    as: 'admin',
-    path: '/admin/allocation-runs',
-    w: 1280,
-    h: 1100,
-  },
-  {
-    name: 'admin-allocation-run-1280-dark',
-    as: 'admin',
-    path: 'RUN_DETAIL',
-    w: 1280,
-    h: 1200,
-    dark: true,
-  },
-  { name: 'admin-allocation-run-390-light', as: 'admin', path: 'RUN_DETAIL', w: 390, h: 900 },
-  {
-    name: 'admin-dashboard-allocation-1280-light',
-    as: 'admin',
-    path: '/admin/dashboard',
-    w: 1280,
-    h: 900,
-  },
-  {
-    name: 'student-dashboard-result-820-light',
-    as: 'allocated',
-    path: '/student/dashboard',
-    w: 820,
-    h: 1000,
-  },
-
-  // Phase 7 — the cart.
-  { name: 'student-cart-1280-light', as: 'draft', path: '/student/cart', w: 1280, h: 900 },
-  { name: 'student-cart-820-light', as: 'draft', path: '/student/cart', w: 820, h: 1000 },
-  { name: 'student-cart-390-dark', as: 'draft', path: '/student/cart', w: 390, h: 844, dark: true },
-  { name: 'student-receipt-1280-light', as: 'priya', path: '/student/cart', w: 1280, h: 900 },
-  {
-    name: 'catalogue-cart-actions-1280-light',
-    as: 'draft',
-    path: '/student/courses?eligibleOnly=true',
-    w: 1280,
-    h: 1000,
-  },
-  {
-    name: 'student-dashboard-cart-1280-light',
-    as: 'priya',
-    path: '/student/dashboard',
-    w: 1280,
-    h: 900,
-  },
+  // ---- Administration -----------------------------------------------------
+  ...pair('admin-dashboard', { as: 'admin', path: '/admin/dashboard' }),
+  ...pair('admin-courses', { as: 'admin', path: '/admin/courses' }),
+  ...pair('admin-course-catalogue', { as: 'admin', path: '/admin/course-catalogue' }),
+  ...pair('admin-students', { as: 'admin', path: '/admin/students' }),
+  ...pair('admin-student-detail', { as: 'admin', path: '/admin/students/CSE23903' }),
+  ...pair('admin-registration-window', { as: 'admin', path: '/admin/registration-window' }),
+  ...pair('admin-allocation-runs', { as: 'admin', path: '/admin/allocation-runs' }),
+  ...pair('admin-allocation-run', { as: 'admin', path: 'RUN_DETAIL' }),
+  ...pair('admin-waitlists', { as: 'admin', path: '/admin/waitlists?course=CS401' }),
+  ...pair('admin-account', { as: 'admin', path: '/admin/account' }),
 ];
 
 function findBrowser() {
@@ -420,10 +313,14 @@ async function waitForIdle(devtools, settleMs = 1200) {
 }
 
 async function main() {
-  const filter = process.argv[2];
-  const shots = filter ? SHOTS.filter((shot) => shot.name.includes(filter)) : SHOTS;
+  const args = process.argv.slice(2);
+  const stage = args.find((arg) => arg.startsWith('--stage='))?.slice('--stage='.length);
+  const filter = args.find((arg) => !arg.startsWith('--'));
+  const shots = SHOTS.filter(
+    (shot) => (!stage || shot.stage === stage) && (!filter || shot.name.includes(filter)),
+  );
   if (shots.length === 0) {
-    throw new Error(`No shot matches "${filter}"`);
+    throw new Error(`No shot matches ${JSON.stringify({ stage, filter })}`);
   }
 
   const env = readEnvFile();
@@ -442,12 +339,6 @@ async function main() {
   const { rows } = await database.query('SELECT id, email FROM users WHERE email = ANY($1)', [
     emails,
   ]);
-  // A generated student with a draft cart, for the editable-cart shots.
-  const draft = await database.query(
-    `SELECT ps.student_id AS id FROM preference_submissions ps
-      WHERE ps.status = 'DRAFT' AND EXISTS (SELECT 1 FROM preference_items pi WHERE pi.submission_id = ps.id)
-      ORDER BY ps.created_at DESC LIMIT 1`,
-  );
   // One student who got a seat, and one who is waiting well down a queue:
   // the two shapes the results page has to handle.
   const allocated = await database.query(
@@ -457,33 +348,18 @@ async function main() {
     `SELECT student_id AS id FROM waitlist_entries
       WHERE status = 'WAITING' AND position BETWEEN 5 AND 12 ORDER BY position LIMIT 1`,
   );
-  // A student who never submitted a cart: nothing held, nothing queued, which
-  // is the late-registration shape of the add/drop page.
-  const nonSubmitter = await database.query(
-    `SELECT s.user_id AS id FROM students s
-      WHERE NOT EXISTS (SELECT 1 FROM preference_submissions ps WHERE ps.student_id = s.user_id)
-        AND NOT EXISTS (
-          SELECT 1 FROM enrollments e WHERE e.student_id = s.user_id AND e.status = 'ACTIVE'
-        )
-      ORDER BY s.roll_number LIMIT 1`,
-  );
-  // A student who was moved up off a waitlist: the fullest timeline the demo
-  // produces. Null before anybody has been promoted, and the shot is skipped.
-  const promoted = await database.query(
-    `SELECT student_id AS id FROM enrollments
-      WHERE status = 'ACTIVE' AND source = 'WAITLIST_PROMOTION'
-      ORDER BY enrolled_at DESC LIMIT 1`,
-  );
   const latestRun = await database.query(
     `SELECT id FROM allocation_runs WHERE status = 'COMPLETED' ORDER BY finished_at DESC LIMIT 1`,
   );
-  await database.end();
 
   const runId = latestRun.rows[0]?.id;
   const pathFor = async (shot) => {
     if (shot.path === 'RESET_LINK') {
       const token = await resetTokenFor(RESET_LINK_EMAIL);
       return `/reset-password?token=${encodeURIComponent(token)}`;
+    }
+    if (shot.path === 'ACTIVATE_LINK') {
+      return `/activate?token=${encodeURIComponent(await invitationFor(sessionFor('admin')))}`;
     }
     if (shot.path !== 'RUN_DETAIL') {
       return shot.path;
@@ -494,7 +370,7 @@ async function main() {
     return `/admin/allocation-runs/${runId}`;
   };
 
-  const generated = { draft, allocated, waitlisted, nonSubmitter, promoted };
+  const generated = { allocated, waitlisted };
 
   const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
   /**
@@ -580,6 +456,9 @@ async function main() {
             sameSite: 'Strict',
           });
         }
+        if (shot.cart) {
+          await saveCartFor(session, shot.cart);
+        }
         await devtools.send('Page.navigate', { url: `${BASE_URL}${await pathFor(shot)}` });
         await waitForIdle(devtools);
 
@@ -593,9 +472,14 @@ async function main() {
       } finally {
         devtools.close();
         await fetch(`http://127.0.0.1:${PORT}/json/close/${target.id}`);
+        if (shot.path === 'ACTIVATE_LINK') {
+          // Gone before any later shot counts the students.
+          await database.query('DELETE FROM users WHERE email = $1', [INVITEE.email]);
+        }
       }
     }
   } finally {
+    await database.end();
     browser.kill();
     await wait(500);
     try {

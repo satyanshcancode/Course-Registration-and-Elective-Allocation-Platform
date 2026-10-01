@@ -20,7 +20,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatRate } from '../../utils/allocationText';
-import { describeDemand } from '../../utils/courseText';
+import { describeRequests } from '../../utils/courseText';
 import { formatDateTime } from '../../utils/formatDate';
 import { formatDemandRatio } from '../../utils/formatSeats';
 import styles from '../DashboardPage.module.css';
@@ -42,7 +42,8 @@ const columns: Column<AdminCourseOffering>[] = [
     header: 'Requests',
     key: 'demand',
     align: 'end',
-    cell: (course) => describeDemand(course.demand, course.capacity),
+    // Just the count: the ratio has a column of its own, right beside it.
+    cell: (course) => describeRequests(course.demand),
   },
   {
     id: 'ratio',

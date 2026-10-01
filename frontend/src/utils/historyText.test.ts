@@ -53,9 +53,9 @@ describe('describeHistoryEvent', () => {
     }
   });
 
-  it('names the course, the choice and the place in line for an allocation', () => {
+  it('names the course, the choice and the placing among applicants', () => {
     expect(say({ type: 'ALLOCATED', rank: 2, finalRank: 7, waitlisted: [] })).toBe(
-      'Allocation gave you a seat in CS401 Artificial Intelligence, your 2nd choice, 7th in line for it.',
+      'Allocation gave you a seat in CS401 Artificial Intelligence, your 2nd choice, ranked 7th among its applicants.',
     );
   });
 
