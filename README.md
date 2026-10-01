@@ -501,7 +501,7 @@ identity from the session cookie, never from the URL or the body.
 | Endpoint                                                       | Access | Purpose                                                    |
 | -------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
 | `GET` / `PATCH /api/admin/registration-window`                 | admin  | The window and its policy. `DRAFT` only: `409` once frozen |
-| `POST /api/admin/registration-window/open                      | close` | admin                                                      | Freeze the policy and notify everyone, then close |
+| `POST /api/admin/registration-window/open` and `/close`        | admin  | Freeze the policy and notify everyone, then close          |
 | `GET /api/admin/courses`                                       | admin  | Offerings with seats, demand and an oversubscribed flag    |
 | `PATCH /api/admin/courses/:code/capacity`                      | admin  | `409` below the allocated seats; audited                   |
 | `GET`/`POST`/`PATCH /api/admin/course-catalogue`               | admin  | Course records and their rules; retire and reinstate       |
