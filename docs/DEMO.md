@@ -276,20 +276,21 @@ When it finishes, read the PASS lines aloud:
 **In the terminal:**
 
 ```bash
-npm run docker:demo:seat-race -- --students=200 --seats=20
+npm run docker:demo:seat-race
 ```
 
 > "The other half of the concurrency story. This finds a course with exactly
-> twenty free seats, finds two hundred eligible students holding nothing, and
-> fires one 'add, or join the waitlist if full' per student at the same
-> instant."
+> ten free seats, finds a hundred eligible students holding nothing, and fires
+> one 'add, or join the waitlist if full' per student at the same instant."
 
 Read the result:
 
-> "Exactly twenty enrolled. Nobody overbooked, nobody enrolled twice, and the
-> waitlist positions are unique and consecutive with no gaps. Two hundred
-> simultaneous requests for twenty seats, and the database never lied about how
+> "Exactly ten enrolled. Nobody overbooked, nobody enrolled twice, and the
+> waitlist positions are unique and consecutive with no gaps. A hundred
+> simultaneous requests for ten seats, and the database never lied about how
 > many were left."
+
+> "`--students` and `--seats` take it further if the machine can stand it."
 
 ---
 
