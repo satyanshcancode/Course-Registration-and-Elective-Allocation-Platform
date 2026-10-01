@@ -21,11 +21,11 @@ npm run docker:demo:reset -- --stage=open
 
 Wait for all four containers to report healthy, then open these in tabs:
 
-| Tab                              | What it is                                 |
-| -------------------------------- | ------------------------------------------ |
-| http://localhost:5173            | The app                                    |
-| http://localhost:8025            | **Mailpit** — the inbox for step 8         |
-| A terminal                       | For the two concurrency scripts            |
+| Tab                   | What it is                         |
+| --------------------- | ---------------------------------- |
+| http://localhost:5173 | The app                            |
+| http://localhost:8025 | **Mailpit** — the inbox for step 8 |
+| A terminal            | For the two concurrency scripts    |
 
 All demo passwords are `Student@123`, and the admin is `admin@university.edu`
 with `Admin@123`. The sign-in page lists them, because this is a development
@@ -67,7 +67,7 @@ build.
 
 2. Expand **Not eligible** and find **Artificial Intelligence**.
 
-   > "And it tells her *every* reason in plain English, not just the first one.
+   > "And it tells her _every_ reason in plain English, not just the first one.
    > She needs semester 5, and she hasn't passed Data Structures. This is
    > available before registration even opens — that is the point. Find out
    > now, not after it closes."
@@ -145,7 +145,7 @@ When it finishes, read the PASS lines aloud:
 1. **Registration Window** → **Close registration**, confirm.
 
    > "Registration is now closed. Note what was already frozen when it
-   > *opened*: the method, the weights, the priority points, the tie-break seed
+   > _opened_: the method, the weights, the priority points, the tie-break seed
    > and the set of offered courses. They can't be changed now — the service
    > refuses, and a database trigger refuses too, even if the application code
    > were wrong. You cannot change the rules after seeing the entries."
@@ -159,7 +159,7 @@ When it finishes, read the PASS lines aloud:
 3. Point at the two **justified envy** numbers.
 
    > "This is the number that matters. Justified envy counts the cases where a
-   > student wanted a course more than someone who got it, *and* scored higher
+   > student wanted a course more than someone who got it, _and_ scored higher
    > for it. First-come-first-served leaves 78 of those. Preference and
    > priority leaves zero — not by luck, but because deferred acceptance
    > provably cannot produce one."
@@ -182,7 +182,7 @@ When it finishes, read the PASS lines aloud:
 
 6. Scroll to **Verify reproducibility** and click it.
 
-   > "Each run stored its own input. This re-runs *that stored snapshot* —
+   > "Each run stored its own input. This re-runs _that stored snapshot_ —
    > not today's database, which has moved on — through the same algorithm
    > version and compares output hashes. That is what makes 'reproducible' a
    > claim you can check rather than a promise."
@@ -239,7 +239,7 @@ When it finishes, read the PASS lines aloud:
    > being filled commit together, or neither happens."
 
    > "And a promotion is only ever an upgrade: a student is only queued for
-   > courses they ranked *above* whatever they already hold. So when they move
+   > courses they ranked _above_ whatever they already hold. So when they move
    > up, the seat they release frees in turn, which can cascade — and it always
    > terminates, because every step moves somebody strictly up their own list."
 
@@ -322,7 +322,7 @@ Read the result:
    > "The link works exactly once and expires after 48 hours. Only its SHA-256
    > hash is stored, so a leaked database can't be turned back into working
    > links — and an unknown link, a spent one and an expired one all give the
-   > *same* answer, so guessing teaches you nothing. Setting the password signs
+   > _same_ answer, so guessing teaches you nothing. Setting the password signs
    > them straight in."
 
 5. Optionally: sign out, go to **Forgot your password?**, enter an address that

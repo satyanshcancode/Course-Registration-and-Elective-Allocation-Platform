@@ -1,527 +1,331 @@
 # Course Registration and Elective Allocation Platform
 
-A web platform for fair course registration: live seat counts, an eligibility
-pre-check, a registration cart with atomic submit, preference-and-priority
-allocation for oversubscribed electives, waitlists with automatic promotion,
-add/drop, and a personal registration history.
+A web platform for fair course registration: a live course catalogue, an
+eligibility pre-check before the window opens, a registration cart that submits
+atomically, preference-and-priority allocation for oversubscribed electives,
+waitlists that promote automatically as seats free up, add/drop, and a personal
+registration history.
 
-> **Status: Phase 5 (course catalogue).** The stack, database schema, seed
-> data, sign-in with role-based access, the design system and app shell, and
-> the first feature, the course catalogue with live seat counts, are in place.
-> The other features arrive in later phases. The full README comes in the final
-> phase.
+![Student dashboard](docs/screenshots/student-dashboard-1280-light.png)
 
-- Brief: [docs/PROBLEM_STATEMENT.md](docs/PROBLEM_STATEMENT.md)
-- Specification: [docs/SPEC.md](docs/SPEC.md)
-- Database design: [docs/DATABASE.md](docs/DATABASE.md)
-- Design direction and review: [docs/DESIGN.md](docs/DESIGN.md) (screenshots in
-  [docs/screenshots/](docs/screenshots/))
+| Document                                                   | What it covers                                    |
+| ---------------------------------------------------------- | ------------------------------------------------- |
+| [docs/PROBLEM_STATEMENT.md](docs/PROBLEM_STATEMENT.md)     | The brief                                         |
+| [docs/SPEC.md](docs/SPEC.md)                               | Scope, quality rules and conventions              |
+| [docs/ALLOCATION.md](docs/ALLOCATION.md)                   | How seats are decided, and why it is fair         |
+| [docs/CONCURRENCY.md](docs/CONCURRENCY.md)                 | The atomic submit, promotion and the seat race    |
+| [docs/DATABASE.md](docs/DATABASE.md)                       | Schema, constraints and seed data                 |
+| [docs/DESIGN.md](docs/DESIGN.md)                           | The visual system and every review round          |
+| [docs/DEMO.md](docs/DEMO.md)                               | A step-by-step script for demonstrating it        |
+| [docs/javascript-concepts.md](docs/javascript-concepts.md) | Where the JavaScript and TypeScript concepts live |
 
-![Student dashboard, desktop](docs/screenshots/student-dashboard-1280-light.png)
+---
+
+## The problem
+
+When registration opens, hundreds of students try to register in the same few
+minutes. A first-come-first-served queue rewards whoever has the fastest
+internet connection, not whoever most needs or deserves the seat — and when an
+elective is oversubscribed, the leftovers get settled by informal appeals to
+the department.
+
+This platform replaces that with something a registrar can defend:
+
+- **Speed stops mattering.** Submitting early gives no advantage. Every
+  submitted cart is collected first, and seats are decided afterwards, once,
+  for everybody at the same time.
+- **The rules are fixed before anyone plays.** Opening registration **freezes**
+  the allocation policy — the method, the weights, the priority points, the
+  tie-break seed and the set of offered courses. They cannot be changed
+  afterwards, and the database refuses the change even if the application is
+  wrong.
+- **Every student gets a reason.** Not "you didn't get in", but their own
+  score, how it was made up, and the cut-off the last seat went at.
+- **A past run can be proved.** Each run stores its own input; re-running that
+  stored input through the same algorithm version must produce the same output
+  hash.
+
+On the demo data the difference is concrete: first-come-first-served leaves
+**78** cases of justified envy — a student who wanted a course more and scored
+higher than somebody who got it — while preference-and-priority leaves **0**.
+
+---
 
 ## Features
 
-| #   | Feature (from the brief)                      | Status               |
-| --- | --------------------------------------------- | -------------------- |
-| 1   | Course catalogue with live seat counts        | **Done** (see below) |
-| 2   | Eligibility pre-check before the window opens | **Done** (see below) |
-| 3   | Registration cart with atomic submit          | **Done** (see below) |
-| 4   | Fair allocation for oversubscribed electives  | **Done** (see below) |
-| 5   | Waitlist with automatic promotion             | **Done** (see below) |
-| 6   | Add/drop                                      | **Done** (see below) |
-| 7   | Registration status and history               | **Done** (see below) |
+All seven features in the brief are built, plus the account and course
+management the platform needs to run on real data instead of a seed.
 
-**Course catalogue** (`/student/courses`):
+| #   | Feature                                        | Status   |
+| --- | ---------------------------------------------- | -------- |
+| 1   | Course catalogue with live seat counts         | **Done** |
+| 2   | Eligibility pre-check before the window opens  | **Done** |
+| 3   | Registration cart with atomic submit           | **Done** |
+| 4   | Fair allocation for oversubscribed electives   | **Done** |
+| 5   | Waitlist with automatic promotion              | **Done** |
+| 6   | Add/drop                                       | **Done** |
+| 7   | Registration status and history                | **Done** |
+| +   | Accounts, student records and course catalogue | **Done** |
 
-- Every offering in the current window, with capacity, allocated, available,
-  demand (submitted requests) and the demand ratio. For students it also shows
-  their eligibility, with reasons, and their own status.
-- Search (debounced), department, credits, "eligible only" and "seats left"
-  filters and five sort orders, all kept in the URL so a view can be shared or
-  refreshed. Card and table views; the table's row buttons use event delegation.
-- Seat numbers refresh every 10 s while the tab is visible. The poll sends the
-  last ETag and gets a bodiless 304 when nothing changed. Changed numbers flash
-  briefly.
-- Course detail (`/student/courses/:code`): full description, every
-  eligibility reason, prerequisites met or not, eligible programmes, seats and
-  status. Its back link keeps the catalogue filters.
-- Admin courses (`/admin/courses`): a sortable table of all offerings with
-  oversubscribed rows marked, and "Edit capacity" (reason required, never below
-  the allocated seats, written to `audit_logs`).
+### 1. Course catalogue — `/student/courses`
 
-**Eligibility pre-check** (`/student/eligibility`):
+Every course offered this term, with capacity, seats taken, seats left, how
+many students have requested it and the demand ratio. For a student it also
+shows whether they can take it and why.
 
-- Every offered course checked against the student's own record — programme,
-  semester, credits and passed courses — with the record shown beside it, so
-  they can see what the check judged them on.
-- Courses are grouped into Eligible and Not eligible (collapsible), and each
-  ineligible course lists **every** reason in plain English ("Needs semester 5
-  — you're in semester 4", "Complete CS201 Data Structures first").
-- It works while the window is still a draft. That is the point: check before
-  registration opens, not after it closes.
-- A registration banner on every student page counts down to the opening or
-  closing, measured against the **server's** clock, so a wrong device clock
-  can't mislead anyone.
+Seat numbers refresh every 10 seconds while the tab is visible; a hidden tab
+sends nothing. The poll sends the last `ETag` and gets an empty **304** back
+when nothing has changed, and changed numbers flash briefly rather than the
+page reloading. Search, department, credits, "eligible only" and "seats left"
+filters and five sort orders all live in the URL, so a view can be shared or
+refreshed. Cards or table, the reader's choice.
 
-**Registration cart** (`/student/cart`):
+![Course catalogue](docs/screenshots/student-courses-1280-light.png)
 
-- Add or remove a course from the catalogue cards, the catalogue table or the
-  course detail page. All three use the same delegated `data-action` handler
-  and the same rule for what to offer, so an ineligible course explains itself
-  instead of showing a dead button and a full cart says so.
-- Rank up to five choices with Move up / Move down (drag-and-drop is an extra,
-  never the only way). Focus stays on the moved item and a polite live region
-  announces its new position. Unsaved changes are shown, warned about on
-  leaving the page, and persisted with **Save draft**.
-- **Submitting is one transaction with an idempotency key.** The confirm dialog
-  generates one `crypto.randomUUID()` and reuses it for every retry, so a
-  network failure is safe to retry and cannot create a duplicate. There is
-  never a partial submission, and the arrival order comes from a database
-  sequence. Afterwards the page shows an immutable receipt with the reference,
-  the time and the arrival number.
-- How this is guaranteed, with a sequence diagram:
-  [docs/CONCURRENCY.md](docs/CONCURRENCY.md).
+### 2. Eligibility pre-check — `/student/eligibility`
 
-**Registration window** (`/admin/registration-window`):
+Every offered course checked against the student's own record — programme,
+semester, credits and passed courses — with the record shown beside it, so they
+can see exactly what the check judged them on. Ineligible courses list **every**
+reason in plain English ("Needs semester 5 — you're in semester 4", "Complete
+CS201 Data Structures first"), never just one.
 
-- Schedule the window, choose the offered courses, and pick the allocation
-  method. The method-specific settings render from the `AllocationConfig`
-  union, so Preference + Priority shows the P1–P5 weights, the priority points
-  and the tie-break seed, while FCFS shows why it rewards fast connections.
-- Opening registration **freezes the policy**: method, weights, priority
-  points, seed and the set of offered courses can no longer change. The service
-  answers `409`, and a database trigger rejects the change even if it is
-  attempted directly. Seats per course stay editable.
-- Opening also notifies every student, in the same transaction. Every change,
-  open and close is written to `audit_logs` with old and new values.
+It works while the window is still a draft. That is the whole point: find out
+before registration opens, not after it closes.
 
-**Allocation** (`/admin/allocation-runs`, `/student/results`):
+![Eligibility check](docs/screenshots/student-eligibility-1280-light.png)
 
-- Two methods behind one `AllocationStrategy` interface: **FCFS** (submission
-  order) and **Preference + Priority** (student-proposing deferred
-  acceptance). The engine is a pure function — no database, no clock, no
-  `Math.random` — so a run is reproducible and testable without a server.
-- Score = preference weight (P1 100 … P5 20) + final year +20 + programme
-  relevance +25 + graduation urgency +40, with ties broken by one seeded
-  number per student. Students see the score as the sum it actually is.
-- **Preview** runs both methods on a fresh snapshot and shows them side by
-  side, writing nothing. On the demo data: identical first-choice rates, but
-  FCFS leaves **78** cases of justified envy against Preference + Priority's
-  **0**.
-- **Run** is one transaction: results, enrollments, waitlist entries, history,
-  a notification per student, an audit row, then the window becomes
-  `ALLOCATED`. It can only complete once. A fault injected mid-way rolls back
-  every table and records the run as `FAILED`.
-- **Verify** re-runs the stored input snapshot through the same algorithm
-  version and compares output hashes.
-- Students get a plain-English explanation per ranked course — "Waitlisted,
-  #7. You ranked it 1st. Your score for this course was 145 (1st preference
-  100 + final year 20 + programme relevance 25). 20 seats went to applicants
-  with scores of 150 or higher." — and never see another student's data.
-- The full rule book, with a worked example and the fairness argument:
-  [docs/ALLOCATION.md](docs/ALLOCATION.md).
+### 3. Registration cart — `/student/cart`
 
-**Accounts and records** (`/admin/students`, `/admin/course-catalogue`) — the
-platform no longer relies on seeded data. Administrators create student
-accounts and the students activate them from an e-mailed, single-use link;
-courses and their rules are maintained by hand or imported from a CSV, in a
-preview-then-confirm flow that writes every valid row in one transaction. The
-whole lifecycle is described under [Accounts](#accounts).
+Add courses from the catalogue cards, the catalogue table or the course detail
+page, then rank up to five with Move up / Move down. Drag-and-drop is an extra,
+never the only way, and focus follows the moved item while a polite live region
+announces its new position.
 
-**Dashboards** — the student dashboard loads the window, the eligibility
-summary and the notification count together with `Promise.allSettled`, so one
-failing section shows its own Retry while the rest of the page still works. It
-also shows the cart and what to do next. The admin dashboard shows the window,
-its counts and the five most demanded courses.
+**Submitting is one transaction carrying an idempotency key.** The browser
+generates one `crypto.randomUUID()` per attempt and reuses it for every retry,
+so a dropped connection is always safe to retry and can never create a second
+submission. There is no such thing as a half-submitted cart, and the arrival
+number comes from a database sequence. Afterwards the page shows a receipt with
+the reference, the time and the arrival number.
 
-How the JavaScript and TypeScript concepts are used is written up in
-[docs/javascript-concepts.md](docs/javascript-concepts.md).
+How that is guaranteed, with a sequence diagram:
+[docs/CONCURRENCY.md](docs/CONCURRENCY.md).
 
-## Stack
+![The cart](docs/screenshots/student-cart-1280-light.png)
 
-| Layer    | Technology                                                                                         |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript, Vite 6, React Router 7, CSS Modules                                          |
-| Backend  | Node 20.12+ (developed on 20 and 24), Express 5, TypeScript, `pg` (PostgreSQL 16), zod, nodemailer |
-| Shared   | `@course-reg/shared` — typed API contracts (`ApiResponse<T>`, …)                                   |
-| Tooling  | ESLint (type-aware), Prettier, Vitest, React Testing Library, supertest                            |
-| Runtime  | Docker, Docker Compose, Mailpit (development mail)                                                 |
+### 4. Allocation — `/admin/allocation-runs`, `/student/results`
+
+Two methods behind one interface: **FCFS** (submission order) and
+**Preference + Priority** (student-proposing deferred acceptance). **Preview**
+runs both on a fresh snapshot and shows them side by side without writing
+anything, so the registrar can see what each would do before committing.
+**Run** is one transaction and can complete only once per window.
+
+Students get a plain-English explanation for every course they ranked — their
+score, what it was made of, and what the last seat went for — and never see
+another student's data.
+
+![An allocation run](docs/screenshots/admin-allocation-run-1280-light.png)
+![A student's results](docs/screenshots/student-results-1280-light.png)
+
+### 5. Waitlists — `/student/waitlist`, `/admin/waitlists`
+
+A student who missed out is queued for every course they ranked above whatever
+they got, so a promotion is always an **upgrade**, never a sideways move. When
+a seat frees up, the next eligible student in that queue takes it — and the
+seat they release frees in turn, which can cascade. It all happens inside the
+transaction of whatever freed the first seat, so an action and the promotions
+it caused commit together or not at all.
+
+Positions are never renumbered: a student's place is computed over the entries
+still waiting, so the queue stays honest as people leave it.
+
+![Waitlists](docs/screenshots/admin-waitlists-1280-light.png)
+
+### 6. Add/drop — `/student/add-drop`
+
+While the add/drop period is open, a student can drop their elective, add one
+with a free seat, swap in a single step, or join and leave waitlists. Outside
+the period every such request is refused by the server, and the button says why
+rather than being greyed out with no explanation. A swap moves the seat in one
+step: if the new course fills up first, the student keeps the one they have.
+
+![Add or drop a course](docs/screenshots/student-add-drop-1280-light.png)
+
+### 7. Status and history — `/student/history`, `/student/notifications`
+
+Where the student stands right now, and the whole timeline that got them there:
+submitted, allocated, waitlisted, promoted, added, dropped. Events carry
+structured facts, not prebuilt sentences, so the wording lives in one place on
+the client and can change without rewriting history.
+
+![Registration history](docs/screenshots/student-history-1280-light.png)
+
+### Accounts, records and the course catalogue
+
+**Administrators create student accounts; students never self-register**, and
+never edit their own academic data — it is what eligibility and priority are
+judged on, so it belongs to the registrar. A student activates their account
+from an e-mailed, single-use link. Courses and their rules are maintained at
+`/admin/course-catalogue`, by hand or from a CSV in a preview-then-confirm
+flow. Nothing is ever deleted: an account is deactivated, a course is retired,
+and every submission, enrolment and result keeps pointing at a row that still
+exists.
+
+![Students](docs/screenshots/admin-students-1280-light.png)
+![Course catalogue administration](docs/screenshots/admin-course-catalogue-1280-light.png)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph browser["Browser"]
+        pages["Pages<br/>student · admin · public"]
+        hooks["Hooks<br/>useAsync · useCart · usePolling"]
+        apimod["API modules<br/>apiClient + one per area"]
+        pages --> hooks --> apimod
+    end
+
+    shared["@course-reg/shared<br/>ApiResponse&lt;T&gt;, domain models,<br/>enums, discriminated unions"]
+
+    subgraph api["Backend (Express 5)"]
+        mw["Middleware<br/>requireAuth · requireRole<br/>rejectCrossOriginWrites · rate limits"]
+        routes["Routes"]
+        controllers["Controllers<br/>validate (zod), shape the response"]
+        services["Services<br/>all business rules + transactions"]
+        pure["Pure rule modules<br/>eligibility · catalogue · cart<br/>window · add/drop"]
+        engine["Allocation engine<br/>pure: no DB, no clock, no random"]
+        repos["Repositories<br/>parameterised SQL only"]
+        mw --> routes --> controllers --> services
+        services --> pure
+        services --> engine
+        services --> repos
+    end
+
+    db[("PostgreSQL 16<br/>constraints · triggers<br/>advisory locks")]
+    mail["Mailer<br/>SMTP · memory · log"]
+
+    apimod -- "HTTPS, cr_session cookie" --> mw
+    repos --> db
+    services --> mail
+    apimod -. imports .-> shared
+    controllers -. imports .-> shared
+```
+
+**The rules that keep it that shape:**
+
+- **Layers go one way.** Routes → controllers → services → repositories. There
+  is no SQL in a controller and no business logic in one; there is no `fetch`
+  in a React component.
+- **One contract, both sides.** `shared/` holds the API types, so a renamed
+  field is a compile error rather than a runtime surprise. It is consumed as
+  TypeScript source in development and as a compiled build in production.
+- **PostgreSQL is the source of truth**, not a place to store what the
+  application already decided. Capacity, status values, uniqueness and the
+  frozen policy are enforced by constraints and triggers, so the database
+  refuses a bad write even if the application asks for one.
+- **The rules are pure and tested without a database.** Eligibility, catalogue,
+  cart, window, add/drop and the whole allocation engine are functions of their
+  input.
+- **Authorization is server-side, always.** Seat counts, eligibility, identity
+  and priority coming from a browser are never trusted.
 
 ```text
 .
 ├── backend/    Express API (routes → controllers → services → repositories)
+│   ├── src/allocation/   the pure allocation engine
+│   ├── src/database/     migrations, transactions, seed
+│   └── tests/            integration tests against a real PostgreSQL
 ├── frontend/   React SPA (components → hooks → api)
+│   ├── src/components/   the component library
+│   ├── src/pages/        one folder per area
+│   └── src/styles/       reset, tokens, base
 ├── shared/     Types shared by both sides
-├── docs/       Problem statement, specification, database design
+├── docs/       Specification, design, allocation, concurrency, demo
 ├── docker/     PostgreSQL init scripts (creates the test database)
+├── scripts/    The documentation screenshot runner
 ├── docker-compose.yml        Development stack (hot reload)
 └── docker-compose.prod.yml   Production-like stack (nginx on :8080)
 ```
 
-## Run with Docker (recommended)
+---
 
-Requires Docker Desktop (or Docker Engine with Compose v2).
+## Tech stack
+
+| Part                        | Used for                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **React 19**                | The whole UI. Function components and hooks only — no class components, no state library needed      |
+| **TypeScript 5.9**          | Everywhere, `strict` plus `noUncheckedIndexedAccess`. `any` is a lint error                          |
+| **Vite 6**                  | Dev server with hot reload, and the production build with route-level code splitting                 |
+| **React Router 7**          | Routing, lazy route chunks, and the layout routes that guard student and admin areas                 |
+| **CSS Modules + CSS3**      | All styling. Design tokens as custom properties; no Tailwind, no CSS-in-JS                           |
+| **Node 20.12+**             | The backend runtime (developed on 20, verified on 22 and 24)                                         |
+| **Express 5**               | HTTP, middleware, routing                                                                            |
+| **PostgreSQL 16**           | The source of truth: constraints, triggers, transactions, `FOR UPDATE`/`FOR SHARE`, advisory locks   |
+| **`pg`**                    | The database driver. Parameterised SQL only — no ORM, so the SQL is visible and reviewable           |
+| **zod**                     | Validating every request body and query at the boundary, where `unknown` becomes a typed value       |
+| **jsonwebtoken + bcryptjs** | The session cookie and password hashing                                                              |
+| **nodemailer**              | Invitation and password-reset e-mail                                                                 |
+| **Mailpit**                 | Catches every e-mail in development so the flows can be demonstrated                                 |
+| **Vitest**                  | Every test, in all three workspaces                                                                  |
+| **React Testing Library**   | Component and page tests, driven the way a user drives the UI                                        |
+| **axe-core**                | An accessibility check on every page and component                                                   |
+| **supertest**               | Integration tests through the real Express app against a real database                               |
+| **fast-check**              | Property-based tests for allocation and waitlist promotion                                           |
+| **ESLint (type-aware)**     | `strictTypeChecked` + `stylisticTypeChecked`, plus a11y and React Hooks rules; zero warnings allowed |
+| **Prettier**                | Formatting, checked in CI-style with `format:check`                                                  |
+| **Docker + Compose**        | The whole stack, development and production-like                                                     |
+
+---
+
+## Running it
+
+### With Docker (recommended)
+
+Requires Docker Desktop, or Docker Engine with Compose v2.
 
 ```bash
-cp .env.example .env          # then change POSTGRES_PASSWORD / DATABASE_URL
+cp .env.example .env          # then change POSTGRES_PASSWORD, DATABASE_URL and JWT_SECRET
 npm run docker:up             # docker compose up --build -d
+npm run docker:demo:reset -- --stage=open
 ```
 
 | URL                              | What                                            |
 | -------------------------------- | ----------------------------------------------- |
-| http://localhost:5173            | Frontend (Vite, hot reload)                     |
+| http://localhost:5173            | The app (Vite, hot reload)                      |
 | http://localhost:4000/api/health | Backend health (API + database)                 |
 | http://localhost:8025            | **Mailpit** — every invitation and reset e-mail |
 | localhost:5432                   | PostgreSQL                                      |
 | localhost:1025                   | Mailpit's SMTP, which the backend sends through |
 
-The backend waits for PostgreSQL to be healthy, applies migrations
-(`npm run migrate`), then starts with hot reload. Source folders are
-bind-mounted; `node_modules` live in named volumes so host and container
-dependencies never mix. File watching uses polling so hot reload works on
-Windows and macOS bind mounts.
+The backend waits for PostgreSQL to be healthy, applies migrations, then starts
+with hot reload. Source folders are bind-mounted; `node_modules` live in named
+volumes so host and container dependencies never mix. File watching uses
+polling, so hot reload works on Windows and macOS bind mounts.
 
-| Script                        | Does                                                 |
-| ----------------------------- | ---------------------------------------------------- |
-| `npm run docker:up`           | Build and start the dev stack in the background      |
-| `npm run docker:logs`         | Follow logs                                          |
-| `npm run docker:down`         | Stop the dev stack (keeps data)                      |
-| `npm run docker:reset`        | Stop and **delete volumes** (database, node_modules) |
-| `npm run docker:prod`         | Build and start the production stack on :8080        |
-| `npm run docker:prod:down`    | Stop the production stack                            |
-| `npm run docker:admin:create` | Create an administrator account interactively        |
+| Script                        | Does                                                |
+| ----------------------------- | --------------------------------------------------- |
+| `npm run docker:up`           | Build and start the dev stack in the background     |
+| `npm run docker:logs`         | Follow the logs                                     |
+| `npm run docker:down`         | Stop it (keeps the data)                            |
+| `npm run docker:reset`        | Stop and **delete the volumes** (database, modules) |
+| `npm run docker:prod`         | Build and start the production stack on :8080       |
+| `npm run docker:prod:down`    | Stop the production stack                           |
+| `npm run docker:admin:create` | Create an administrator account interactively       |
 
 After changing dependencies, refresh the `node_modules` volumes with
 `npm run docker:reset && npm run docker:up`.
 
 **Production stack:** `npm run docker:prod`, then open http://localhost:8080.
 nginx serves the built frontend and proxies `/api` to the backend; only port
-8080 is published.
+8080 is published. It starts with an empty database plus the migrations — the
+seed and every demo script refuse to run there, with no override — so the first
+administrator is created with `npm run admin:create`.
 
-## Accounts
-
-**Administrators create student accounts; students never self-register and never
-choose their own academic data.** Programme, semester, credits and completed
-courses are what eligibility and priority are judged on, so they belong to the
-registrar — a student who could edit them would be deciding their own place in
-the allocation.
-
-### The lifecycle
-
-1. **Invitation.** An administrator creates the student at `/admin/students`.
-   The account is created and the invitation e-mailed in **one transaction**: if
-   the e-mail cannot be sent, nothing is created, because an account nobody can
-   be told about is worse than no account.
-2. **Activation.** The link opens `/activate?token=…`, where the student chooses
-   a password (at least 10 characters, with a strength hint) and is signed in
-   straight away. The link works **once** and expires after 48 hours.
-3. **Resending.** "Resend invitation" mints a new link and spends the old one,
-   so the previous e-mail stops working the moment the new one is sent.
-4. **Forgotten passwords.** `/forgot-password` answers with the **same message
-   whether or not the address exists** — same status, same body, and the same
-   answer when sending fails, so a mail outage cannot become a way of
-   discovering which addresses exist. The link behaves exactly like an
-   activation link.
-5. **Changing a password.** `/student/account` and `/admin/account` (linked from
-   the user menu) take the current password and set a new one.
-6. **Deactivation.** A deactivated account cannot sign in and its open sessions
-   end on their next request. **Nothing is deleted** — every submission,
-   enrolment, waitlist place and history row is kept, and reactivating restores
-   access with the same password.
-
-### What the security rests on
-
-- **Links are stored as hashes.** Only the SHA-256 of a token reaches
-  `account_tokens`, so a leaked table cannot be turned back into working links.
-  Unknown, spent and expired links are **one answer**, so a guess learns nothing.
-- **Redeeming a link is one transaction** over a locked token row, so two
-  requests carrying the same link cannot both set a password.
-- **Setting a password ends every other session.** `users.password_changed_at`
-  is the cut-off, compared against each session token's `iat`; the device that
-  made the change gets a fresh cookie in the same response, so it stays signed
-  in while the others are signed out. Every outstanding link dies with it.
-- **Deactivated and never-activated accounts are refused**, the first only
-  _after_ the password has been checked — so a guesser who does not know the
-  password learns nothing, while the person who does is told why they are out.
-- **The public account endpoints are rate limited** per IP (20 per 15 minutes),
-  keyed on the address alone: keying on the e-mail would turn the limiter itself
-  into the oracle `/forgot-password` refuses to be.
-
-### Reading the e-mail in development
-
-The Docker stack runs [Mailpit](https://mailpit.axllent.org/), which accepts
-every message and shows it instead of delivering it:
-
-| URL                   | What                                       |
-| --------------------- | ------------------------------------------ |
-| http://localhost:8025 | **The inbox** — every invitation and reset |
-| localhost:1025        | SMTP, which the backend is pointed at      |
-
-Running on the host without `SMTP_HOST` set, account e-mails are written to the
-backend log instead (link included) so the flow still works. `NODE_ENV=production`
-refuses to start without a real `SMTP_HOST`.
-
-### The first administrator
-
-Production starts with an **empty database plus the migrations**: the seed and
-every demo script refuse to run there, with no override. The first
-administrator is created on the server:
-
-```bash
-npm run admin:create              # or: npm run docker:admin:create
-```
-
-It prompts for an e-mail and a password (hidden while typed), re-asks on
-anything invalid, refuses an address that already has an account, and writes an
-`ADMIN_CREATED` audit row. From there, students are invited from
-`/admin/students`.
-
-Demo-seeded accounts count as already activated, so `npm run demo:reset` works
-exactly as before, and the sign-in page shows the demo credentials **only in a
-development build** — the component holding them is removed by the bundler
-otherwise, along with the `/dev/components` gallery route.
-
-That guarantee does not depend on the environment: Vite decides
-`import.meta.env.DEV` from `NODE_ENV`, not from the build mode, so
-`npm run build` on a machine with `NODE_ENV=development` exported used to
-produce a deployable bundle that rendered them. `vite.config.ts` now forces
-`NODE_ENV=production` for `vite build`; `vite build --mode development` still
-opts out, because that mode is asked for rather than inherited.
-
-### Managing students and courses
-
-| Page                      | What                                                                                                                         |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `/admin/students`         | Every account, searchable and filterable by programme, semester and status (invited / active / inactive). Create, and import |
-| `/admin/students/:roll`   | One student's record, their standing and their timeline, plus resend invitation and deactivate / reactivate                  |
-| `/admin/course-catalogue` | The course records and their rules: create, edit, retire, reinstate, and import                                              |
-| `/admin/courses`          | The current window's **offerings** — seats and demand (unchanged)                                                            |
-
-A course is **retired, never deleted**, and cannot be retired while a window
-that is `OPEN` or later offers it: the button says so, the server answers `409`
-naming the windows, and a trigger is the final guard. A new course can be added
-to a window's offerings only while that window is a `DRAFT`.
-
-Every create, edit, import, invitation, deactivation and retirement writes an
-`audit_logs` row with its old and new values.
-
-### CSV import
-
-Both `/admin/students` and `/admin/course-catalogue` import a CSV in two steps:
-**upload → preview → confirm**. The preview judges every row and writes
-nothing; the confirm re-judges the file (the verdicts the browser saw are not a
-credential) and writes every valid row in **one transaction**, reporting what
-each row became. Nothing is ever imported halfway and silently.
-
-Download the template from the panel. The columns, in any order — extra columns
-are ignored, and lists inside a cell are separated by spaces:
-
-| File     | Columns                                                                                                                                      |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Students | `rollNumber`, `name`, `email`, `program`, `semester`, `creditsCompleted`, `expectedGraduationTerm`, `completedCourses`                       |
-| Courses  | `code`, `name`, `credits`, `department`, `description`, `minSemester`, `minCredits`, `prerequisites`, `eligiblePrograms`, `relevantPrograms` |
-
-```csv
-rollNumber,name,email,program,semester,creditsCompleted,expectedGraduationTerm,completedCourses
-CSE26001,Asha Menon,asha.menon@university.edu,BTECH-CSE,5,88,2028-SPRING,MA201 CS201
-```
-
-Each imported student is invited by e-mail. Unlike a single create, a failing
-invitation does **not** roll the import back — thirty accounts should not be
-lost to one bounced address — and the report says how many went out, so the rest
-can be invited again from their own page. A course import may name a
-prerequisite that an earlier row of the same file creates.
-
-## Authentication
-
-Sign in at `/login`. In development the page lists the
-[demo accounts](#demo-accounts); students land on `/student`, administrators on
-`/admin`.
-
-- **Session cookie.** `POST /api/auth/login` checks the password with bcrypt and
-  sets a signed JWT (HS256, user id + role, 8 hours) in the `cr_session` cookie:
-  `HttpOnly` (JavaScript can't read it), `SameSite=Strict`, `Path=/api`, and
-  `Secure` in production. The token is never in a response body or localStorage.
-- **No account enumeration.** An unknown e-mail and a wrong password give the same
-  401 message, and both paths run a bcrypt comparison so timing looks the same.
-- **Brute-force limit.** At most 10 failed sign-ins per IP and e-mail every 15
-  minutes, then `429`.
-- **CSRF.** Besides `SameSite=Strict`, state-changing requests with a foreign
-  `Origin` header are rejected (`403`).
-- **Authorization on the server.** Every request re-validates the cookie and
-  re-loads the user (`requireAuth`); `requireRole` returns `403` for the wrong
-  role. Student endpoints take the student's identity from the session, never
-  from an id in the request. Admin sign-ins are written to `audit_logs`.
-- **Frontend.** `AuthProvider` restores the session via `GET /api/auth/me`;
-  `<ProtectedRoute>` sends visitors to `/login` (and back afterwards) and sends
-  users of the other role to their own home. If a session expires, the next API
-  call sends you to `/login` with a notice.
-
-| Endpoint                | Access    | Purpose                                            |
-| ----------------------- | --------- | -------------------------------------------------- |
-| `POST /api/auth/login`  | public    | Sign in; sets the session cookie; returns the user |
-| `POST /api/auth/logout` | public    | Clears the session cookie                          |
-| `GET /api/auth/me`      | signed in | Current user (plus profile summary for students)   |
-| `GET /api/students/me`  | student   | The caller's own student profile                   |
-| `GET /api/admin/ping`   | admin     | Role check                                         |
-
-| Account endpoint                  | Access    | Purpose                                                                                       |
-| --------------------------------- | --------- | --------------------------------------------------------------------------------------------- |
-| `GET /api/auth/activation/:token` | public    | Is this link usable, and whose is it? Always `200`; spent, expired and unknown are one answer |
-| `POST /api/auth/activate`         | public    | `{ token, password }`: sets the first password and signs in                                   |
-| `POST /api/auth/forgot-password`  | public    | `{ email }`: the same `200` and message whether or not the address exists                     |
-| `POST /api/auth/reset-password`   | public    | `{ token, password }`: replaces the password, signs other devices out, signs this one in      |
-| `PUT /api/account/password`       | signed in | `{ currentPassword, newPassword }`, either role. Signs every other device out                 |
-
-The four public ones share one rate limit, per IP (20 per 15 minutes).
-
-| Student records endpoint                          | Access | Purpose                                                       |
-| ------------------------------------------------- | ------ | ------------------------------------------------------------- |
-| `GET /api/admin/students`                         | admin  | `search`, `program`, `semester`, `status`, `page`, `pageSize` |
-| `POST /api/admin/students`                        | admin  | Creates the account and e-mails the invitation, atomically    |
-| `GET /api/admin/students/:rollNumber`             | admin  | The record, their standing and their timeline                 |
-| `PATCH /api/admin/students/:rollNumber`           | admin  | Saves every field together; audited with old and new values   |
-| `POST /api/admin/students/:rollNumber/invitation` | admin  | Mints a new link and spends the outstanding one               |
-| `POST /api/admin/students/:rollNumber/deactivate` | admin  | Blocks sign-in; keeps every row                               |
-| `POST /api/admin/students/:rollNumber/reactivate` | admin  | Restores access with the same password                        |
-| `POST /api/admin/students/import/preview`         | admin  | Judges every row of a CSV; writes nothing                     |
-| `POST /api/admin/students/import`                 | admin  | Re-judges it and writes every valid row in one transaction    |
-| `GET /api/admin/reference-data`                   | admin  | Programmes, departments and courses for the forms' pickers    |
-
-| Course catalogue endpoint                           | Access | Purpose                                                            |
-| --------------------------------------------------- | ------ | ------------------------------------------------------------------ |
-| `GET /api/admin/course-catalogue`                   | admin  | Every course with its rules and where it is offered                |
-| `POST /api/admin/course-catalogue`                  | admin  | Creates a course and its three rule lists                          |
-| `PATCH /api/admin/course-catalogue/:code`           | admin  | Replaces the rules. The code itself cannot change                  |
-| `POST /api/admin/course-catalogue/:code/deactivate` | admin  | Retires it. `409` while a window that is `OPEN` or later offers it |
-| `POST /api/admin/course-catalogue/:code/reactivate` | admin  | Lets it be offered again                                           |
-| `POST /api/admin/course-catalogue/import/preview`   | admin  | Judges every row; writes nothing                                   |
-| `POST /api/admin/course-catalogue/import`           | admin  | Re-judges it and writes every valid row in one transaction         |
-
-| Catalogue endpoint                        | Access    | Purpose                                                                                                                                                      |
-| ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /api/registration-windows/current`   | signed in | The OPEN (else latest) window and the server time                                                                                                            |
-| `GET /api/courses`                        | signed in | Catalogue page: `search`, `department`, `credits`, `onlyAvailable`, `onlyEligible`, `sort`, `order`, `page`, `pageSize` (≤ 48); personal fields for students |
-| `GET /api/courses/:code`                  | signed in | One course in full, prerequisites met or not                                                                                                                 |
-| `GET /api/courses/seats`                  | signed in | Seat numbers only, with `ETag`; `If-None-Match` → `304`                                                                                                      |
-| `GET /api/admin/courses`                  | admin     | Every offering with seats, demand and an oversubscribed flag                                                                                                 |
-| `PATCH /api/admin/courses/:code/capacity` | admin     | `{ capacity, reason }`; `409` below the allocated seats; audited                                                                                             |
-
-| Eligibility and window endpoint                   | Access  | Purpose                                                                                      |
-| ------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `GET /api/eligibility`                            | student | Every offered course checked against the caller, plus their record and a summary. Any status |
-| `GET /api/eligibility/:code`                      | student | The same for one course                                                                      |
-| `GET /api/students/me/notifications/unread-count` | student | Unread notifications, for the dashboard                                                      |
-| `GET /api/admin/registration-window`              | admin   | The window with its policy, counts and every course                                          |
-| `PATCH /api/admin/registration-window`            | admin   | Schedule, offered courses and policy. `DRAFT` only: `409` once frozen                        |
-| `POST /api/admin/registration-window/open`        | admin   | `DRAFT → OPEN`. Freezes the policy and notifies every student                                |
-| `POST /api/admin/registration-window/close`       | admin   | `OPEN → CLOSED`                                                                              |
-
-### The cart, allocation and waitlists
-
-| Endpoint                                     | Who     | What                                                                         |
-| -------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
-| `GET /api/preferences`                       | student | The caller's own cart                                                        |
-| `PUT /api/preferences`                       | student | Saves the draft cart in rank order                                           |
-| `POST /api/registration/submit`              | student | One atomic submit; needs an idempotency key; rate limited                    |
-| `GET /api/registration/status`               | student | Whether they have submitted, and their reference                             |
-| `POST /api/admin/allocation/preview`         | admin   | Both methods on a fresh snapshot. Writes nothing                             |
-| `POST /api/admin/allocation/run`             | admin   | `CLOSED → ALLOCATED`. Once per window; needs `{ confirm: true }`             |
-| `GET /api/admin/allocation-runs[/:id]`       | admin   | Past runs, with metrics and the per-course table                             |
-| `POST /api/admin/allocation-runs/:id/verify` | admin   | Re-runs the stored snapshot and compares hashes                              |
-| `GET /api/allocation/results`                | student | The caller's own outcome and the reasoning behind it                         |
-| `GET /api/students/me/waitlist`              | student | The caller's own queues, with live positions                                 |
-| `GET /api/admin/waitlists?course=CODE`       | admin   | One course's roster and queue                                                |
-| `POST /api/admin/enrollments/:id/withdraw`   | admin   | `{ reason }`; releases a seat and promotes whoever is next, cascade included |
-| `POST /api/admin/waitlists/process`          | admin   | The safety sweep: offers every free seat in the window to its waitlist       |
-
-### The student's own record
-
-| Endpoint                                        | Who     | What                                                                                                             |
-| ----------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| `GET /api/students/me/status`                   | student | Where they stand now: window, submission, seat and how it was obtained, live waitlist positions, add/drop period |
-| `GET /api/students/me/history`                  | student | Their timeline, newest first. `type`, `course`, `cursor`, `limit`; events carry structured facts, not sentences  |
-| `GET /api/students/me/notifications`            | student | Their messages. `filter=unread\|all`, `cursor`                                                                   |
-| `PATCH /api/students/me/notifications/:id/read` | student | Marks one read; idempotent, `404` for anybody else's. Returns the new unread count                               |
-| `POST /api/students/me/notifications/read-all`  | student | Marks every unread one read. Returns the new unread count                                                        |
-
-`JWT_SECRET` must be set in `.env` (at least 32 characters; see `.env.example`).
-The server refuses to start in production with the example value.
-
-## Seed data and demo accounts
-
-```bash
-npm run docker:seed                    # reset + load demo data (inside Docker)
-npm run docker:seed:demo-submissions   # open Fall 2026 and add ~150 submissions
-```
-
-Outside Docker use `npm run seed` and `npm run seed:demo-submissions`. Both are
-deterministic and safe to re-run; `seed` wipes all application data first.
-See [docs/DATABASE.md](docs/DATABASE.md#seed-data) for what gets created.
-
-`seed:demo-submissions` deliberately leaves **aarav.sharma** and **priya.nair**
-without a submission, so the cart and the atomic submit can be demonstrated
-live rather than described.
-
-### Demo stages
-
-```bash
-npm run docker:demo:reset -- --stage=draft      # base seed, window not open yet
-npm run docker:demo:reset -- --stage=open       # + ~150 submissions
-npm run docker:demo:reset -- --stage=closed     # + registration closed
-npm run docker:demo:reset -- --stage=allocated  # + allocation run for real
-npm run docker:demo:reset -- --stage=add-drop   # + the add/drop period open
-```
-
-Each stage is cumulative and goes through the real service, not a shortcut
-`UPDATE`: closing freezes the policy and notifies every student, and
-allocating runs the same transaction the admin's button runs. Outside Docker:
-`npm run demo:reset -- --stage=...`. It refuses to run in production.
-
-### Proving the concurrency guarantees
-
-```bash
-npm run docker:demo:concurrent-submit                 # 50 students, default
-npm run docker:demo:concurrent-submit -- --students=100
-```
-
-```bash
-npm run docker:demo:seat-race                         # 100 students, 10 seats
-npm run docker:demo:seat-race -- --students=200 --seats=20
-```
-
-`demo:seat-race` is the add/drop half: it prepares a course with exactly N free
-seats, finds students who hold no elective and are eligible for it, and fires
-one "add, or join the waitlist if full" per student at the same instant. It
-then prints enrolled, waitlisted, overbooked, duplicate enrolments and whether
-the waitlist positions are unique and consecutive. See
-[docs/CONCURRENCY.md](docs/CONCURRENCY.md#the-seat-race-100-students-10-seats).
-
-Every student fires their submit twice at the same instant with the same
-idempotency key. The script then checks the database and prints PASS/FAIL for
-duplicates, partial carts, one submission per student, and unique, gap-free
-arrival numbers. Outside Docker: `npm run demo:concurrent-submit`. It refuses
-to run with `NODE_ENV=production`.
-
-### Demo accounts
-
-> **Demo-only credentials.** They are published here so the app can be
-> demonstrated, and the sign-in page lists them in a **development build only**.
-> Never reuse them anywhere real. A real deployment starts with an empty
-> database and its first administrator from `npm run admin:create`.
-
-| Role    | E-mail                        | Password      | Situation                                                                                                                    |
-| ------- | ----------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Admin   | `admin@university.edu`        | `Admin@123`   | Manages courses, the registration window and allocation                                                                      |
-| Student | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6: eligible for Artificial Intelligence (program relevance +25). **No submission** — use them to demo the cart |
-| Student | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3: **not** eligible for Artificial Intelligence                                                         |
-| Student | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: highest priority (+20 +25 +40)                                                        |
-| Student | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5: eligible for Artificial Intelligence, no priority bonus. **No submission** — use them to demo the cart      |
-
-The 296 generated students also use `Student@123`; their e-mail is their roll
-number, e.g. `cse24004@university.edu`.
-
-## Run without Docker
+### Without Docker
 
 Requires Node.js ≥ 20.12 and a PostgreSQL 16 server.
 
@@ -533,14 +337,303 @@ npm run seed            # optional demo data
 npm run dev             # backend on :4000, frontend on :5173
 ```
 
-Tip: `docker compose up -d postgres` runs just the database in Docker.
+`npm run docker:up postgres` runs just the database in Docker if that is
+easier. Without `SMTP_HOST` set, account e-mails are written to the backend log
+with the link included, so the invitation and reset flows still work.
 
-## Quality checks
+---
+
+## Demo accounts and demo stages
+
+> **Demo-only credentials.** They are published here so the project can be
+> demonstrated, and the sign-in page lists them in a **development build only**
+> — the component holding them is removed by the bundler otherwise. Never reuse
+> them anywhere real.
+
+| Role    | E-mail                        | Password      | Situation                                                                                        |
+| ------- | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| Admin   | `admin@university.edu`        | `Admin@123`   | Courses, the registration window, allocation, students                                           |
+| Student | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6. Eligible for AI (programme relevance +25). **No submission** — use for the cart |
+| Student | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5. Eligible for AI, no priority bonus. **No submission**                           |
+| Student | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3. **Not** eligible for AI                                                  |
+| Student | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: the highest priority (+20 +25 +40)                        |
+
+The other 296 generated students also use `Student@123`; their e-mail is their
+roll number, e.g. `cse24004@university.edu`.
+
+### Demo stages
+
+One command puts the database in any state you want to demonstrate:
+
+```bash
+npm run docker:demo:reset -- --stage=draft      # base seed; the window is not open yet
+npm run docker:demo:reset -- --stage=open       # + ~150 submissions
+npm run docker:demo:reset -- --stage=closed     # + registration closed
+npm run docker:demo:reset -- --stage=allocated  # + a real allocation run
+npm run docker:demo:reset -- --stage=add-drop   # + the add/drop period open
+```
+
+Each stage is cumulative and goes through the **real service**, never a
+shortcut `UPDATE`: closing freezes the policy and notifies every student, and
+allocating runs the same transaction the admin's button runs. Outside Docker,
+`npm run demo:reset -- --stage=...`. It refuses to run in production.
+
+The seed deliberately leaves **aarav.sharma** and **priya.nair** without a
+submission, so the cart and the atomic submit can be demonstrated live rather
+than described. It also sets up the headline case: **Artificial Intelligence**,
+20 seats, 112 requests.
+
+### Proving the concurrency guarantees
+
+```bash
+npm run docker:demo:concurrent-submit                 # 50 students, default
+npm run docker:demo:concurrent-submit -- --students=100
+npm run docker:demo:seat-race                         # 100 students, 10 seats
+npm run docker:demo:seat-race -- --students=200 --seats=20
+```
+
+The first fires every student's submit **twice at the same instant with the
+same idempotency key**, then checks the database and prints PASS/FAIL for
+duplicates, partial carts, one submission per student, and unique gap-free
+arrival numbers. The second prepares a course with exactly N free seats and
+fires one "add, or join the waitlist if full" per student simultaneously, then
+reports enrolled, waitlisted, overbooked, duplicate enrolments and whether the
+waitlist positions are unique and consecutive. Both are explained in
+[docs/CONCURRENCY.md](docs/CONCURRENCY.md).
+
+A full walkthrough to demonstrate the project is
+[docs/DEMO.md](docs/DEMO.md).
+
+---
+
+## How allocation works
+
+The short version; the rule book, the worked example and the fairness argument
+are in [docs/ALLOCATION.md](docs/ALLOCATION.md).
+
+Only **submitted** carts take part, and each student gets **at most one**
+elective from their ranked list — one they ranked, are still eligible for
+(re-checked from the database at allocation time, never trusted from when the
+cart was saved), and that the window offers.
+
+**Preference + Priority** gives each student a score **per course**:
+
+```
+score = preference weight  (1st 100 · 2nd 80 · 3rd 60 · 4th 40 · 5th 20)
+      + final year         (+20)
+      + programme relevance(+25)
+      + graduation urgency (+40)
+```
+
+Ties are broken by one seeded number per student, drawn once, so the ordering
+is stable and the run is repeatable. Seats are then assigned by
+**student-proposing deferred acceptance**: every student applies to their top
+choice, each course provisionally keeps its highest scorers up to capacity and
+releases the rest, and the released students apply to their next choice. It
+settles because every rejection moves a student strictly down their own list.
+
+The result is **no justified envy**: nobody is left wanting a course more than
+somebody who got it while also scoring higher for it. **FCFS** is implemented
+too, purely so the two can be compared on the same data — on the demo seed it
+leaves 78 such cases against 0.
+
+Each run then writes its input snapshot, and
+`POST /api/admin/allocation-runs/:id/verify` re-runs **that stored input**
+through the same algorithm version and compares output hashes. Rebuilding the
+input from today's database would prove nothing, which is why it does not.
+
+---
+
+## API overview
+
+Every endpoint answers `ApiResponse<T>` — `{ success, data, message? }`.
+Student endpoints live under `/api/students/me/...` and take the student's
+identity from the session cookie, never from the URL or the body.
+
+**Authentication and accounts**
+
+| Endpoint                          | Access    | Purpose                                                            |
+| --------------------------------- | --------- | ------------------------------------------------------------------ |
+| `POST /api/auth/login`            | public    | Sign in; sets the session cookie                                   |
+| `POST /api/auth/logout`           | public    | Clears it                                                          |
+| `GET /api/auth/me`                | signed in | The current user                                                   |
+| `GET /api/auth/activation/:token` | public    | Is this link usable? Spent, expired and unknown are **one** answer |
+| `POST /api/auth/activate`         | public    | Sets the first password and signs in                               |
+| `POST /api/auth/forgot-password`  | public    | The same answer whether or not the address exists                  |
+| `POST /api/auth/reset-password`   | public    | Replaces the password and signs every other device out             |
+| `PUT /api/account/password`       | signed in | Change password, either role                                       |
+
+**Catalogue and eligibility**
+
+| Endpoint                                | Access    | Purpose                                                      |
+| --------------------------------------- | --------- | ------------------------------------------------------------ |
+| `GET /api/registration-windows/current` | signed in | The window, plus the **server's** time                       |
+| `GET /api/courses`                      | signed in | The catalogue: search, filters, sort, paging                 |
+| `GET /api/courses/:code`                | signed in | One course in full, prerequisites met or not                 |
+| `GET /api/courses/seats`                | signed in | Seat numbers only, with an `ETag`; `If-None-Match` → **304** |
+| `GET /api/eligibility`                  | student   | Every offered course checked against the caller              |
+
+**The cart, allocation and waitlists**
+
+| Endpoint                                     | Access  | Purpose                                                        |
+| -------------------------------------------- | ------- | -------------------------------------------------------------- |
+| `GET` / `PUT /api/preferences`               | student | Read and save the draft cart in rank order                     |
+| `POST /api/registration/submit`              | student | One atomic submit; needs an idempotency key                    |
+| `POST /api/admin/allocation/preview`         | admin   | Both methods on a fresh snapshot. Writes nothing               |
+| `POST /api/admin/allocation/run`             | admin   | `CLOSED → ALLOCATED`, once per window                          |
+| `POST /api/admin/allocation-runs/:id/verify` | admin   | Re-runs the stored snapshot and compares hashes                |
+| `GET /api/allocation/results`                | student | The caller's own outcome and the reasoning behind it           |
+| `GET /api/students/me/waitlist`              | student | The caller's own queues, with live positions                   |
+| `POST /api/admin/enrollments/:id/withdraw`   | admin   | Releases a seat and promotes whoever is next, cascade included |
+| `POST /api/admin/waitlists/process`          | admin   | The safety sweep: offers every free seat to its waitlist       |
+
+**Add/drop and the student's record**
+
+| Endpoint                             | Access  | Purpose                                   |
+| ------------------------------------ | ------- | ----------------------------------------- |
+| `POST /api/students/me/add-drop/...` | student | Add, drop, swap, join or leave a waitlist |
+| `GET /api/students/me/status`        | student | Where they stand now                      |
+| `GET /api/students/me/history`       | student | Their timeline, newest first              |
+| `GET /api/students/me/notifications` | student | Their messages, with read and read-all    |
+
+**Administration**
+
+| Endpoint                                                       | Access | Purpose                                                    |
+| -------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| `GET` / `PATCH /api/admin/registration-window`                 | admin  | The window and its policy. `DRAFT` only: `409` once frozen |
+| `POST /api/admin/registration-window/open                      | close` | admin                                                      | Freeze the policy and notify everyone, then close |
+| `GET /api/admin/courses`                                       | admin  | Offerings with seats, demand and an oversubscribed flag    |
+| `PATCH /api/admin/courses/:code/capacity`                      | admin  | `409` below the allocated seats; audited                   |
+| `GET`/`POST`/`PATCH /api/admin/course-catalogue`               | admin  | Course records and their rules; retire and reinstate       |
+| `GET`/`POST`/`PATCH /api/admin/students`                       | admin  | Student accounts; invite, deactivate, reactivate           |
+| `POST /api/admin/{students,course-catalogue}/import[/preview]` | admin  | CSV import: preview judges, confirm re-judges and writes   |
+
+---
+
+## Security
+
+- **Sessions are an httpOnly cookie.** `cr_session` holds an HS256 JWT (user id
+  - role, 8 hours), `SameSite=Strict`, `Path=/api`, `Secure` in production. The
+    token never appears in a response body, in `localStorage` or in reach of
+    JavaScript.
+- **Authorization is re-checked on every request.** The cookie is verified and
+  the user re-loaded from the database; `requireRole` answers `403` for the
+  wrong role. A student's identity always comes from the session.
+- **No account enumeration.** An unknown e-mail and a wrong password give the
+  same `401`, and both run a bcrypt comparison so the timing matches.
+  `/forgot-password` answers identically for a known and an unknown address —
+  same status, same body, even when sending fails — and its rate limiter is
+  keyed on the IP **alone**, because keying it on the e-mail would make the
+  limiter itself the oracle the endpoint refuses to be.
+- **Links are stored as hashes.** Only the SHA-256 of an activation or reset
+  token reaches the database, so a leaked table cannot be turned back into
+  working links. Unknown, spent and expired are one answer. Redeeming one is a
+  transaction over a locked row, so two requests carrying the same link cannot
+  both succeed.
+- **Changing a password ends every other session**, by comparing
+  `users.password_changed_at` with each token's `iat`; the device that made the
+  change gets a fresh cookie in the same response.
+- **Brute force and abuse are rate limited:** failed sign-ins per IP and
+  e-mail, the public account endpoints per IP, and submits per student.
+- **CSRF:** `SameSite=Strict`, and state-changing requests arriving with a
+  foreign `Origin` are rejected with `403`.
+- **SQL injection:** parameterised statements only. No value is ever
+  interpolated into a statement, anywhere.
+- **The client is never trusted** for seat counts, eligibility, identity or
+  priority. Every one is recomputed on the server from its own rows.
+- **Admin actions are audited.** Every create, edit, import, invitation,
+  deactivation, retirement, capacity change, window transition and allocation
+  run writes an `audit_logs` row with its old and new values. Admin sign-ins
+  are recorded too.
+- **Nothing is deleted.** Accounts deactivate, courses retire. Every historical
+  row keeps pointing at something that still exists.
+
+`JWT_SECRET` must be at least 32 characters, and the server refuses to start in
+production with the example value. `.env` is gitignored; `.env.example`
+documents every setting and contains no secret.
+
+---
+
+## Testing
 
 ```bash
 npm run lint           # ESLint, zero warnings allowed
-npm run typecheck      # tsc in every workspace
-npm run test           # Vitest in every workspace (backend integration tests need PostgreSQL)
+npm run typecheck      # tsc --noEmit in every workspace
+npm run test           # Vitest in all three workspaces
 npm run build          # shared → backend → frontend
 npm run format:check   # Prettier
 ```
+
+| Workspace   | Files   | Tests    | What                                                                                                                                  |
+| ----------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared/`   | 4       | 19       | Contracts, type guards, domain rules                                                                                                  |
+| `backend/`  | 41      | 636      | Pure rules, the allocation engine, property-based tests, and integration tests through the real Express app against a real PostgreSQL |
+| `frontend/` | 59      | 443      | Components, hooks, pages and utilities with React Testing Library, plus an axe check on each                                          |
+| **Total**   | **104** | **1098** |                                                                                                                                       |
+
+The backend integration tests need PostgreSQL running (`npm run docker:up`).
+They use a separate `<db>_test` database, never the development one, and
+truncate it between tests. They cover the things only a real database can
+prove: that the atomic submit is atomic, that a fault injected mid-allocation
+rolls back every table, that concurrent promotions do not deadlock or
+double-book, and that the constraints refuse what they should.
+
+Vitest runs at most 2 workers per workspace; raise it with
+`VITEST_MAX_WORKERS=<n>` on a machine with memory to spare.
+
+---
+
+## Limitations
+
+Honest about what this is and is not:
+
+- **Priority scoring is a mock**, as the brief specifies. Final year,
+  programme relevance and graduation urgency are plausible stand-ins for
+  whatever a real registrar would weigh; the weights are configurable per
+  window, but they are not a real institution's policy.
+- **Allocation runs inside the backend process**, not in a worker. It is a pure
+  function and takes about 14 ms for 150 students over 20 courses, so for this
+  scale a queue and a separate container would be ceremony. The strategy
+  interface is there so one can be added without restructuring.
+- **One elective per student per window.** The model allows exactly one, which
+  is what the brief describes; multi-course allocation would change the
+  matching problem, not just the code.
+- **One registration window at a time** is what the UI assumes, even though the
+  schema allows several.
+- **No live updates beyond seat counts.** Seats poll every 10 seconds; results
+  and waitlist positions refresh when the page is loaded or retried. There are
+  no WebSockets.
+- **Not deployed.** It runs locally under Docker, including a production-like
+  stack, but there is no hosted environment and no CI pipeline.
+- **E-mail is Mailpit in development.** The SMTP mailer is real and
+  configurable, but it has only ever been pointed at a local catcher.
+- **No bulk student self-service.** A student cannot correct their own record,
+  by design — but that means a wrong record needs a registrar.
+
+---
+
+## Future scope
+
+- **More allocation methods.** The engine takes a new strategy as one class and
+  one `case`; the factory's `default` branch takes a `never`, so the build
+  fails until the case exists. A **weighted lottery** is the obvious next one —
+  random within priority bands, which some institutions prefer precisely
+  because it cannot be gamed — alongside a proper serial dictatorship and a
+  course-proposing variant for comparison.
+- **An allocation simulator**, so a registrar can try weights against last
+  term's data before freezing a policy.
+- **A help page with a captioned video** walking through registration. It is
+  specified but not built; `/student/help` currently redirects to the dashboard
+  rather than showing an unfinished page.
+- **A `/dev/javascript-lab` page**, hidden in production, demonstrating the
+  language concepts interactively. The written version is
+  [docs/javascript-concepts.md](docs/javascript-concepts.md).
+- **Deployment**: a hosted environment, a CI pipeline running lint, typecheck,
+  tests and build on every push, and real SMTP.
+- **A worker container and a job queue** if allocation ever has to run for tens
+  of thousands of students, plus Redis for seat counts if polling stops being
+  enough.
+- **Analytics for the registrar**: demand trends across terms, which
+  prerequisites block the most students, how often add/drop is used.
+- **A faculty role**, between student and registrar, able to see their own
+  courses' rosters without administrative rights.
