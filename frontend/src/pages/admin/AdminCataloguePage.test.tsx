@@ -8,6 +8,7 @@ import { routes } from '../../app/routes';
 import { catalogue, courseRecord, importReport, okRow } from '../../test/adminFixtures';
 import { adminUser, ok } from '../../test/authFixtures';
 import { expectNoA11yViolations } from '../../test/axe';
+import { findLoadedTable } from '../../test/tables';
 
 vi.mock('../../api/adminCatalogueApi', () => ({
   getAdminCatalogue: vi.fn(),
@@ -31,7 +32,7 @@ async function openPage() {
   const router = createMemoryRouter(routes, { initialEntries: ['/admin/course-catalogue'] });
   const view = render(<RouterProvider router={router} />);
   await screen.findByRole('heading', { level: 1, name: 'Course catalogue' });
-  await screen.findByRole('table');
+  await findLoadedTable();
   return { router, ...view };
 }
 

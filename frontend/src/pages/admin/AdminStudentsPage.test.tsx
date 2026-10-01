@@ -15,6 +15,7 @@ import {
 } from '../../test/adminFixtures';
 import { adminUser, ok } from '../../test/authFixtures';
 import { expectNoA11yViolations } from '../../test/axe';
+import { findLoadedTable } from '../../test/tables';
 
 vi.mock('../../api/adminStudentApi', async (original) => ({
   // buildStudentQuery is pure and is what the page's URL handling relies on.
@@ -101,7 +102,7 @@ describe('AdminStudentsPage list', () => {
     );
     await openList();
 
-    const table = within(await screen.findByRole('table'));
+    const table = within(await findLoadedTable());
     expect(table.getByRole('link', { name: 'CSE26001' })).toHaveAttribute(
       'href',
       '/admin/students/CSE26001',
@@ -202,12 +203,12 @@ describe('AdminStudentsPage list', () => {
     api.getStudents.mockResolvedValue(ok(studentPage()));
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findByRole('table')).toBeVisible();
+    expect(await findLoadedTable()).toBeVisible();
   });
 
   it('has no accessibility violations', async () => {
     const { container } = await openList();
-    await screen.findByRole('table');
+    await findLoadedTable();
 
     await expectNoA11yViolations(container, { isolated: false });
   });

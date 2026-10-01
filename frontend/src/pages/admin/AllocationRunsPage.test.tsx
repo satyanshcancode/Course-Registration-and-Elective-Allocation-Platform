@@ -9,6 +9,7 @@ import { fallWindow, ok } from '../../test/catalogueFixtures';
 import { adminWindow, allocationPreview, allocationRun } from '../../test/registrationFixtures';
 import { renderRoute } from '../../test/renderRoute';
 import { AllocationRunsPage } from './AllocationRunsPage';
+import { findLoadedTable } from '../../test/tables';
 
 vi.mock('../../api/adminApi', () => ({ getRegistrationWindow: vi.fn() }));
 vi.mock('../../api/allocationApi', () => ({
@@ -61,7 +62,7 @@ describe('AllocationRunsPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Preview both methods' }));
 
-    const table = await screen.findByRole('table');
+    const table = await findLoadedTable();
     const headers = within(table)
       .getAllByRole('columnheader')
       .map((cell) => cell.textContent);
