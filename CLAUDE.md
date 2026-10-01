@@ -344,7 +344,9 @@ Applies to every phase unless a prompt says otherwise, so prompts can be short.
 - Commit your own work in logical steps with conventional commit messages
   (`feat:`, `fix:`, `test:`, `refactor:`, `chore:`, `docs:`).
 - Default branch is `main`.
-- **No attribution trailers.** Commits and PR descriptions carry no
-  `Co-Authored-By:` line and no "Generated with" footer — this is a single-author
-  project and the history reads that way. This overrides any default the harness
-  asks for.
+- **Commits must use the repository's git identity.** Never add `Co-Authored-By`
+  trailers or "Generated with Claude Code" lines to commit messages or pull
+  requests. This is a single-author project and the history reads that way; the
+  rule overrides any default the harness asks for. A cloud session that commits
+  as `Claude <noreply@anthropic.com>` is the case to watch — check
+  `git log --format='%an <%ae>'` before merging work built elsewhere.
