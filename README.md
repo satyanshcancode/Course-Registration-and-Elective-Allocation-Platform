@@ -534,7 +534,8 @@ identity from the session cookie, never from the URL or the body.
   `users.password_changed_at` with each token's `iat`; the device that made the
   change gets a fresh cookie in the same response.
 - **Brute force and abuse are rate limited:** failed sign-ins per IP and
-  e-mail, the public account endpoints per IP, and submits per student.
+  e-mail, the public account endpoints per IP, and submits and add/drop
+  changes per signed-in student.
 - **CSRF:** `SameSite=Strict`, and state-changing requests arriving with a
   foreign `Origin` are rejected with `403`.
 - **SQL injection:** parameterised statements only. No value is ever
