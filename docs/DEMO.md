@@ -35,6 +35,11 @@ build.
 > puts the database back in a known state in a few seconds. The stages are
 > `draft`, `open`, `closed`, `allocated` and `add-drop`.
 
+> **Step 9 needs Mailpit.** It catches the invitation instead of delivering it,
+> which is the default. If your `.env` points `SMTP_HOST` at a real relay, that
+> step sends a real e-mail to whatever address you type — so comment the
+> `SMTP_*` lines out before demonstrating, or invite an address you own.
+
 ---
 
 ## 1. The problem, in one screen (2 min)

@@ -306,6 +306,17 @@ with hot reload. Source folders are bind-mounted; `node_modules` live in named
 volumes so host and container dependencies never mix. File watching uses
 polling, so hot reload works on Windows and macOS bind mounts.
 
+**Sending real e-mail instead.** Every mail setting comes from `.env`, and with
+none of them set the stack talks to Mailpit exactly as above. Point `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` and `MAIL_FROM_NAME` at a
+real relay — Brevo is `smtp-relay.brevo.com` on port 587 with `SMTP_SECURE=false`,
+since 587 upgrades with STARTTLS — and the same code delivers for real.
+`.env.example` has the block commented out, ready to fill in. Whenever a user and
+password are set the backend **requires** the connection to be encrypted before
+sending them, so a relay that stopped offering STARTTLS fails the send rather
+than leaking the credential. The line the backend logs at startup says which
+server it chose and whether the connection will be encrypted.
+
 | Script                        | Does                                                |
 | ----------------------------- | --------------------------------------------------- |
 | `npm run docker:up`           | Build and start the dev stack in the background     |
@@ -606,8 +617,10 @@ Honest about what this is and is not:
   no WebSockets.
 - **Not deployed.** It runs locally under Docker, including a production-like
   stack, but there is no hosted environment and no CI pipeline.
-- **E-mail is Mailpit in development.** The SMTP mailer is real and
-  configurable, but it has only ever been pointed at a local catcher.
+- **E-mail defaults to Mailpit.** The SMTP mailer is real and every setting
+  comes from `.env`, so pointing it at a relay such as Brevo is configuration
+  rather than code — but deliverability, bounces and unsubscribes are the
+  relay's problem, and nothing here tracks them.
 - **No bulk student self-service.** A student cannot correct their own record,
   by design — but that means a wrong record needs a registrar.
 
