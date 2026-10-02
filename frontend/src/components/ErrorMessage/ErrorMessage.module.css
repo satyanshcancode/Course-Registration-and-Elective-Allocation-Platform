@@ -5,7 +5,7 @@
   padding: var(--space-4);
   border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
   border-left-width: 3px;
-  border-left-color: var(--color-danger);
+  border-color: var(--color-danger);
   border-radius: var(--radius-md);
   background-color: var(--color-danger-soft);
 }

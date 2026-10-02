@@ -1,45 +1,18 @@
 /*
- * An index card: hairline border, no shadow, and a coloured spine down the
- * left edge for the department, so a long list can be scanned by eye before it
- * is read. Position: relative anchors both the spine and the status stamp.
+ * An index card: hairline border, no shadow. The department used to get a
+ * coloured spine down the left edge; the department's NAME is printed on every
+ * card anyway and there was no colour key to read the stripe against, so it was
+ * decoration pretending to be information.
  */
 .card {
-  --spine: var(--color-dept-a);
-
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+  padding: var(--space-4);
   border: var(--border-hairline);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background-color: var(--spine);
-}
-
-.card[data-dept='b'] {
-  --spine: var(--color-dept-b);
-}
-
-.card[data-dept='c'] {
-  --spine: var(--color-dept-c);
-}
-
-.card[data-dept='d'] {
-  --spine: var(--color-dept-d);
-}
-
-.card[data-dept='e'] {
-  --spine: var(--color-dept-e);
 }
 
 /*

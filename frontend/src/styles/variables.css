@@ -34,14 +34,6 @@
   --color-info: #41566b;
   --color-info-soft: #e3e8ed;
 
-  /* Department tones for the catalogue spine. Never the only signal: the
-     department is always written out beside it. */
-  --color-dept-a: #2f5d4a;
-  --color-dept-b: #a04a26;
-  --color-dept-c: #8a5a06;
-  --color-dept-d: #41566b;
-  --color-dept-e: #6b4a63;
-
   --color-focus: var(--color-accent);
   --color-backdrop: rgb(36 31 26 / 0.45);
   --color-shadow: 36 31 26;
@@ -163,12 +155,6 @@
     --color-danger-soft: #3a241a;
     --color-info: #a9bace;
     --color-info-soft: #232a31;
-
-    --color-dept-a: #86c3a3;
-    --color-dept-b: #e79e78;
-    --color-dept-c: #e0b468;
-    --color-dept-d: #a9bace;
-    --color-dept-e: #c3a1bc;
 
     --color-backdrop: rgb(0 0 0 / 0.62);
     --color-shadow: 0 0 0;
