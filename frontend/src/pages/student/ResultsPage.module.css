@@ -22,17 +22,16 @@
   max-width: var(--layout-narrow);
   padding: var(--space-5);
   border: var(--border-hairline);
-  border-left: 3px solid var(--color-rule-strong);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
 }
 
 .headline[data-allocated='true'] {
-  border-left-color: var(--color-success);
+  border-color: var(--color-success);
 }
 
 .headline[data-allocated='false'] {
-  border-left-color: var(--color-warning);
+  border-color: var(--color-warning);
 }
 
 .mark {

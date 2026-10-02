@@ -23,7 +23,6 @@
 }
 
 .panel {
-  position: relative;
   display: grid;
   gap: var(--space-4);
   align-content: start;
@@ -32,18 +31,6 @@
   border: var(--border-hairline);
   border-radius: var(--radius-lg);
   background-color: var(--color-surface);
-  overflow: hidden;
-}
-
-/* The same forest spine the sign-in card carries, so every card a signed-out
-   visitor meets is recognisably one product. */
-.panel::before {
-  content: '';
-  position: absolute;
-  inset: var(--space-5) auto var(--space-5) 0;
-  width: 4px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background-color: var(--color-accent);
 }
 
 @media (width < 40rem) {
@@ -75,7 +62,7 @@
 
 .notice {
   padding: var(--space-3);
-  border-left: 3px solid var(--color-info);
+  border: 1px solid var(--color-info);
   border-radius: var(--radius-sm);
   background-color: var(--color-info-soft);
   color: var(--color-ink);
@@ -85,7 +72,7 @@
 
 .alert {
   padding: var(--space-3);
-  border-left: 3px solid var(--color-danger);
+  border: 1px solid var(--color-danger);
   border-radius: var(--radius-sm);
   background-color: var(--color-danger-soft);
   color: var(--color-danger);
