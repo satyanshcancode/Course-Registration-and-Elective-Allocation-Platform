@@ -78,7 +78,7 @@ describe('layouts', { timeout: 20_000 }, () => {
 
     const heading = screen.getByRole('heading', { level: 1, name: 'Waitlist' });
     expect(heading).toHaveFocus();
-    expect(document.title).toBe('Waitlist · Course Registration');
+    expect(document.title).toBe('Waitlist · Allocademy');
   });
 
   it('/student redirects to the dashboard; unknown pages show a 404 inside the shell', async () => {

@@ -1,29 +1,44 @@
-/* Form on the left, a short "how it works" column on the right: a registrar form. */
+/*
+ * One card, centred. The page used to carry a second column explaining the
+ * process and listing demo accounts; signing in is the only job here, and the
+ * explanation belongs where someone is deciding, not where they are typing.
+ */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 27rem) minmax(0, 24rem);
-  align-items: start;
-  justify-content: start;
-  gap: var(--space-7);
-  padding-top: var(--space-4);
+  justify-items: center;
+  /* Centred in whatever height the public layout gives it, so the card does
+     not sit against the header with the page empty beneath it. */
+  align-content: center;
+  min-height: 100%;
+  padding-block: var(--space-6);
 }
 
-@media (width < 56rem) {
+@media (width < 40rem) {
   .layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-6);
-    max-width: 30rem;
+    padding-block: var(--space-5);
   }
 }
 
 .panel {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   align-content: start;
+  width: min(100%, 27rem);
   padding: var(--space-6);
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
+}
+
+/* The forest spine that marks a card as this product's, rather than a shadow. */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-5) auto var(--space-5) 0;
+  width: 4px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background-color: var(--color-accent);
 }
 
 @media (width < 40rem) {
@@ -33,7 +48,7 @@
 }
 
 .kicker {
-  color: var(--color-ink-muted);
+  color: var(--color-danger);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-kicker);
@@ -42,7 +57,10 @@
 
 .title {
   margin-top: calc(-1 * var(--space-3));
-  font-size: var(--text-2xl);
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-heading);
 }
 
 .title:focus {
@@ -100,56 +118,6 @@
 .passwordRow {
   display: flex;
   gap: var(--space-2);
-}
-
-/* ---- "How registration works" ------------------------------------------ */
-.aside {
-  display: grid;
-  gap: var(--space-5);
-  align-content: start;
-  padding-top: var(--space-2);
-}
-
-.asideTitle {
-  font-size: var(--text-lg);
-}
-
-.steps {
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: var(--space-4);
-}
-
-.step {
-  display: grid;
-  grid-template-columns: 2rem 1fr;
-  gap: var(--space-2);
-  padding-bottom: var(--space-4);
-  border-bottom: var(--border-hairline);
-}
-
-.step:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.stepNumber {
-  color: var(--color-accent);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: var(--leading-body);
-}
-
-.stepTitle {
-  font-weight: var(--weight-semibold);
-}
-
-.stepText {
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  line-height: var(--leading-dense);
 }
 
 .forgot {

@@ -2,22 +2,25 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-ink);
+  color: var(--color-accent);
   text-decoration: none;
 }
 
 .mark {
-  width: 1.75rem;
-  height: 1.75rem;
-  fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
 }
 
-.tab {
-  stroke: var(--color-ink-muted);
+.taken {
+  fill: var(--color-accent);
+}
+
+/* The open seat is drawn, not filled — the one thing still available. */
+.open {
+  fill: none;
+  stroke: var(--color-danger);
+  stroke-width: 1.5;
 }
 
 .words {
@@ -27,6 +30,7 @@
 
 .name {
   font-family: var(--font-serif);
+  font-optical-sizing: auto;
   font-size: var(--text-md);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);

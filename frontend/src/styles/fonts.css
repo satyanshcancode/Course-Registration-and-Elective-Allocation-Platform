@@ -1,13 +1,13 @@
 /*
- * Self-hosted fonts (Latin subsets). Only the weights the design uses.
+ * Self-hosted fonts (@fontsource). Only the axes the design uses.
  *
- * Source Serif 4: variable with weight + optical-size axes — headings only.
- * IBM Plex Sans 400/500/600: UI and body text.
- * IBM Plex Mono 400/500: course codes, seat counts, timestamps.
+ * Fraunces: variable, with the optical-size axis — so a 42px page title and a
+ * 13px course code are drawn differently rather than scaled. Display only.
+ * Work Sans: variable weight — the whole interface and body text.
+ * IBM Plex Mono 400/500: course codes, references, timestamps — the things
+ * that have to align by the character.
  */
-@import '@fontsource-variable/source-serif-4/opsz.css';
-@import '@fontsource/ibm-plex-sans/latin-400.css';
-@import '@fontsource/ibm-plex-sans/latin-500.css';
-@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource-variable/fraunces/opsz.css';
+@import '@fontsource-variable/work-sans/wght.css';
 @import '@fontsource/ibm-plex-mono/latin-400.css';
 @import '@fontsource/ibm-plex-mono/latin-500.css';

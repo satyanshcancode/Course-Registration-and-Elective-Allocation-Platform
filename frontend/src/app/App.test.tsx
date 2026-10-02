@@ -1,5 +1,4 @@
-import type { ApiResponse, HealthStatus } from '@course-reg/shared';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
@@ -10,47 +9,46 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-const healthyBody: ApiResponse<HealthStatus> = {
-  success: true,
-  data: {
-    status: 'ok',
-    database: { status: 'ok', latencyMs: 3 },
-    uptimeSeconds: 10,
-    timestamp: '2026-01-15T09:30:00.000Z',
-  },
-};
-
 const notSignedInBody = { success: false, data: null, message: 'Please sign in to continue.' };
 
-/** Health succeeds; the session probe says "not signed in". */
+/** The session probe says "not signed in"; nothing else is asked for. */
 function fakeBackend(input: RequestInfo | URL): Promise<Response> {
   const url = input instanceof Request ? input.url : String(input);
   return Promise.resolve(
-    url.endsWith('/api/auth/me') ? jsonResponse(notSignedInBody, 401) : jsonResponse(healthyBody),
+    url.endsWith('/api/auth/me')
+      ? jsonResponse(notSignedInBody, 401)
+      : jsonResponse({ success: true, data: null }),
   );
 }
 
 describe('App', () => {
-  it('sends anonymous visitors from / to the sign-in page, which shows service status', async () => {
-    const fetchMock = vi.fn(fakeBackend);
-    vi.stubGlobal('fetch', fetchMock);
+  it('sends anonymous visitors from / to the sign-in page', async () => {
+    vi.stubGlobal('fetch', vi.fn(fakeBackend));
 
     render(<App />);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('complementary', { name: 'How registration works' })).toBeVisible();
-
-    const status = screen.getByRole('region', { name: 'Service status' });
-    const database = (await within(status).findByText('Database')).closest('div');
-    expect(within(database as HTMLElement).getByText('Operational')).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/health',
-      expect.objectContaining({ method: 'GET', credentials: 'include' }),
-    );
   });
 
-  it('says so (and offers a retry) when the server is unreachable', async () => {
+  it('is the form and nothing else: no process explainer, status panel or demo accounts', async () => {
+    vi.stubGlobal('fetch', vi.fn(fakeBackend));
+
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Service status' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/demo account/i)).not.toBeInTheDocument();
+    // What must still be there.
+    expect(screen.getByLabelText(/e-mail address/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Forgot your password?' })).toBeInTheDocument();
+  });
+
+  it('still renders the sign-in page when the server is unreachable', async () => {
+    // The session probe failing must not leave a blank page: the form is the
+    // one thing a visitor can still usefully be shown.
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
@@ -58,7 +56,7 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Server unreachable')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check again' })).toBeEnabled();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 });

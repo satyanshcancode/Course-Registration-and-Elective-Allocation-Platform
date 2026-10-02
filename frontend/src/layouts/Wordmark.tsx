@@ -4,17 +4,22 @@ import styles from './Wordmark.module.css';
 interface WordmarkProps {
   /** Where the wordmark links (the user's home, or the sign-in page). */
   to: string;
-  /** Hide the words on the narrowest screens, keeping the mark. */
+  /** Hide the office line on the narrowest screens, keeping the name. */
   compact?: boolean;
 }
 
-/** An index card with ruled lines: the catalogue, drawn in two strokes. */
-function CatalogueMark() {
+/**
+ * Four seats, three taken and one still open — the same dot matrix the
+ * catalogue draws beside every course, at its smallest possible size. The mark
+ * and the product are about the one seat that is left.
+ */
+function SeatMark() {
   return (
-    <svg className={styles.mark} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <rect x="3.75" y="5.75" width="16.5" height="12.5" rx="1.25" />
-      <path d="M7 9.75h10M7 12.5h10M7 15.25h6" />
-      <path className={styles.tab} d="M15.5 5.75v-2h3v2" />
+    <svg className={styles.mark} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <circle className={styles.taken} cx="6" cy="6" r="3" />
+      <circle className={styles.taken} cx="14" cy="6" r="3" />
+      <circle className={styles.taken} cx="6" cy="14" r="3" />
+      <circle className={styles.open} cx="14" cy="14" r="2.25" />
     </svg>
   );
 }
@@ -22,9 +27,9 @@ function CatalogueMark() {
 export function Wordmark({ to, compact = false }: WordmarkProps) {
   return (
     <Link to={to} className={styles.wordmark} data-compact={compact ? 'true' : undefined}>
-      <CatalogueMark />
+      <SeatMark />
       <span className={styles.words}>
-        <span className={styles.name}>Course Registration</span>
+        <span className={styles.name}>Allocademy</span>
         <span className={styles.office}>University Registrar</span>
       </span>
     </Link>

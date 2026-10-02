@@ -2,6 +2,7 @@ import type { CatalogueCourse } from '@course-reg/shared';
 import { TrendingUp, Users } from 'lucide-react';
 import { Link, type To } from 'react-router';
 import { describeDemand, isOversubscribed } from '../../utils/courseText';
+import { departmentTone } from '../../utils/departmentTone';
 import type { CartAction as CartActionState } from '../../utils/cartActions';
 import { describeReason } from '../../utils/eligibilityText';
 import { CartAction } from '../CartAction';
@@ -48,7 +49,11 @@ export function CourseCard({
   const hot = isOversubscribed(course.demand, course.capacity);
 
   return (
-    <article className={styles.card} data-course-code={course.code}>
+    <article
+      className={styles.card}
+      data-dept={departmentTone(course.department.code)}
+      data-course-code={course.code}
+    >
       {personal && (
         <div className={styles.stamp}>
           <span className="visually-hidden">Your status: </span>

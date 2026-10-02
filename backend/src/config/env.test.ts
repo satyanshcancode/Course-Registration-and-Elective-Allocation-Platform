@@ -29,7 +29,7 @@ describe('parseEnv', () => {
       APP_BASE_URL: 'http://localhost:5173',
       SMTP_PORT: 1025,
       SMTP_SECURE: false,
-      MAIL_FROM: 'Course Registration <no-reply@university.edu>',
+      MAIL_FROM: 'Allocademy <no-reply@university.edu>',
     });
   });
 
@@ -114,16 +114,16 @@ describe('parseEnv', () => {
   it('reads the sender name as an optional setting beside the address', () => {
     // Nothing set: the historical single-header default still stands alone.
     const bare = parseEnv(appEnvSchema, validEnv);
-    expect(bare.MAIL_FROM).toBe('Course Registration <no-reply@university.edu>');
+    expect(bare.MAIL_FROM).toBe('Allocademy <no-reply@university.edu>');
     expect(bare.MAIL_FROM_NAME).toBeUndefined();
 
     const named = parseEnv(appEnvSchema, {
       ...validEnv,
       MAIL_FROM: 'no-reply@university.edu',
-      MAIL_FROM_NAME: 'Course Registration',
+      MAIL_FROM_NAME: 'Allocademy',
     });
     expect(named.MAIL_FROM).toBe('no-reply@university.edu');
-    expect(named.MAIL_FROM_NAME).toBe('Course Registration');
+    expect(named.MAIL_FROM_NAME).toBe('Allocademy');
 
     // Compose passes `${MAIL_FROM_NAME:-}` when .env does not set it.
     expect(
