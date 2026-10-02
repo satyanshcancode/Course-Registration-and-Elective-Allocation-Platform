@@ -1,10 +1,10 @@
-# Course Registration and Elective Allocation Platform
+# Allocademy
 
-A web platform for fair course registration: a live course catalogue, an
-eligibility pre-check before the window opens, a registration cart that submits
-atomically, preference-and-priority allocation for oversubscribed electives,
-waitlists that promote automatically as seats free up, add/drop, and a personal
-registration history.
+**Course registration and elective allocation, done fairly.** A live course
+catalogue, an eligibility pre-check before the window opens, a registration cart
+that submits atomically, preference-and-priority allocation for oversubscribed
+electives, waitlists that promote automatically as seats free up, add/drop, and
+a personal registration history.
 
 ![Student dashboard](docs/screenshots/student-dashboard-1280-light.png)
 
@@ -16,6 +16,7 @@ registration history.
 | [docs/CONCURRENCY.md](docs/CONCURRENCY.md)                 | The atomic submit, promotion and the seat race    |
 | [docs/DATABASE.md](docs/DATABASE.md)                       | Schema, constraints and seed data                 |
 | [docs/DESIGN.md](docs/DESIGN.md)                           | The visual system and every review round          |
+| [docs/redesign/](docs/redesign/)                           | The three directions this design was chosen from  |
 | [docs/DEMO.md](docs/DEMO.md)                               | A step-by-step script for demonstrating it        |
 | [docs/javascript-concepts.md](docs/javascript-concepts.md) | Where the JavaScript and TypeScript concepts live |
 
@@ -178,6 +179,40 @@ exists.
 
 ---
 
+## Design
+
+**A warm academic catalogue, not a dashboard.** Finding out what you can take
+and whether there is room is a reading task before it is a control task, so the
+interface is built like a catalogue: clay around warm paper, forest green as the
+one colour you have to learn, and ruled entries rather than a grid of boxed
+cards. Terracotta means "you cannot have this" and nothing else; amber means
+"not yet".
+
+**Fraunces** carries the voice on its optical-size axis — a 40px page title and
+a 13px course code are drawn differently rather than scaled — with **Work Sans**
+for the interface and **IBM Plex Mono** kept for the things that align by the
+character. Both are self-hosted variable fonts; there is no Tailwind, no CSS
+framework and no inline styles, only hand-written CSS Modules over the tokens in
+[`variables.css`](frontend/src/styles/variables.css).
+
+**The seat count gets a drawing as well as a number**: a twenty-dot matrix,
+filled = taken, the same size on every course whatever its capacity, with the
+exact figures beside it. Nothing is ever carried by colour alone — every status
+is an icon plus words, and every meter prints its numbers.
+
+[`node frontend/src/styles/contrast.mjs`](frontend/src/styles/contrast.mjs)
+reads the tokens straight out of the stylesheet and checks all 48 pairs across
+both themes against WCAG AA, 4.5:1 for text and 3:1 for borders. It exits
+non-zero on a failure, so the palette cannot quietly drift.
+
+The full system, the dark theme and every review round:
+[docs/DESIGN.md](docs/DESIGN.md). The two directions it was chosen over:
+[docs/redesign/](docs/redesign/).
+
+![Course catalogue](docs/screenshots/student-courses-1280-light.png)
+
+---
+
 ## Architecture
 
 ```mermaid
@@ -261,7 +296,8 @@ flowchart TB
 | **TypeScript 5.9**          | Everywhere, `strict` plus `noUncheckedIndexedAccess`. `any` is a lint error                          |
 | **Vite 6**                  | Dev server with hot reload, and the production build with route-level code splitting                 |
 | **React Router 7**          | Routing, lazy route chunks, and the layout routes that guard student and admin areas                 |
-| **CSS Modules + CSS3**      | All styling. Design tokens as custom properties; no Tailwind, no CSS-in-JS                           |
+| **CSS Modules + CSS3**      | All styling, hand-written. Design tokens as custom properties; no Tailwind, no CSS-in-JS             |
+| **Fraunces + Work Sans**    | Self-hosted variable fonts. Fraunces carries the display voice on its optical-size axis              |
 | **Node 20.12+**             | The backend runtime (developed on 20, verified on 22 and 24)                                         |
 | **Express 5**               | HTTP, middleware, routing                                                                            |
 | **PostgreSQL 16**           | The source of truth: constraints, triggers, transactions, `FOR UPDATE`/`FOR SHARE`, advisory locks   |
