@@ -71,7 +71,14 @@ export const appEnvSchema = databaseEnvSchema
       .transform((value) => value === 'true'),
     SMTP_USER: optionalSetting(),
     SMTP_PASSWORD: optionalSetting(),
+    /**
+     * The sender. Historically a whole header ("Name <address>"), which still
+     * works; set MAIL_FROM to the bare address and MAIL_FROM_NAME to the name
+     * to let the two be configured apart (see mail/fromHeader.ts). A relay such
+     * as Brevo only accepts an address it has verified as a sender.
+     */
     MAIL_FROM: z.string().min(1).default('Course Registration <no-reply@university.edu>'),
+    MAIL_FROM_NAME: optionalSetting(),
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV === 'production' && env.JWT_SECRET === EXAMPLE_JWT_SECRET) {

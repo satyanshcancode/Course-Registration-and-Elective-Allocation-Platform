@@ -111,6 +111,26 @@ describe('parseEnv', () => {
     );
   });
 
+  it('reads the sender name as an optional setting beside the address', () => {
+    // Nothing set: the historical single-header default still stands alone.
+    const bare = parseEnv(appEnvSchema, validEnv);
+    expect(bare.MAIL_FROM).toBe('Course Registration <no-reply@university.edu>');
+    expect(bare.MAIL_FROM_NAME).toBeUndefined();
+
+    const named = parseEnv(appEnvSchema, {
+      ...validEnv,
+      MAIL_FROM: 'no-reply@university.edu',
+      MAIL_FROM_NAME: 'Course Registration',
+    });
+    expect(named.MAIL_FROM).toBe('no-reply@university.edu');
+    expect(named.MAIL_FROM_NAME).toBe('Course Registration');
+
+    // Compose passes `${MAIL_FROM_NAME:-}` when .env does not set it.
+    expect(
+      parseEnv(appEnvSchema, { ...validEnv, MAIL_FROM_NAME: '' }).MAIL_FROM_NAME,
+    ).toBeUndefined();
+  });
+
   it('refuses half an SMTP credential', () => {
     expect(() => parseEnv(appEnvSchema, { ...validEnv, SMTP_USER: 'mailer' })).toThrow(
       /SMTP_PASSWORD: SMTP_USER and SMTP_PASSWORD must be set together/,
