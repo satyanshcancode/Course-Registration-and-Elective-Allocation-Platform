@@ -205,9 +205,21 @@ reads the tokens straight out of the stylesheet and checks all 48 pairs across
 both themes against WCAG AA, 4.5:1 for text and 3:1 for borders. It exits
 non-zero on a failure, so the palette cannot quietly drift.
 
-The full system, the dark theme and every review round:
-[docs/DESIGN.md](docs/DESIGN.md). The two directions it was chosen over:
-[docs/redesign/](docs/redesign/).
+**A colour either carries a labelled key or it does not appear.** There are no
+decorative left stripes: an earlier draft hashed each department to one of five
+tones, and it went, because nothing on the page told a reader what plum meant.
+What is left is states with words beside them. Hover tells you a thing is
+interactive and stops there, nothing lifts or glows, and the interface copy has
+no em dashes in it (the one in a table cell is a value meaning "none").
+
+Privacy and Terms are written in plain English and linked from every footer.
+Both say up front that they are a template: the data controller, the retention
+period, the applicable law and the complaints route are the university's to
+fill in.
+
+The full system, the reasoning behind each of those decisions, the dark theme
+and every review round: [docs/DESIGN.md](docs/DESIGN.md). The two directions it
+was chosen over: [docs/redesign/](docs/redesign/).
 
 ![Course catalogue](docs/screenshots/student-courses-1280-light.png)
 

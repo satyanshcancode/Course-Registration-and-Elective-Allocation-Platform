@@ -379,7 +379,6 @@ export function AdminCataloguePage() {
           itemName={{ one: 'course', other: 'courses' }}
           emptyTitle="The catalogue is empty"
           emptyMessage="Add a course, or import a CSV file, to get started."
-          getRowTone={(row) => (row.isActive ? undefined : 'warning')}
           onBodyClick={handleBodyClick}
         />
       </div>

@@ -160,7 +160,6 @@ export function AdminCoursesPage() {
           itemName={{ one: 'offering', other: 'offerings' }}
           emptyTitle="No offerings in this window"
           emptyMessage="Courses appear here once they are offered in a registration window."
-          getRowTone={(row) => (row.oversubscribed ? 'warning' : undefined)}
         />
       </div>
 

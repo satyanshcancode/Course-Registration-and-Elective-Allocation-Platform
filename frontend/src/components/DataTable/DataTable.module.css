@@ -158,9 +158,3 @@
   margin-right: var(--space-3);
   color: var(--color-ink-muted);
 }
-
-/* A marked row (e.g. oversubscribed): an ochre rule down its left edge. The
-   row always says why in words too. */
-.row[data-tone='warning'] .cell:first-child {
-  box-shadow: inset 3px 0 0 var(--color-warning);
-}

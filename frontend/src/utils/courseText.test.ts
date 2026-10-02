@@ -15,6 +15,7 @@ describe('describeMyStatus', () => {
     expect(describeMyStatus({ code: 'SUBMITTED', rank: 1 })).toBe('Choice 1 · submitted');
     expect(describeMyStatus({ code: 'ENROLLED' })).toBe('Enrolled');
     expect(describeMyStatus({ code: 'WAITLISTED', position: 7 })).toBe('Waitlisted · #7');
+    expect(describeMyStatus({ code: 'NOT_ALLOCATED', rank: 3 })).toBe('Choice 3 · no seat');
   });
 });
 

@@ -109,7 +109,6 @@ export function CsvImportReportTable({ report, itemName }: CsvImportReportTableP
       itemName={{ one: 'row', other: 'rows' }}
       emptyTitle="The file has no rows"
       emptyMessage="Only a header row was found. Add one line per student or course below it."
-      getRowTone={(row) => (row.verdict.kind === 'ok' ? undefined : 'warning')}
     />
   );
 }
