@@ -5,8 +5,6 @@ import { Link, Navigate, useLocation } from 'react-router';
 import { Button } from '../../components/Button';
 import { FormField } from '../../components/FormField';
 import { Input } from '../../components/Input';
-import { ServiceStatus } from '../../components/ServiceStatus';
-import { DemoAccountHints } from './DemoAccountHints';
 import { useAuth } from '../../hooks/useAuth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../../hooks/useFocusOnMount';
@@ -29,25 +27,6 @@ const NOTICES: Record<LoginNotice, string> = {
 };
 
 const INITIAL_VALUES: LoginRequest = { email: '', password: '' };
-
-const STEPS: readonly { title: string; text: string }[] = [
-  {
-    title: 'Check your eligibility',
-    text: 'Before the window opens, see which courses you can take and why.',
-  },
-  {
-    title: 'Rank up to five courses',
-    text: 'Your first choice carries the most weight in allocation.',
-  },
-  {
-    title: 'Submit once',
-    text: 'All of your choices are saved together. Submitting early gives no advantage.',
-  },
-  {
-    title: 'See your results',
-    text: 'Full courses go by preference and priority, not by speed. Everyone else joins a waitlist.',
-  },
-];
 
 export function LoginPage() {
   useDocumentTitle('Sign in');
@@ -210,29 +189,6 @@ export function LoginPage() {
           <Link to="/forgot-password">Forgot your password?</Link>
         </p>
       </section>
-
-      <aside className={styles.aside} aria-labelledby="how-it-works">
-        <h2 id="how-it-works" className={styles.asideTitle}>
-          How registration works
-        </h2>
-        <ol className={styles.steps}>
-          {STEPS.map((step, index) => (
-            <li key={step.title} className={styles.step}>
-              <span className={styles.stepNumber} aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <p className={styles.stepTitle}>{step.title}</p>
-                <p className={styles.stepText}>{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <ServiceStatus />
-        {/* In a production build this is the literal `false`, so the component
-            and its credentials are never bundled. */}
-        {import.meta.env.DEV && <DemoAccountHints />}
-      </aside>
     </div>
   );
 }

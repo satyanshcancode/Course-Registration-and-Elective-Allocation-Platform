@@ -26,7 +26,7 @@ export function PublicLayout() {
         </ErrorBoundary>
       </main>
       <footer className={styles.footer}>
-        <p>Course Registration · University Registrar</p>
+        <p>Allocademy · University Registrar</p>
       </footer>
     </div>
   );

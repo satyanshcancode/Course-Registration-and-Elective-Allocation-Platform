@@ -73,7 +73,7 @@ services:
       # an empty setting as unset (config/env.ts).
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-Course Registration <no-reply@university.edu>}
+      MAIL_FROM: ${MAIL_FROM:-Allocademy <no-reply@university.edu>}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-}
       # Bind mounts from Windows/macOS hosts do not emit inotify events.
       CHOKIDAR_USEPOLLING: 'true'

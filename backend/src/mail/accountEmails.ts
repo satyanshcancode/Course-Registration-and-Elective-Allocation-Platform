@@ -26,7 +26,7 @@ export interface ResetEmail {
   expiresInHours: number;
 }
 
-const SIGN_OFF = 'The Registrar\nCourse Registration and Elective Allocation Platform';
+const SIGN_OFF = 'The Registrar\nAllocademy · University Registrar';
 
 function hours(count: number): string {
   return count === 1 ? '1 hour' : `${count} hours`;

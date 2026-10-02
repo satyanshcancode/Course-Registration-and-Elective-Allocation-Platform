@@ -9,7 +9,7 @@ export interface SmtpOptions {
   secure: boolean;
   user: string | undefined;
   password: string | undefined;
-  /** The From header, e.g. "Course Registration <no-reply@university.edu>". */
+  /** The From header, e.g. "Allocademy <no-reply@university.edu>". */
   from: string;
 }
 

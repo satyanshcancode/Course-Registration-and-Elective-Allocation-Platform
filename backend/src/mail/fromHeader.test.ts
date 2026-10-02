@@ -3,17 +3,17 @@ import { formatFromHeader } from './fromHeader.js';
 
 describe('formatFromHeader', () => {
   it('pairs a bare address with the display name', () => {
-    expect(formatFromHeader('no-reply@university.edu', 'Course Registration')).toBe(
-      '"Course Registration" <no-reply@university.edu>',
+    expect(formatFromHeader('no-reply@university.edu', 'Allocademy')).toBe(
+      '"Allocademy" <no-reply@university.edu>',
     );
   });
 
   it('leaves a value that is already a whole header alone', () => {
     // What .env.example ships, and what existing .env files carry: wrapping it
     // again would nest one header inside another.
-    expect(
-      formatFromHeader('Course Registration <no-reply@university.edu>', 'University Registrar'),
-    ).toBe('Course Registration <no-reply@university.edu>');
+    expect(formatFromHeader('Allocademy <no-reply@university.edu>', 'University Registrar')).toBe(
+      'Allocademy <no-reply@university.edu>',
+    );
   });
 
   it('returns the address alone when no name is set', () => {
@@ -31,8 +31,8 @@ describe('formatFromHeader', () => {
   });
 
   it('trims either setting', () => {
-    expect(formatFromHeader('  no-reply@university.edu  ', '  Course Registration  ')).toBe(
-      '"Course Registration" <no-reply@university.edu>',
+    expect(formatFromHeader('  no-reply@university.edu  ', '  Allocademy  ')).toBe(
+      '"Allocademy" <no-reply@university.edu>',
     );
   });
 });

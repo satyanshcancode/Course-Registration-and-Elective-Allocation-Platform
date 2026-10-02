@@ -8,7 +8,7 @@ export function AdminLayout() {
       areaLabel="Administration"
       homePath="/admin/dashboard"
       items={ADMIN_NAV}
-      footerNote="Course Registration · Registrar administration"
+      footerNote="Allocademy · Registrar administration"
     />
   );
 }

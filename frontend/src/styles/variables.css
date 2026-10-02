@@ -6,36 +6,53 @@
 :root {
   color-scheme: light dark;
 
-  /* ---- Colour: paper theme (light) -------------------------------------- */
-  --color-paper: #f7f5f0;
-  --color-surface: #fcfbf8;
-  --color-surface-sunken: #efece4;
-  --color-ink: #1d1b17;
-  --color-ink-muted: #5a554c;
-  --color-rule: #dcd6ca;
-  --color-rule-strong: #8c8577;
+  /* ---- Colour: Quad theme (light) ---------------------------------------
+   * Clay surrounds warm paper. Forest green is the primary and the only
+   * colour a reader is asked to recognise; terracotta means "you cannot have
+   * this" and nothing else; amber means "not yet". Every pair below clears
+   * WCAG AA against the surface it is used on (docs/DESIGN.md records them).
+   */
+  --color-paper: #e8e1d6;
+  --color-surface: #fdfbf7;
+  --color-surface-sunken: #f2ece1;
+  --color-ink: #241f1a;
+  --color-ink-muted: #585046;
+  --color-rule: #d6cdbe;
+  --color-rule-strong: #887d6d;
 
-  --color-accent: #1f4d3a;
-  --color-accent-hover: #163a2b;
-  --color-accent-soft: #e1ebe4;
-  --color-on-accent: #fcfbf8;
+  --color-accent: #2f5d4a;
+  --color-accent-hover: #244a3b;
+  --color-accent-soft: #dfe9e3;
+  --color-on-accent: #fdfbf7;
 
-  --color-success: #2d6630;
-  --color-success-soft: #e3eddd;
-  --color-warning: #85560a;
-  --color-warning-soft: #f4e9d0;
-  --color-danger: #9a2f22;
-  --color-danger-soft: #f4e2dd;
-  --color-info: #475467;
-  --color-info-soft: #e6e8ec;
+  --color-success: #2f5d4a;
+  --color-success-soft: #dfe9e3;
+  --color-warning: #8a5a06;
+  --color-warning-soft: #f7ecd6;
+  --color-danger: #a04a26;
+  --color-danger-soft: #f6e3da;
+  --color-info: #41566b;
+  --color-info-soft: #e3e8ed;
+
+  /* Department tones for the catalogue spine. Never the only signal: the
+     department is always written out beside it. */
+  --color-dept-a: #2f5d4a;
+  --color-dept-b: #a04a26;
+  --color-dept-c: #8a5a06;
+  --color-dept-d: #41566b;
+  --color-dept-e: #6b4a63;
 
   --color-focus: var(--color-accent);
-  --color-backdrop: rgb(29 27 23 / 0.45);
-  --color-shadow: 29 27 23;
+  --color-backdrop: rgb(36 31 26 / 0.45);
+  --color-shadow: 36 31 26;
 
   /* ---- Typography --------------------------------------------------------- */
-  --font-serif: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Fraunces carries the voice: a soft serif with an optical-size axis, so
+     a 42px page title and a 13px course code are drawn differently rather
+     than scaled. Work Sans does the interface work; IBM Plex Mono is kept
+     for the things that must align by the character. */
+  --font-serif: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Work Sans Variable', 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   /* 1.2 (minor third) scale from 1rem; the largest steps are fluid. */
@@ -52,14 +69,14 @@
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-heading: 580;
+  --weight-heading: 600;
 
   --leading-tight: 1.15;
   --leading-snug: 1.3;
   --leading-dense: 1.45;
   --leading-body: 1.55;
 
-  --tracking-heading: -0.018em;
+  --tracking-heading: -0.028em;
   --tracking-kicker: 0.08em;
   --tracking-code: 0.04em;
 
@@ -75,9 +92,9 @@
   --space-8: 4rem;
 
   /* ---- Shape -------------------------------------------------------------- */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
+  --radius-sm: 4px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
   --border-hairline: 1px solid var(--color-rule);
   --border-control: 1px solid var(--color-rule-strong);
 
@@ -122,32 +139,38 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* "Ink" theme: only colour tokens change. */
+/* "Lamplight" theme: only colour tokens change, and they stay warm. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #1b1916;
-    --color-surface: #23201c;
-    --color-surface-sunken: #16140f;
-    --color-ink: #ece7dc;
-    --color-ink-muted: #b3ac9e;
-    --color-rule: #3a3630;
-    --color-rule-strong: #7d7667;
+    --color-paper: #191611;
+    --color-surface: #221d17;
+    --color-surface-sunken: #13100c;
+    --color-ink: #f0e9dd;
+    --color-ink-muted: #b6ab9b;
+    --color-rule: #3a342b;
+    --color-rule-strong: #887c68;
 
-    --color-accent: #8cc3a4;
-    --color-accent-hover: #a4d2b8;
-    --color-accent-soft: #223329;
+    --color-accent: #86c3a3;
+    --color-accent-hover: #9fd3b6;
+    --color-accent-soft: #1e3028;
     --color-on-accent: #10201a;
 
-    --color-success: #96c68e;
-    --color-success-soft: #233020;
-    --color-warning: #ddae55;
-    --color-warning-soft: #382c15;
-    --color-danger: #e8978a;
-    --color-danger-soft: #3c221d;
-    --color-info: #aeb8c6;
-    --color-info-soft: #282c32;
+    --color-success: #86c3a3;
+    --color-success-soft: #1e3028;
+    --color-warning: #e0b468;
+    --color-warning-soft: #352a14;
+    --color-danger: #e79e78;
+    --color-danger-soft: #3a241a;
+    --color-info: #a9bace;
+    --color-info-soft: #232a31;
 
-    --color-backdrop: rgb(0 0 0 / 0.6);
+    --color-dept-a: #86c3a3;
+    --color-dept-b: #e79e78;
+    --color-dept-c: #e0b468;
+    --color-dept-d: #a9bace;
+    --color-dept-e: #c3a1bc;
+
+    --color-backdrop: rgb(0 0 0 / 0.62);
     --color-shadow: 0 0 0;
   }
 }

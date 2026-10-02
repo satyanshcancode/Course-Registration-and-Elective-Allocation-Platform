@@ -1,4 +1,3 @@
-import type { CSSWithVariables } from '../../types/css';
 import {
   formatDemandRatio,
   seatFillLevel,
@@ -25,9 +24,33 @@ const LEVEL_WORDS: Record<SeatFillLevel, string | null> = {
 };
 
 /**
- * Seat availability as a slim bar with the exact numbers beside it:
- * "37 of 50 allocated · 13 left". The tone changes as it fills, but the
- * numbers (and "Full") always carry the meaning.
+ * How many of the twenty dots are filled.
+ *
+ * Twenty whatever the capacity: one dot per seat would make an 80-seat course
+ * four times the height of a 20-seat one, and the row has to stay the same
+ * height down the page. A course with any seat taken keeps at least one dot
+ * filled, and one with any seat left keeps at least one empty — otherwise a
+ * nearly-full course and a full one would look identical, which is the one
+ * distinction this drawing exists to make.
+ */
+export const SEAT_DOTS = 20;
+
+export function filledDots(allocated: number, capacity: number): number {
+  if (capacity <= 0 || allocated >= capacity) {
+    return SEAT_DOTS;
+  }
+  if (allocated <= 0) {
+    return 0;
+  }
+  const scaled = Math.round((allocated / capacity) * SEAT_DOTS);
+  return Math.min(SEAT_DOTS - 1, Math.max(1, scaled));
+}
+
+/**
+ * Seat availability as a twenty-dot matrix with the exact numbers beside it:
+ * "37 of 50 allocated · 13 left". The dots give the proportion at a glance and
+ * the tone changes as it fills, but the numbers (and the word "Full") always
+ * carry the meaning — the drawing is never the only signal.
  */
 export function SeatMeter({
   allocated,
@@ -38,14 +61,13 @@ export function SeatMeter({
 }: SeatMeterProps) {
   const left = seatsLeft(allocated, capacity);
   const level = seatFillLevel(allocated, capacity);
-  const percent = capacity > 0 ? Math.min(100, (allocated / capacity) * 100) : 100;
+  const filled = filledDots(allocated, capacity);
   const valueText = `${allocated} of ${capacity} allocated, ${left} left`;
-  const style: CSSWithVariables = { '--fill': `${percent.toFixed(1)}%` };
 
   return (
     <div className={styles.meter} data-level={level} data-compact={compact ? 'true' : undefined}>
       <div
-        className={styles.track}
+        className={styles.dots}
         role="meter"
         aria-label={label}
         aria-valuemin={0}
@@ -53,7 +75,14 @@ export function SeatMeter({
         aria-valuenow={Math.min(allocated, capacity)}
         aria-valuetext={valueText}
       >
-        <span className={styles.fill} style={style} />
+        {Array.from({ length: SEAT_DOTS }, (_, index) => (
+          <span
+            key={index}
+            className={styles.dot}
+            data-taken={index < filled ? 'true' : undefined}
+            aria-hidden="true"
+          />
+        ))}
       </div>
       <p className={styles.numbers} aria-hidden="true">
         {compact ? (

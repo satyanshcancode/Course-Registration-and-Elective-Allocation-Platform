@@ -53,7 +53,7 @@ describe('CourseDetailPage', () => {
     // The title is set by an effect, which React may flush after the heading
     // renders; asserting it directly is a race under a loaded test run.
     await waitFor(() => {
-      expect(document.title).toBe('CS401 Artificial Intelligence · Course Registration');
+      expect(document.title).toBe('CS401 Artificial Intelligence · Allocademy');
     });
 
     const article = screen.getByRole('article', { name: 'CS401 Artificial Intelligence' });

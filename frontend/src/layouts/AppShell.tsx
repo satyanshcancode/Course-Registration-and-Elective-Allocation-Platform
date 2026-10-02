@@ -83,7 +83,7 @@ export function AppShell({
       </main>
 
       <footer className={styles.footer}>
-        <p>{footerNote ?? 'Course Registration · University Registrar'}</p>
+        <p>{footerNote ?? 'Allocademy · University Registrar'}</p>
       </footer>
     </div>
   );

@@ -88,7 +88,7 @@ describe('LoginPage validation', () => {
     expect(screen.getByLabelText('E-mail address')).toHaveAttribute('autocomplete', 'username');
     expect(password).toHaveAttribute('autocomplete', 'current-password');
     expect(password).toBeRequired();
-    expect(document.title).toBe('Sign in · Course Registration');
+    expect(document.title).toBe('Sign in · Allocademy');
 
     await user.click(screen.getByRole('button', { name: 'Show password' }));
     expect(password).toHaveAttribute('type', 'text');
