@@ -93,12 +93,12 @@ function nextSteps(
       return [
         'Add courses to your cart from the catalogue, most wanted first.',
         `You can rank up to ${MAX_PREFERENCES}.`,
-        'Submit before the window closes — a saved draft is not a submission.',
+        'Submit before the window closes: a saved draft is not a submission.',
       ];
     }
     return [
       `You have ${cart.items.length} of ${MAX_PREFERENCES} courses ranked. Check the order.`,
-      'Submit before the window closes — a saved draft is not a submission.',
+      'Submit before the window closes: a saved draft is not a submission.',
       'Seat counts change: check what is realistic before you submit.',
     ];
   }
@@ -113,7 +113,7 @@ function nextSteps(
     case 'OPEN':
       return [
         'Rank up to five courses in your cart, most wanted first.',
-        'Submit before the window closes — a saved draft is not a submission.',
+        'Submit before the window closes: a saved draft is not a submission.',
         'Check the seat counts: demand changes what is realistic.',
       ];
     case 'CLOSED':

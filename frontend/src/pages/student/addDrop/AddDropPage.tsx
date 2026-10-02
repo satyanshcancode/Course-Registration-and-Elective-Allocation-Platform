@@ -285,7 +285,7 @@ export function AddDropPage() {
 
             {unreachable && (
               <p className={styles.retryNote} role="alert">
-                We couldn’t confirm your change. Trying again is safe — it won’t move a second seat.
+                We couldn’t confirm your change. Trying again is safe: it won’t move a second seat.
               </p>
             )}
 
@@ -347,7 +347,7 @@ export function AddDropPage() {
                 <p className={styles.lead}>
                   {view.held
                     ? 'A waitlist place is only offered to a student holding nothing, so drop your course first if you would rather wait for one of these.'
-                    : 'Join a queue and you are moved in automatically as soon as a seat frees up — there is nothing to accept and nothing to claim.'}
+                    : 'Join a queue and you are moved in automatically as soon as a seat frees up. There is nothing to accept and nothing to claim.'}
                 </p>
                 {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: every click comes from a real <button>, which handles the keyboard itself */}
                 <ul className={styles.list} onClick={onSurfaceClick}>
@@ -451,7 +451,7 @@ export function AddDropPage() {
               )}
               {unreachable && (
                 <p className={styles.retryNote}>
-                  We couldn’t confirm the drop. Trying again is safe — it won’t release a second
+                  We couldn’t confirm the drop. Trying again is safe: it won’t release a second
                   seat.
                 </p>
               )}
@@ -549,7 +549,7 @@ function HeldSeat({
             Drop {held.course.code}
           </Button>
           <p className={styles.hint}>
-            To change course instead, use <strong>Swap</strong> on one of the courses below — your
+            To change course instead, use <strong>Swap</strong> on one of the courses below. Your
             seat moves in one step.
           </p>
         </div>

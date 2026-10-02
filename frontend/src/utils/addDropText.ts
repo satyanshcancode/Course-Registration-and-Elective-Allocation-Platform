@@ -36,11 +36,11 @@ export function describeHeldSeat(held: AddDropSeat): string {
   switch (held.source) {
     case 'ALLOCATION':
       return rank
-        ? `Allocated to you in the registration round — your ${rank} choice.`
+        ? `Allocated to you in the registration round, your ${rank} choice.`
         : 'Allocated to you in the registration round.';
     case 'WAITLIST_PROMOTION':
       return rank
-        ? `A seat freed up and you were next in line — your ${rank} choice.`
+        ? `A seat freed up and you were next in line, your ${rank} choice.`
         : 'A seat freed up and you were next in line.';
     case 'ADD':
       return 'You took this seat during add/drop.';
@@ -113,7 +113,7 @@ export function describeProblem(problem: AddDropProblem): string {
     case 'NO_SEAT_HELD':
       return 'You do not hold a course to change.';
     case 'NOT_THE_HELD_SEAT':
-      return `You hold ${problem.heldCode}, not ${problem.code}. This page is out of date — reload it.`;
+      return `You hold ${problem.heldCode}, not ${problem.code}. This page is out of date. Reload it.`;
     case 'SAME_COURSE':
       return `${problem.code} is the course you already hold.`;
     case 'ALREADY_WAITING':

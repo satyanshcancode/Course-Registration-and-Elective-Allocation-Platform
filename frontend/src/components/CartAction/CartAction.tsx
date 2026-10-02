@@ -74,7 +74,7 @@ export function CartAction({ action, code, name, compact = false }: CartActionPr
       // The reason itself is already on screen beside this control (the
       // eligibility badge on a card or a row, the checklist on the detail
       // page), so repeating it here would say the same thing twice.
-      return <p className={styles.note}>Not eligible — this course can’t be ranked.</p>;
+      return <p className={styles.note}>Not eligible: this course can’t be ranked.</p>;
 
     case 'locked':
       return <p className={styles.note}>{action.reason}</p>;

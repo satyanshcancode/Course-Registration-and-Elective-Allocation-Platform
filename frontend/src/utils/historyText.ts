@@ -63,7 +63,7 @@ export function describeHistoryEvent(event: HistoryEvent): string {
         ? `You submitted your preferences${receipt}.`
         : `You submitted ${detail.courseCodes.length} ${
             detail.courseCodes.length === 1 ? 'preference' : 'preferences'
-          } — ${list(detail.courseCodes)}${receipt}.`;
+          }: ${list(detail.courseCodes)}${receipt}.`;
     }
 
     case 'ALLOCATED': {

@@ -123,7 +123,7 @@ export function AllocationRunsPage() {
             {window.status === 'OPEN' && (
               <p className={styles.note}>
                 Registration is still open, so the preferences are not final. Allocation runs once
-                the window is closed —{' '}
+                the window is closed.{' '}
                 <Link to="/admin/registration-window">close it on the window page</Link> when the
                 deadline passes.
               </p>
@@ -256,7 +256,7 @@ function TradeOffs({ preview }: { preview: AllocationPreview }) {
         </li>
         <li>
           Neither is free: scoring decides who <em>deserves</em> a seat using rules the registrar
-          chose — final year, programme relevance, graduation urgency — so the fairness it buys is
+          chose: final year, programme relevance, graduation urgency. So the fairness it buys is
           only as good as those rules. First come, first served needs no such judgement, and treats
           a fast connection as merit.
         </li>

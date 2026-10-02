@@ -36,15 +36,15 @@ export function describeUpgrade(
   held: { course: CourseRef; rank: PreferenceRank | null } | null,
 ): string {
   if (!held) {
-    return 'You have no seat yet, so any of these would be your first. You are moved in automatically as soon as one frees up — there is nothing to accept and nothing to claim.';
+    return 'You have no seat yet, so any of these would be your first. You are moved in automatically as soon as one frees up. There is nothing to accept and nothing to claim.';
   }
   const release = `Your ${held.course.code} seat would be released for the next student waiting for it.`;
   // A seat taken during add/drop was never ranked, so "higher" has nothing to
   // compare against — but every course below IS one they ranked, which is why
   // promotion still offers them one (see docs/ALLOCATION.md).
   return held.rank === null
-    ? `You hold a seat in ${held.course.code} ${held.course.name}, which you took during add/drop rather than ranking. Everything below is a course you did rank, so being moved up is still an improvement — and ${release.charAt(0).toLowerCase()}${release.slice(1)}`
-    : `You hold a seat in ${held.course.code} ${held.course.name}, your ${ordinal(held.rank)} choice. Everything below is a course you ranked higher, so being moved up is always an improvement — and ${release.charAt(0).toLowerCase()}${release.slice(1)}`;
+    ? `You hold a seat in ${held.course.code} ${held.course.name}, which you took during add/drop rather than ranking. Everything below is a course you did rank, so being moved up is still an improvement, and ${release.charAt(0).toLowerCase()}${release.slice(1)}`
+    : `You hold a seat in ${held.course.code} ${held.course.name}, your ${ordinal(held.rank)} choice. Everything below is a course you ranked higher, so being moved up is always an improvement, and ${release.charAt(0).toLowerCase()}${release.slice(1)}`;
 }
 
 export function describeRemoval(reason: WaitlistRemovalReason): string {
@@ -56,7 +56,7 @@ export function describeRemoval(reason: WaitlistRemovalReason): string {
     case 'STUDENT_LEFT':
       return 'you left this waitlist yourself';
     case 'SEAT_ELSEWHERE':
-      return 'you took a seat in another course, and this was a waitlist you joined during add/drop rather than one you ranked — so there was no way to tell whether moving you here would be an improvement';
+      return 'you took a seat in another course, and this was a waitlist you joined during add/drop rather than one you ranked, so there was no way to tell whether moving you here would be an improvement';
     default:
       return unhandled(reason);
   }

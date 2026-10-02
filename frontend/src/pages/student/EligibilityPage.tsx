@@ -76,8 +76,8 @@ export function EligibilityPage() {
           <>
             {data.window?.status === 'DRAFT' && (
               <p className={styles.notice}>
-                Registration opens {formatDateTime(data.window.startsAt)} — check now so there are
-                no surprises.
+                Registration opens {formatDateTime(data.window.startsAt)}. Check now so there are no
+                surprises.
               </p>
             )}
 
@@ -167,7 +167,7 @@ export function EligibilityPage() {
                     title="Not eligible"
                     status="NOT_ELIGIBLE"
                     courses={notEligible}
-                    emptyText="Nothing is out of reach — you can take every course shown."
+                    emptyText="Nothing is out of reach: you can take every course shown."
                   />
                 </>
               )}

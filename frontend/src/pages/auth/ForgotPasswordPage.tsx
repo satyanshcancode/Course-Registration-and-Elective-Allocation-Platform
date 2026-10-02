@@ -80,7 +80,7 @@ export function ForgotPasswordPage() {
       >
         <div className={styles.sent}>
           <p className={styles.help}>
-            The link works once and expires in 48 hours. If nothing arrives, check the spam folder —
+            The link works once and expires in 48 hours. If nothing arrives, check the spam folder.
             and if your account was created recently, look for the invitation e-mail instead.
           </p>
           <p className={styles.help}>Still stuck? The registrar can send you a new invitation.</p>

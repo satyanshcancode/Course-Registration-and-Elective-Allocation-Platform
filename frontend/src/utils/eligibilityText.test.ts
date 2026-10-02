@@ -12,10 +12,10 @@ const cases: [IneligibilityReason, string][] = [
         { code: 'ECE', name: 'Electronics' },
       ],
     },
-    'Open to CSE and ECE only — you’re in ME',
+    'Open to CSE and ECE only. You’re in ME',
   ],
-  [{ type: 'SEMESTER_TOO_LOW', required: 5, actual: 4 }, 'Needs semester 5 — you’re in semester 4'],
-  [{ type: 'CREDITS_TOO_LOW', required: 80, actual: 44 }, 'Needs 80 credits — you have 44'],
+  [{ type: 'SEMESTER_TOO_LOW', required: 5, actual: 4 }, 'Needs semester 5, you’re in semester 4'],
+  [{ type: 'CREDITS_TOO_LOW', required: 80, actual: 44 }, 'Needs 80 credits, you have 44'],
   [
     { type: 'PREREQUISITE_MISSING', course: { code: 'CS201', name: 'Data Structures' } },
     'Complete CS201 Data Structures first',
@@ -43,7 +43,7 @@ describe('describeReason', () => {
         program: { code: 'BBA', name: 'Business' },
         allowedPrograms: [{ code: 'CSE', name: 'Computer Science' }],
       }),
-    ).toBe('Open to CSE only — you’re in BBA');
+    ).toBe('Open to CSE only. You’re in BBA');
   });
 });
 

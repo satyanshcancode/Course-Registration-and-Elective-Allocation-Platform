@@ -190,7 +190,7 @@ export function CartPage() {
       // The answer never arrived. The same key is still armed, so pressing
       // the button again cannot create a second submission.
       setSubmitError(
-        'We couldn’t confirm your submission. Retrying is safe — it won’t create a duplicate.',
+        'We couldn’t confirm your submission. Retrying is safe: it won’t create a duplicate.',
       );
       return;
     }
@@ -378,7 +378,7 @@ function describeOverall(problem: CartProblem): string {
     case 'ALREADY_SUBMITTED':
       return 'Your preferences are already submitted.';
     case 'CART_CHANGED':
-      return 'Your cart changed since this page loaded. It has been reloaded — please check it and submit again.';
+      return 'Your cart changed since this page loaded. It has been reloaded. Please check it and submit again.';
     default:
       return 'Your cart was refused.';
   }

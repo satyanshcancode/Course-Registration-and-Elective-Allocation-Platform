@@ -159,10 +159,10 @@ describe('describePassedOn', () => {
 describe('describeHeldSeat', () => {
   it('says how the seat was come by, and drops the rank when there is none', () => {
     expect(describeHeldSeat(seat())).toBe(
-      'Allocated to you in the registration round — your 2nd choice.',
+      'Allocated to you in the registration round, your 2nd choice.',
     );
     expect(describeHeldSeat(seat({ source: 'WAITLIST_PROMOTION', preferenceRank: 1 }))).toBe(
-      'A seat freed up and you were next in line — your 1st choice.',
+      'A seat freed up and you were next in line, your 1st choice.',
     );
     // A course taken in add/drop was never ranked, so there is no rank to name.
     expect(describeHeldSeat(seat({ source: 'ADD', preferenceRank: null }))).toBe(

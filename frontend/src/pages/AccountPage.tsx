@@ -162,7 +162,7 @@ export function AccountPage() {
           {user.role === 'STUDENT' && (
             <p className={styles.note}>
               Your academic record is maintained by the registrar. If anything here is wrong, ask
-              them to correct it — it is what your eligibility is judged on.
+              them to correct it. It is what your eligibility is judged on.
             </p>
           )}
         </Card>

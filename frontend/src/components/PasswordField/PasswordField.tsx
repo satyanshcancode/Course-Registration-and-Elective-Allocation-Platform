@@ -112,7 +112,7 @@ export function PasswordField({
           {/* The word carries the meaning; the bars only repeat it. */}
           <p className={styles.label} data-strength={strength} aria-live="polite">
             {describePasswordStrength(strength)}
-            {!assessment.acceptable && ' — not long enough yet'}
+            {!assessment.acceptable && ', not long enough yet'}
           </p>
           {assessment.suggestions.length > 0 && (
             <ul className={styles.suggestions}>
