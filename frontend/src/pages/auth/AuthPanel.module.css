@@ -15,18 +15,35 @@
    */
   justify-content: center;
   justify-items: center;
-  padding-top: var(--space-4);
+  /* Vertically centred too, so these pages sit where the sign-in card does
+     rather than against the header with the page empty beneath them. */
+  align-content: center;
+  min-height: 100%;
+  padding-block: var(--space-6);
 }
 
 .panel {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   align-content: start;
   width: min(100%, 30rem);
   padding: var(--space-6);
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+/* The same forest spine the sign-in card carries, so every card a signed-out
+   visitor meets is recognisably one product. */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-5) auto var(--space-5) 0;
+  width: 4px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background-color: var(--color-accent);
 }
 
 @media (width < 40rem) {
@@ -36,7 +53,7 @@
 }
 
 .kicker {
-  color: var(--color-ink-muted);
+  color: var(--color-danger);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-kicker);
