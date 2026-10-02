@@ -61,12 +61,18 @@ const sets = {
 
 let fails = 0;
 for (const [name, set] of Object.entries(sets)) {
-  console.log(`\n--- Direction ${name} ---`);
+  process.stdout.write(`\n--- Direction ${name} ---\n`);
   for (const [label, fg, bg, min] of set.pairs) {
     const r = ratio(fg, bg);
     const ok = r >= min;
     if (!ok) fails += 1;
-    console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${r.toFixed(2)}:1  ${label.padEnd(20)} ${fg} on ${bg}`);
+    process.stdout.write(
+      `  ${ok ? 'PASS' : 'FAIL'}  ${r.toFixed(2)}:1  ${label.padEnd(20)} ${fg} on ${bg}\n`,
+    );
   }
 }
-console.log(`\n${fails === 0 ? 'All pairs meet WCAG AA (4.5:1).' : `${fails} pair(s) BELOW AA.`}`);
+process.stdout.write(
+  `\n${fails === 0 ? 'All pairs meet WCAG AA (4.5:1).' : `${fails} pair(s) BELOW AA.`}\n`,
+);
+// Non-zero on failure, so this can gate a build rather than only inform one.
+process.exitCode = fails === 0 ? 0 : 1;
