@@ -364,7 +364,7 @@ export function AdminStudentDetailPage() {
         message={
           confirming === 'reactivate'
             ? `${student.name} will be able to sign in again with their existing password. Nothing else changes.`
-            : `${student.name} will no longer be able to sign in, and any open session ends on their next request. Every submission, enrolment, waitlist place and history entry is kept exactly as it is — nothing is deleted, and the account can be reactivated at any time.`
+            : `${student.name} will no longer be able to sign in, and any open session ends on their next request. Every submission, enrolment, waitlist place and history entry is kept exactly as it is. Nothing is deleted, and the account can be reactivated at any time.`
         }
         onCancel={() => {
           setConfirming(null);

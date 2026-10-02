@@ -54,7 +54,7 @@ export function PolicyFields({
     return (
       <div className={styles.explainer}>
         <p>
-          Seats go to whoever submits first, ordered by the server’s own submission sequence — never
+          Seats go to whoever submits first, ordered by the server’s own submission sequence, never
           by a clock the student controls.
         </p>
         <p className={styles.caution}>

@@ -306,7 +306,7 @@ export function AdminCataloguePage() {
       <PageHeader
         title="Course catalogue"
         kicker="Administration · Catalogue"
-        description="Every course and the rules that decide who may take it. Seats belong to a window's offering, not to the course — edit those under Courses."
+        description="Every course and the rules that decide who may take it. Seats belong to a window's offering, not to the course. Edit those under Courses."
         actions={
           <div className={styles.headerActions}>
             <Button
@@ -423,7 +423,7 @@ export function AdminCataloguePage() {
           dialog?.kind === 'reinstate'
             ? `${dialog.course.code} can be offered in a registration window again. Nothing else changes.`
             : dialog?.kind === 'retire'
-              ? `${dialog.course.code} will stay in every window that already offers it, and in every submission, enrolment and result that refers to it — nothing is deleted. It simply cannot be added to a new window. You can reinstate it at any time.`
+              ? `${dialog.course.code} will stay in every window that already offers it, and in every submission, enrolment and result that refers to it. Nothing is deleted. It simply cannot be added to a new window. You can reinstate it at any time.`
               : ''
         }
         onCancel={close}

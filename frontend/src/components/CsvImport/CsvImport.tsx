@@ -185,7 +185,7 @@ export function CsvImport({
           {fileName !== null && (
             <p className={styles.fileName}>
               {fileName}
-              {busy && ' — checking…'}
+              {busy && ', checking…'}
             </p>
           )}
         </div>

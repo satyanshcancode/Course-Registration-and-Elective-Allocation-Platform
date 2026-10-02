@@ -113,8 +113,8 @@ export function LoginPage() {
           Sign in
         </h1>
         <p className={styles.lead}>
-          Use your university e-mail address and password. Accounts are created by the registrar —
-          if you have an invitation e-mail, open its link to set your password.
+          Use your university e-mail address and password. Accounts are created by the registrar. if
+          you have an invitation e-mail, open its link to set your password.
         </p>
 
         {notice && (

@@ -27,11 +27,11 @@ function listPrograms(programs: readonly ProgramRef[]): string {
 export function describeReason(reason: IneligibilityReason): string {
   switch (reason.type) {
     case 'PROGRAM_NOT_ALLOWED':
-      return `Open to ${listPrograms(reason.allowedPrograms)} only — you’re in ${reason.program.code}`;
+      return `Open to ${listPrograms(reason.allowedPrograms)} only. You’re in ${reason.program.code}`;
     case 'SEMESTER_TOO_LOW':
-      return `Needs semester ${reason.required} — you’re in semester ${reason.actual}`;
+      return `Needs semester ${reason.required}, you’re in semester ${reason.actual}`;
     case 'CREDITS_TOO_LOW':
-      return `Needs ${reason.required} credits — you have ${reason.actual}`;
+      return `Needs ${reason.required} credits, you have ${reason.actual}`;
     case 'PREREQUISITE_MISSING':
       return `Complete ${reason.course.code} ${reason.course.name} first`;
     case 'ALREADY_COMPLETED':
