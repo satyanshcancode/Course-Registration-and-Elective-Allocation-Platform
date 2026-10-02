@@ -20,7 +20,10 @@
 .select {
   width: 100%;
   min-height: 2.5rem;
-  padding: var(--space-2) var(--space-7) var(--space-2) var(--space-3);
+  /* The right padding only has to clear the chevron (7px, inset 12px), so
+     3rem was over twice what it needed — invisible with a narrow typeface and
+     a clipped "All departments" with a wider one. */
+  padding: var(--space-2) var(--space-6) var(--space-2) var(--space-3);
   border: var(--border-control);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);

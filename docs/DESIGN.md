@@ -1,143 +1,138 @@
-# Design direction
+# Design direction — Quad
 
-**Concept: the university course catalogue, digitised.** The interface borrows
-from printed academic catalogues, timetables and registrar forms: calm, precise,
-information-dense and trustworthy. Students use it under time pressure, so
-clarity always beats decoration.
+**Concept: a warm academic catalogue, not a dashboard.** Allocademy is where a
+student finds out what they can take and whether there is room. That is a
+reading task before it is a control task, so the interface is built like a
+catalogue: clay around warm paper, a soft serif with real character for
+anything that names a thing, and a list of ruled entries rather than a grid of
+boxed cards.
+
+Students use it under time pressure and in a term when the outcome matters, so
+**clarity always beats decoration** — and the one number they came for, how
+many seats are left, is drawn as well as written.
 
 All UI follows this document. Tokens live in
-[`frontend/src/styles/variables.css`](../frontend/src/styles/variables.css); every
-component in `/dev/components` (dev only) shows them in use.
+[`frontend/src/styles/variables.css`](../frontend/src/styles/variables.css);
+every component in `/dev/components` (dev only) shows them in use. Three
+directions were built as working pages before this one was chosen —
+[`docs/redesign/`](redesign/) has the other two and the reasoning.
 
 ## Typography
 
-| Role                                   | Face                                                          | Why                                                                                                                                                                                                                                                                                                                                                              |
-| -------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Headings                               | **Source Serif 4** (variable, `opsz` axis)                    | A bookish transitional serif made for catalogues and long reading. Its optical-size axis gives headings sharper, higher-contrast "display" letterforms while small text stays sturdy — the character comes from the cut, not from bolding everything. Fraunces was considered but its soft, wonky shapes read as editorial or playful rather than institutional. |
-| UI and body                            | **IBM Plex Sans** 400 / 500 / 600                             | Engineered, slightly technical, very legible at 14–16px, with a clear distinction between `I`, `l` and `1`. Not Inter, not Roboto.                                                                                                                                                                                                                               |
-| Codes, seat counts, timestamps, tables | **IBM Plex Mono** 400 / 500, plus `tabular-nums` in Plex Sans | Course codes read like catalogue labels; digits line up in columns like a timetable.                                                                                                                                                                                                                                                                             |
+| Role                    | Face                               | Where                                                              |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| Display                 | **Fraunces Variable** (opsz 9–144) | Page titles, course names, card and section headings, the wordmark |
+| Interface               | **Work Sans Variable**             | Body text, labels, buttons, navigation, tables                     |
+| Figures that must align | **IBM Plex Mono**                  | Course codes, references, hashes, timestamps                       |
 
-- All fonts are self-hosted through `@fontsource` (Latin subset only), loaded in
-  `styles/fonts.css`. No Google Fonts CDN.
-- Scale: ratio **1.2** (minor third) from a 1rem base:
-  12.2 · 13.3 · **16** · 19.2 · 23 · 27.6 · 33.2 · 39.8 px. The three largest
-  steps are fluid (`clamp()`), so page titles shrink on phones without media queries.
-- Headings: serif, weight 560–620 (not 700), `letter-spacing: -0.015em` to
-  `-0.02em`, line-height 1.15–1.2, `font-optical-sizing: auto`.
-- Body: 1rem / 1.55. Dense UI text (tables, meta) 0.833rem / 1.45.
-- **Kicker**: a small uppercase label above a serif title
-  (`FALL 2026 · REGISTRATION`): Plex Sans 600, 0.694rem, `letter-spacing: 0.08em`,
-  muted ink.
+**Fraunces earns its place on the optical-size axis.** A 40px page title and a
+13px course code are _drawn_ differently rather than scaled — the small sizes
+get sturdier serifs and more open counters, the large ones get the contrast and
+the slightly odd, warm letterforms that give the product a voice. `font-optical-sizing: auto`
+is set on every heading, so this is automatic rather than hand-tuned.
+
+The scale is a 1.2 (minor third) ratio from 1rem, fluid at the top three steps.
+`h1` is `--text-3xl` (up to 40px): the page title is the largest thing on the
+page by a wide margin, and everything else is quiet.
+
+**Figures are lining and tabular everywhere.** Both Fraunces and Work Sans ship
+oldstyle figures by default, which are lovely in a sentence and useless in a
+column of seat counts. `base.css` sets `font-variant-numeric: lining-nums
+tabular-nums` on body, inputs, tables and buttons, so "59 left" and "6 left"
+occupy the same width down a list.
 
 ## Colour
 
-**Accent: deep library green `#1F4D3A`.** It recalls cloth-bound catalogues,
-green-shaded desk lamps and the registrar's stamp, and reads as calm and
-institutional rather than commercial. Oxblood was the alternative, but this
-product's most common negative status is "not allocated" (brick red), and red
-validation errors sit right next to primary buttons. With an oxblood accent the
-main action would look like a destructive one, so red is reserved for problems.
-The allocated/success green is a separate, yellower moss (`#2D6630`), and it
-always appears with a check icon and the word, so the two greens are never
-confused.
+Clay surrounds warm paper. One colour is asked to carry meaning, and the other
+two are reserved for a single idea each.
 
-Semantic tokens (light "paper" / dark "ink"):
+| Token                    | Light                | Means                                                |
+| ------------------------ | -------------------- | ---------------------------------------------------- |
+| `--color-paper`          | `#e8e1d6` clay       | The surround: everything outside the content         |
+| `--color-surface`        | `#fdfbf7` warm paper | Where the work is                                    |
+| `--color-surface-sunken` | `#f2ece1`            | Wells, table headers, disabled fields                |
+| `--color-ink`            | `#241f1a`            | Text                                                 |
+| `--color-ink-muted`      | `#585046`            | Secondary text                                       |
+| `--color-rule`           | `#d6cdbe`            | Hairlines                                            |
+| `--color-rule-strong`    | `#887d6d`            | Control borders                                      |
+| `--color-accent`         | `#2f5d4a` forest     | The primary, and the only colour a reader must learn |
+| `--color-danger`         | `#a04a26` terracotta | "You cannot have this": full, blocked, destructive   |
+| `--color-warning`        | `#8a5a06` amber      | "Not yet": a requirement not met, a window not open  |
+| `--color-info`           | `#41566b` slate      | Neutral notices                                      |
 
-| Token                    | Light     | Dark      | Use                                                      |
-| ------------------------ | --------- | --------- | -------------------------------------------------------- |
-| `--color-paper`          | `#F7F5F0` | `#1B1916` | Page background (warm off-white / warm charcoal)         |
-| `--color-surface`        | `#FCFBF8` | `#23201C` | Cards, tables, inputs, header                            |
-| `--color-surface-sunken` | `#EFECE4` | `#16140F` | Table stripes, meter track, code blocks                  |
-| `--color-ink`            | `#1D1B17` | `#ECE7DC` | Primary text (never pure black/white)                    |
-| `--color-ink-muted`      | `#5A554C` | `#B3AC9E` | Secondary text, captions, kickers                        |
-| `--color-rule`           | `#DCD6CA` | `#3A3630` | Hairline borders and table rules (decorative)            |
-| `--color-rule-strong`    | `#8C8577` | `#7D7667` | Input borders, meter edges (≥ 3:1, WCAG 1.4.11)          |
-| `--color-accent`         | `#1F4D3A` | `#8CC3A4` | Primary buttons, active nav, links, focus ring           |
-| `--color-success`        | `#2D6630` | `#96C68E` | Allocated, enrolled, eligible                            |
-| `--color-warning`        | `#85560A` | `#DDAE55` | Waitlisted, nearly full (ochre)                          |
-| `--color-danger`         | `#9A2F22` | `#E8978A` | Not allocated, errors, full, destructive actions (brick) |
-| `--color-info`           | `#475467` | `#AEB8C6` | Pending, draft, neutral notices (slate)                  |
+**The dark theme ("Lamplight") redefines colour tokens and nothing else** — no
+sizes, no shapes, no type. It stays warm: `#191611` paper rather than a neutral
+grey, so the product does not become a different thing after dark.
 
-Each status colour has a `-soft` background (`--color-success-soft` …) for badges
-and notices. Status is **never shown by colour alone**: every status has a
-colour, an icon and a text label (`StatusBadge`), and the seat meter always prints
-its numbers.
+### Department spine
 
-The dark theme is an "ink" version: a warm charcoal paper with light warm ink.
-It is a single `@media (prefers-color-scheme: dark)` block that only redefines
-colour tokens.
+Five tones (`--color-dept-a` … `-e`) colour a 4px spine down the left edge of
+each course card, so a long catalogue can be scanned by eye before it is read.
+The tone comes from a stable hash of the department code
+([`utils/departmentTone.ts`](../frontend/src/utils/departmentTone.ts)), so a
+department added to the seed needs no change here and adding one does not
+recolour the others. **The department's name is always printed beside the
+spine** — the colour is a second way to scan, never the only one.
 
 ### Contrast (WCAG 2.2 AA)
 
-Computed with the WCAG relative-luminance formula. Text needs 4.5:1;
-non-text UI (input borders, focus ring, meter fill) needs 3:1.
+[`frontend/src/styles/contrast.mjs`](../frontend/src/styles/contrast.mjs) reads
+the values straight out of `variables.css`, so the audit cannot drift from what
+ships. Run it with `node frontend/src/styles/contrast.mjs`; it exits non-zero on
+any failure.
 
-| Pair                                   | Light         | Dark          |
-| -------------------------------------- | ------------- | ------------- |
-| ink on paper                           | 15.78:1       | 14.22:1       |
-| ink on surface                         | 16.62:1       | 13.15:1       |
-| ink on surface-sunken (stripes)        | 14.56:1       | 14.92:1       |
-| ink-muted on paper                     | 6.79:1        | 7.78:1        |
-| ink-muted on surface                   | 7.15:1        | 7.19:1        |
-| ink-muted on surface-sunken            | 6.27:1        | 8.16:1        |
-| accent on paper (links, active nav)    | 8.84:1        | 8.73:1        |
-| accent on surface                      | 9.31:1        | 8.08:1        |
-| accent on accent-soft                  | 7.89:1        | 6.65:1        |
-| on-accent on accent (primary button)   | 9.31:1        | 8.41:1        |
-| on-accent on accent-hover              | 12.12:1       | 10.04:1       |
-| success on success-soft / surface      | 5.70 / 6.64:1 | 7.11 / 8.31:1 |
-| warning on warning-soft / surface      | 5.22 / 6.09:1 | 6.67 / 7.92:1 |
-| danger on danger-soft / surface        | 5.98 / 7.24:1 | 6.41 / 7.12:1 |
-| info on info-soft / surface            | 6.27 / 7.43:1 | 7.00 / 8.09:1 |
-| rule-strong on surface (input borders) | 3.54:1        | 3.60:1        |
-| accent on surface-sunken (meter fill)  | 8.16:1        | 9.16:1        |
+Text pairs are held to **4.5:1**, and pairs that only draw a boundary or a
+control to **3:1** (WCAG 1.4.11). All 48 pairs across both themes pass. The
+tightest are the control border on clay (3.11:1) and body text on clay
+(12.58:1 — comfortable); when the palette was first written the control border
+came out at 2.41:1 and `--color-rule-strong` was darkened until it cleared.
 
-`--color-rule` is deliberately below 3:1: hairlines separate content that is
-already grouped by alignment and spacing. They're decorative, not the only cue.
+## Seats, at a glance
+
+The catalogue's whole job is the seat count, so it gets a drawing as well as a
+number: a **twenty-dot matrix**, filled = taken, ten per row, two rows.
+
+- **Twenty dots whatever the capacity.** One dot per seat would make an 80-seat
+  course four times the height of a 20-seat one, and every row has to be the
+  same height down the page. The grid is a fixed `repeat(10, …)`, never
+  `auto-fill`, so the block is the same 97×17px on every course and the dots
+  line up down a column.
+- **Nearly-full and full never look the same.** 59 of 60 rounds to twenty dots,
+  which would draw it exactly like a full course — so `filledDots` clamps to 19
+  while a seat remains, and to 1 while any seat is taken. That is the one
+  distinction the drawing exists to make, and it is unit-tested.
+- **The numbers always sit beside it** ("1 of 60 allocated · 59 left"), and a
+  full course says the word "Full". The matrix is reinforcement; it is never
+  the only signal.
+
+Demand is a ratio (`5.6×`) with the request count, formatted in exactly one
+place (`utils/courseText.ts`).
 
 ## Shape, depth and layout
 
-- **Hairlines, not boxes.** 1px warm-grey rules separate content. Cards are
-  hairline-bordered surfaces with no shadow.
-- **Shadows only for things that float**: modals, toasts and menus
-  (`--shadow-float`, `--shadow-overlay`).
-- **Small radii**: 2px (tags, badges), 4px (inputs, buttons, cards), 6px
-  (dialogs). No pills, no 24px rounded cards.
-- **Left-aligned grids** with clear alignment lines. Tables are set like a
-  timetable: tabular numerals, hairline rules, subtle striping, right-aligned numbers.
-- **Course codes** look like catalogue labels: Plex Mono 500, letter-spaced,
-  uppercase, in a thin outlined tag (`CourseCode`).
-- **Seat availability** is a slim 6px horizontal meter with the exact numbers
-  beside it ("37 of 50 allocated · 13 left"), never a donut.
-- **Kicker + serif title** for section and page headings.
-- **Motion** is short and functional only: 120ms (hover, press) and 180ms
-  (dialog, toast, status change), with a standard ease-out curve. Nothing
-  bounces, parallaxes or fades in on scroll. `prefers-reduced-motion` switches
-  transitions and animations off.
-
-## Layout
-
-- **Desktop (≥ 1024px)**: a CSS Grid shell with a sticky left sidebar (15rem)
-  and the content column. The top bar is sticky, and inside `main` a sticky page
-  header holds the title and actions.
-- **Tablet (640–1023px)**: the sidebar collapses to a 4rem icon rail. Labels
-  appear as tooltips on hover and keyboard focus, and stay in the accessibility
-  tree the whole time.
-- **Mobile (< 640px)**: a fixed bottom navigation bar with the four most-used
-  destinations plus **More** (the rest). Content is padded so nothing hides
-  behind the bar, and toasts sit above it.
+- **Radii are small and consistent**: 4px (`sm`), 7px (`md`), 10px (`lg`).
+  Enough to feel made rather than machined, not enough to look like a toy.
+- **Shadows only on things that genuinely float** — modals and toasts. Cards
+  have a hairline, never a shadow.
+- **Flexbox** for rows that share a line (nav items, button groups, card
+  metadata); **Grid** for the page shells, the catalogue, dashboards and admin
+  panels.
+- Positioning: `sticky` sidebar and page header, `fixed` phone nav and skip
+  link, `absolute` overlays and the card spine, `relative` as their anchor.
+- Breakpoints at **1280 / 820 / 390**, as media queries on `width < 64rem` and
+  `width < 40rem`. Wide tables scroll inside their own keyboard-focusable
+  region; the page itself never scrolls sideways.
 
 ## Icons
 
-Lucide, used through one `Icon` wrapper: 1.5px stroke (absolute), 16/20/24px
-grid, `aria-hidden`. Every icon sits next to visible text or has a
-visually-hidden label. No emoji, no sparkles.
+Lucide, through the `Icon` component only — never imported directly into a
+page. 1.5px stroke, sized in `em` so they follow their text.
 
 ## Copy
 
 Short, direct and specific: "13 of 50 seats left", "Registration opens Mon 21
-Sep, 10:00", "You're #7 on the waitlist". Say what happened and what to do next.
-No marketing language and no placeholder text.
+Sep, 10:00", "You're #7 on the waitlist". Say what happened and what to do
+next. No marketing language and no placeholder text.
 
 ## Banned
 
@@ -145,7 +140,7 @@ Purple/blue/pink gradients and gradient text · glassmorphism and blur panels ·
 emoji or sparkle icons · giant hero sections or welcome banners inside the app ·
 big shadows and large radii on every card · centring everything · rows of
 identical stat cards with huge numbers and tiny labels · lorem ipsum or vague
-copy · default browser-blue links and buttons.
+copy · default browser-blue links and buttons · status carried by colour alone.
 
 ## Review
 
