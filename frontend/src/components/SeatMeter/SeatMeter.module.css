@@ -45,7 +45,7 @@
 
 /* Compact (table cells): a smaller matrix beside the figures, not above them. */
 .meter[data-compact='true'] {
-  --dot-size: 5px;
+  --dot-size: 6px;
   --dot-gap: 2px;
 
   grid-template-columns: max-content minmax(0, 1fr);
