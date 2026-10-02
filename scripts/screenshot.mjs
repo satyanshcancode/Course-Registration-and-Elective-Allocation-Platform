@@ -182,6 +182,8 @@ const SHOTS = [
   ...pair('reset-password', { public: true, path: 'RESET_LINK' }),
   ...pair('activate', { public: true, path: 'ACTIVATE_LINK' }),
   ...pair('not-found', { public: true, path: '/no-such-page' }),
+  ...pair('privacy', { public: true, path: '/privacy' }),
+  ...pair('terms', { public: true, path: '/terms' }),
 
   // ---- Student ------------------------------------------------------------
   ...pair('student-dashboard', { as: 'allocated', path: '/student/dashboard' }),

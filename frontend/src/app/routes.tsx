@@ -8,6 +8,7 @@ import { ActivatePage } from '../pages/auth/ActivatePage';
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { PolicyPage } from '../pages/PolicyPage';
 import { AuthProvider } from './AuthProvider';
 import { lazyNamed } from './lazyNamed';
 import { RootRedirect } from './RootRedirect';
@@ -117,6 +118,8 @@ export const routes: RouteObject[] = [
           { path: 'activate', element: <ActivatePage mode="activate" /> },
           { path: 'reset-password', element: <ActivatePage mode="reset" /> },
           { path: 'forgot-password', element: <ForgotPasswordPage /> },
+          { path: 'privacy', element: <PolicyPage kind="privacy" /> },
+          { path: 'terms', element: <PolicyPage kind="terms" /> },
           ...devRoutes,
           { path: '*', element: <NotFoundPage centred /> },
         ],
@@ -140,6 +143,8 @@ export const routes: RouteObject[] = [
               { path: 'history', element: <HistoryPage /> },
               { path: 'notifications', element: <NotificationsPage /> },
               { path: 'account', element: <AccountPage /> },
+              { path: 'privacy', element: <PolicyPage kind="privacy" /> },
+              { path: 'terms', element: <PolicyPage kind="terms" /> },
               // Retired: the written guide and video are future scope (see README).
               { path: 'help', element: <Navigate to="/student/dashboard" replace /> },
               { path: '*', element: <NotFoundPage /> },
@@ -161,6 +166,8 @@ export const routes: RouteObject[] = [
               { path: 'students', element: <AdminStudentsPage /> },
               { path: 'students/:rollNumber', element: <AdminStudentDetailPage /> },
               { path: 'account', element: <AccountPage /> },
+              { path: 'privacy', element: <PolicyPage kind="privacy" /> },
+              { path: 'terms', element: <PolicyPage kind="terms" /> },
               { path: 'registration-window', element: <RegistrationWindowPage /> },
               { path: 'allocation-runs', element: <AllocationRunsPage /> },
               { path: 'allocation-runs/:id', element: <AllocationRunDetailPage /> },

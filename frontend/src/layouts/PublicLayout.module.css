@@ -57,6 +57,11 @@
   text-align: start;
 }
 
+.footerLinks {
+  display: flex;
+  gap: var(--space-4);
+}
+
 @media (width >= 40rem) {
   .footer {
     padding-inline: max(var(--space-4), (100% - var(--layout-max-width)) / 2 + var(--space-4));

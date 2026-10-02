@@ -142,6 +142,11 @@
   font-size: var(--text-xs);
 }
 
+.footerLinks {
+  display: flex;
+  gap: var(--space-4);
+}
+
 /* ---- Tablet: icon rail, labels as tooltips on hover and focus ------------ */
 @media (40rem <= width < 64rem) {
   .shell {

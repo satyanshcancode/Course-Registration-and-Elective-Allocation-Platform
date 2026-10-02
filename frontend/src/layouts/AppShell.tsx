@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Icon } from '../components/Icon';
 import { PageLoading } from '../components/PageLoading';
@@ -40,6 +40,8 @@ export function AppShell({
   itemBadge,
 }: AppShellProps) {
   const { pathname } = useLocation();
+  // "/student" or "/admin": the policy pages exist under each so they keep this shell.
+  const areaRoot = homePath.slice(0, homePath.indexOf('/', 1));
   // Only one navigation landmark exists at a time: the sidebar/rail, or the
   // phone bottom bar. (Two <nav>s with the same name would be ambiguous.)
   const isPhone = useMediaQuery('(width < 40rem)');
@@ -84,6 +86,10 @@ export function AppShell({
 
       <footer className={styles.footer}>
         <p>{footerNote ?? 'Allocademy · University Registrar'}</p>
+        <p className={styles.footerLinks}>
+          <Link to={`${areaRoot}/privacy`}>Privacy</Link>
+          <Link to={`${areaRoot}/terms`}>Terms</Link>
+        </p>
       </footer>
     </div>
   );
