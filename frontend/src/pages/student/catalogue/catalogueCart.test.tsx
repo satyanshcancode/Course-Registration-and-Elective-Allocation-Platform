@@ -132,9 +132,9 @@ describe('adding to the cart from the catalogue', () => {
 
     const card = cardFor('Artificial Intelligence');
     expect(card.queryByRole('button', { name: /Add to cart/ })).not.toBeInTheDocument();
-    expect(card.getByText('Not eligible — this course can’t be ranked.')).toBeVisible();
+    expect(card.getByText('Not eligible: this course can’t be ranked.')).toBeVisible();
     // The reason stays where it already was, beside the eligibility badge.
-    expect(card.getByText('Needs semester 7 — you’re in semester 6')).toBeVisible();
+    expect(card.getByText('Needs semester 7, you’re in semester 6')).toBeVisible();
   });
 
   it('says the cart is full once five courses are ranked', async () => {

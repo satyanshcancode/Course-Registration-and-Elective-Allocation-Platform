@@ -177,7 +177,7 @@ describe('CartPage', () => {
 
     expect(
       await screen.findByText(
-        /We couldn’t confirm your submission\. Retrying is safe — it won’t create a duplicate\./,
+        /We couldn’t confirm your submission\. Retrying is safe: it won’t create a duplicate\./,
       ),
     ).toBeVisible();
 
