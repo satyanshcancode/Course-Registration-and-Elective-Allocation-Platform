@@ -25,7 +25,6 @@
 
 .input[aria-invalid='true'] {
   border-color: var(--color-danger);
-  box-shadow: inset 3px 0 0 var(--color-danger);
 }
 
 .input:disabled {

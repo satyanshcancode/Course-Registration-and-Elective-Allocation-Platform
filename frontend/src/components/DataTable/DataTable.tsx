@@ -54,8 +54,6 @@ export interface DataTableProps<T> {
    * reads as "of 20" beside a pager offering 15 pages.
    */
   totalRows?: number;
-  /** Marks a row, e.g. 'warning' for an oversubscribed course (pair with text). */
-  getRowTone?: (row: T) => 'warning' | undefined;
   /**
    * ONE click handler on <tbody> for every row's buttons (event delegation):
    * read event.target and find the button with closest().
@@ -87,7 +85,6 @@ export function DataTable<T>({
   emptyMessage,
   paginated = true,
   totalRows,
-  getRowTone,
   onBodyClick,
 }: DataTableProps<T>) {
   const captionId = useId();
@@ -211,7 +208,7 @@ export function DataTable<T>({
               ))}
             {!loading &&
               slice.rows.map((row) => (
-                <tr key={getRowId(row)} className={styles.row} data-tone={getRowTone?.(row)}>
+                <tr key={getRowId(row)} className={styles.row}>
                   {columns.map((column) => (
                     <td
                       key={column.id}

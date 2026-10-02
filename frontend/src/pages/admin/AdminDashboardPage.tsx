@@ -125,7 +125,6 @@ export function AdminDashboardPage() {
                   filterable={false}
                   paginated={false}
                   getRowId={(course) => course.code}
-                  getRowTone={(course) => (course.oversubscribed ? 'warning' : undefined)}
                   emptyMessage="No requests have been submitted yet."
                 />
               </Card>

@@ -17,7 +17,7 @@ export function describeMyStatus(status: MyCourseStatus): string {
     case 'WAITLISTED':
       return `Waitlisted · #${status.position}`;
     case 'NOT_ALLOCATED':
-      return `Choice ${status.rank} · not allocated`;
+      return `Choice ${status.rank} · no seat`;
   }
 }
 

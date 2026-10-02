@@ -261,7 +261,6 @@ function CourseTable({ courses }: { courses: readonly CourseAllocationMetric[] }
         filterable={false}
         paginated={false}
         itemName={{ one: 'course', other: 'courses' }}
-        getRowTone={(course) => (course.oversubscribed ? 'warning' : undefined)}
       />
     </section>
   );

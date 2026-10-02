@@ -1,5 +1,5 @@
 import { MAX_PREFERENCES, type CartItem, type CartProblem } from '@course-reg/shared';
-import { CircleCheck, Lock, Send, ShoppingCart } from 'lucide-react';
+import { Lock, Send, ShoppingCart } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, LinkButton } from '../../../components/Button';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
@@ -308,8 +308,7 @@ export function CartPage() {
             )}
             {saved.submittable && !dirty && !empty && (
               <p className={styles.hint}>
-                <Icon icon={CircleCheck} /> Submitting is final: your list can’t be changed
-                afterwards.
+                <Icon icon={Lock} /> Submitting is final: your list can’t be changed afterwards.
               </p>
             )}
           </div>
