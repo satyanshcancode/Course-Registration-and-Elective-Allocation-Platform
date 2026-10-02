@@ -48,7 +48,9 @@ describe('AdminCoursesPage', () => {
     const { container } = renderAdminCourses();
     const row = (await screen.findByText('Artificial Intelligence')).closest('tr')!;
 
-    expect(row).toHaveAttribute('data-tone', 'warning');
+    // The row carries no tone of its own: the column says it, which is the
+    // reason the coloured row edge could go.
+    expect(row).not.toHaveAttribute('data-tone');
     expect(within(row).getByText('Oversubscribed')).toBeVisible();
     expect(within(row).getByText('5.7×')).toBeVisible();
     const calm = screen.getByText('Renewable Energy Systems').closest('tr')!;
