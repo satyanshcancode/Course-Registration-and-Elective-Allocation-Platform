@@ -28,8 +28,8 @@ Wait for all four containers to report healthy, then open these in tabs:
 | A terminal            | For the two concurrency scripts    |
 
 All demo passwords are `Student@123`, and the admin is `admin@university.edu`
-with `Admin@123`. The sign-in page lists them, because this is a development
-build.
+with `Admin@123`. Keep this page open — the sign-in screen is the form and
+nothing else, so it does not list them.
 
 > **If anything goes wrong mid-demo**, `npm run docker:demo:reset -- --stage=<stage>`
 > puts the database back in a known state in a few seconds. The stages are

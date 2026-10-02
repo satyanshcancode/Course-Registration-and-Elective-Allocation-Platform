@@ -392,10 +392,9 @@ with the link included, so the invitation and reset flows still work.
 
 ## Demo accounts and demo stages
 
-> **Demo-only credentials.** They are published here so the project can be
-> demonstrated, and the sign-in page lists them in a **development build only**
-> — the component holding them is removed by the bundler otherwise. Never reuse
-> them anywhere real.
+> **Demo-only credentials.** They are documented **here and nowhere else** —
+> the sign-in page is the form and nothing else, so no build of the app
+> displays them. Never reuse them anywhere real.
 
 | Role    | E-mail                        | Password      | Situation                                                                                        |
 | ------- | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
