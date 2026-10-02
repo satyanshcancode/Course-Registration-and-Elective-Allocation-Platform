@@ -64,15 +64,15 @@ two are reserved for a single idea each.
 sizes, no shapes, no type. It stays warm: `#191611` paper rather than a neutral
 grey, so the product does not become a different thing after dark.
 
-### Department spine
+### No colour without a key
 
-Five tones (`--color-dept-a` … `-e`) colour a 4px spine down the left edge of
-each course card, so a long catalogue can be scanned by eye before it is read.
-The tone comes from a stable hash of the department code
-([`utils/departmentTone.ts`](../frontend/src/utils/departmentTone.ts)), so a
-department added to the seed needs no change here and adding one does not
-recolour the others. **The department's name is always printed beside the
-spine** — the colour is a second way to scan, never the only one.
+An earlier draft gave every course card a 4px coloured spine, hashed from
+its department code. It is gone, and so are the `--color-dept-*` tokens.
+Five tones with nothing anywhere telling a reader what plum meant is
+decoration wearing the costume of information, and the department's name is
+printed on the card anyway. **A colour in this interface either carries a
+labelled key or it does not appear.** The remaining coloured edges are
+states with words beside them: a selected nav item, an error, a warning.
 
 ### Contrast (WCAG 2.2 AA)
 
@@ -118,7 +118,7 @@ place (`utils/courseText.ts`).
   metadata); **Grid** for the page shells, the catalogue, dashboards and admin
   panels.
 - Positioning: `sticky` sidebar and page header, `fixed` phone nav and skip
-  link, `absolute` overlays and the card spine, `relative` as their anchor.
+  link, `absolute` overlays and badges, `relative` as their anchor.
 - Breakpoints at **1280 / 820 / 390**, as media queries on `width < 64rem` and
   `width < 40rem`. Wide tables scroll inside their own keyboard-focusable
   region; the page itself never scrolls sideways.
@@ -141,6 +141,59 @@ emoji or sparkle icons · giant hero sections or welcome banners inside the app 
 big shadows and large radii on every card · centring everything · rows of
 identical stat cards with huge numbers and tiny labels · lorem ipsum or vague
 copy · default browser-blue links and buttons · status carried by colour alone.
+
+## Decisions, and why
+
+The redesign was reviewed against a checklist of the things that make an
+interface look generated rather than designed. Each one below is a decision,
+not a preference, so a later change has something to argue with.
+
+**Coloured left stripes: removed.** See "No colour without a key" above. A
+callout that used to be a 3px coloured left edge is now a full 1px border in
+the same colour, which is what it was always trying to say. The one survivor
+is the active-item marker in the sidebar, which marks a selected state the
+user just caused, not a category.
+
+**Seat dot grids: kept, as data.** Twenty dots is the one drawing in the
+product that earns its place: the catalogue's job is "is there room", and a
+filled matrix answers it faster than a number. It is kept because **the exact
+figures sit beside it on every surface** ("1 of 60 allocated · 59 left"), so
+the dots add speed and never carry the fact alone. A dot grid with no number
+beside it would be ornament, and would have gone.
+
+**Em dashes: not in the interface.** Every one in the UI copy is now a comma,
+a colon or a second sentence. The exception is the `—` printed in a table cell
+for a missing value: there it is a value meaning "none", not punctuation, and
+it is the convention a registrar's printout already uses. Documents in `docs/`
+keep their em dashes; they are prose, not interface.
+
+**Icons: few, and the same few.** Lucide only, through `Icon`, at one stroke
+weight, sized in `em`. An icon appears where it adds meaning a word cannot
+(status badges, nav, the sort direction) and nowhere as decoration. No icon
+sits next to a heading just to fill the space.
+
+**No checkmark bullet lists.** A list of green ticks is a marketing device.
+Lists are plain. A check icon _inside_ a `StatusBadge` is different and stays:
+there it is one of several icons distinguishing one state from another, with
+the word beside it.
+
+**Hover: functional and subtle.** A hover tells you a thing is interactive and
+stops there: a background one step warmer, a border one step darker, an
+underline. Nothing lifts, scales, glows or changes colour family. Transitions
+are `--duration-base` and respect `prefers-reduced-motion`.
+
+**Skeletons: kept.** Every async surface still draws the shape of what is
+coming. They are honest about layout, they stop the page jumping, and
+`DataTable` marks its skeleton `aria-busy` so tests and assistive technology
+can tell loading from loaded.
+
+**Privacy and Terms: written, and marked as a template.** Both pages are
+linked from both footers and say plainly what the software does with a
+student's data and how a seat is decided. Both open with a callout stating
+that the data controller, the retention period, the applicable law and the
+complaints route are the university's to fill in. Inventing those would be
+writing legal advice from a codebase, which is worse than leaving the gap
+visible.
 
 ## Review
 
