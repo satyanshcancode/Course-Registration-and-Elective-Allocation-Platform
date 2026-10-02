@@ -64,7 +64,7 @@ describe('CourseDetailPage', () => {
       .getByRole('heading', { name: 'Your eligibility' })
       .closest('section')!;
     expect(eligibility).toHaveTextContent('Not eligible');
-    expect(eligibility).toHaveTextContent('Needs semester 5 — you’re in semester 3');
+    expect(eligibility).toHaveTextContent('Needs semester 5, you’re in semester 3');
     expect(eligibility).toHaveTextContent('Complete MA201 Probability and Statistics first');
 
     const prerequisites = within(article)

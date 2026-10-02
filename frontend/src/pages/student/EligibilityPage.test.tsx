@@ -67,8 +67,8 @@ describe('EligibilityPage', () => {
     const notEligible = group('Not eligible');
     expect(notEligible.getByText('Artificial Intelligence')).toBeInTheDocument();
     // Both of AI's reasons, each as its own sentence.
-    expect(notEligible.getByText('Open to CSE only — you’re in BTECH-ME')).toBeInTheDocument();
-    expect(notEligible.getByText('Needs semester 5 — you’re in semester 3')).toBeInTheDocument();
+    expect(notEligible.getByText('Open to CSE only. You’re in BTECH-ME')).toBeInTheDocument();
+    expect(notEligible.getByText('Needs semester 5, you’re in semester 3')).toBeInTheDocument();
     expect(notEligible.getByText('Complete CS302 Computer Networks first')).toBeInTheDocument();
   });
 
