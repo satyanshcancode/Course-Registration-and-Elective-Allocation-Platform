@@ -18,6 +18,7 @@ function start(): void {
     smtpUser: env.SMTP_USER,
     smtpPassword: env.SMTP_PASSWORD,
     mailFrom: env.MAIL_FROM,
+    mailFromName: env.MAIL_FROM_NAME,
   });
 
   const app = createApp({

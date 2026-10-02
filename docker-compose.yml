@@ -63,10 +63,18 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       # Links in e-mails must point at the browser's address, not the container's.
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
-      SMTP_HOST: mailpit
-      SMTP_PORT: '1025'
-      SMTP_SECURE: 'false'
+      # Mailpit unless .env names a real relay (e.g. Brevo on
+      # smtp-relay.brevo.com:587). Mailpit stays up either way; it simply stops
+      # being talked to, so switching back is one comment in .env.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      # Empty means "no credential": Mailpit needs none, and the backend reads
+      # an empty setting as unset (config/env.ts).
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-Course Registration <no-reply@university.edu>}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-}
       # Bind mounts from Windows/macOS hosts do not emit inotify events.
       CHOKIDAR_USEPOLLING: 'true'
       CHOKIDAR_INTERVAL: '500'
