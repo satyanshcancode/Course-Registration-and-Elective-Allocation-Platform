@@ -54,18 +54,17 @@ export function CourseCard({
       data-dept={departmentTone(course.department.code)}
       data-course-code={course.code}
     >
-      {personal && (
-        <div className={styles.stamp}>
-          <span className="visually-hidden">Your status: </span>
-          <MyStatusBadge status={personal.myStatus} />
-        </div>
-      )}
-
       <header className={styles.header}>
         <p className={styles.meta}>
           <CourseCode code={course.code} size="sm" />
           <span>{course.credits} credits</span>
         </p>
+        {personal && (
+          <div className={styles.stamp}>
+            <span className="visually-hidden">Your status: </span>
+            <MyStatusBadge status={personal.myStatus} />
+          </div>
+        )}
         <p className={styles.department}>{course.department.name}</p>
         <Heading className={styles.title}>
           <Link to={to} state={linkState} className={styles.link}>
