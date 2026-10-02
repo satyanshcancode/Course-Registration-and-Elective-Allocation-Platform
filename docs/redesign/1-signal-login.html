@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in · Allocademy — Direction 1: Signal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #ffffff;
+        --ink: #0c0d0e;
+        --ink-2: #41464b;
+        --ink-3: #6b7177;
+        --rule: #e2e5e8;
+        --rule-2: #c9ced4;
+        --sunken: #f4f6f7;
+        --signal: #d12b0d;
+        --signal-soft: #fdeeea;
+        --ok: #0f5f4d;
+        --ok-soft: #e4f1ed;
+        --warn: #8a5a00;
+        --warn-soft: #fbf0d9;
+        --sans: 'Archivo', system-ui, sans-serif;
+        --mono: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      /* ---- Masthead: a single hairline, nothing floating ------------------ */
+      header {
+        border-bottom: 1px solid var(--ink);
+        padding: 18px 28px;
+      }
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 17px;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+      }
+      /* The mark is the seat meter in miniature: four filled, one open. */
+      .mark {
+        display: grid;
+        grid-template-columns: repeat(5, 5px);
+        gap: 2px;
+      }
+      .mark i {
+        height: 16px;
+        background: var(--ink);
+      }
+      .mark i:last-child {
+        background: var(--signal);
+      }
+
+      main {
+        display: grid;
+        place-items: center;
+        padding: 56px 24px;
+      }
+      .card {
+        width: 100%;
+        max-width: 384px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.05;
+        margin-bottom: 10px;
+      }
+      .lede {
+        color: var(--ink-2);
+        font-size: 14px;
+        margin-bottom: 30px;
+        max-width: 34ch;
+      }
+
+      .field {
+        margin-bottom: 18px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+      }
+      /* Underline inputs: the rule is the control, no box to fill. */
+      input {
+        width: 100%;
+        font: inherit;
+        font-size: 15px;
+        color: var(--ink);
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid var(--rule-2);
+        padding: 9px 2px;
+        border-radius: 0;
+      }
+      input:focus {
+        outline: 0;
+        border-bottom-color: var(--signal);
+      }
+      .pwrow {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+      }
+      .pwrow input {
+        flex: 1;
+      }
+      .ghost {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-2);
+        background: transparent;
+        border: 1px solid var(--rule-2);
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+      .ghost:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+
+      button.primary {
+        width: 100%;
+        margin-top: 10px;
+        font-family: var(--sans);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #fff;
+        background: var(--ink);
+        border: 0;
+        padding: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      button.primary:hover {
+        background: var(--signal);
+      }
+      button.primary span.arrow {
+        font-family: var(--mono);
+      }
+
+      .foot {
+        margin-top: 26px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rule);
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .foot a {
+        color: var(--ink);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      footer {
+        border-top: 1px solid var(--rule);
+        padding: 16px 28px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wordmark">
+        <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        Allocademy
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="t">
+        <p class="eyebrow">Students &amp; registrar staff</p>
+        <h1 id="t">Sign in</h1>
+        <p class="lede">
+          Use your university e-mail and password. Accounts are created by the registrar.
+        </p>
+
+        <form>
+          <div class="field">
+            <label for="e">E-mail address</label>
+            <input id="e" type="email" value="aarav.sharma@university.edu" />
+          </div>
+          <div class="field">
+            <label for="p">Password</label>
+            <div class="pwrow">
+              <input id="p" type="password" value="xxxxxxxxxxxx" />
+              <button class="ghost" type="button">Show</button>
+            </div>
+          </div>
+          <button class="primary" type="button">
+            Sign in <span class="arrow" aria-hidden="true">&rarr;</span>
+          </button>
+        </form>
+
+        <p class="foot">Forgotten your password? <a href="#">Send me a reset link</a></p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Allocademy · University Registrar</span>
+      <span>Direction 1 — Signal</span>
+    </footer>
+  </body>
+</html>
