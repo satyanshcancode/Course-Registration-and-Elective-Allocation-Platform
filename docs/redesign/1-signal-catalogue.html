@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course catalogue · Allocademy — Direction 1: Signal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #ffffff;
+        --ink: #0c0d0e;
+        --ink-2: #41464b;
+        --ink-3: #6b7177;
+        --rule: #e2e5e8;
+        --rule-2: #c9ced4;
+        --sunken: #f4f6f7;
+        --signal: #d12b0d;
+        --signal-soft: #fdeeea;
+        --ok: #0f5f4d;
+        --ok-soft: #e4f1ed;
+        --warn: #8a5a00;
+        --warn-soft: #fbf0d9;
+        --sans: 'Archivo', system-ui, sans-serif;
+        --mono: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 216px 1fr;
+        min-height: 100vh;
+      }
+
+      /* ---- Sidebar: rules, not pills ------------------------------------- */
+      .side {
+        border-right: 1px solid var(--ink);
+        display: flex;
+        flex-direction: column;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        padding: 17px 18px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .mark {
+        display: grid;
+        grid-template-columns: repeat(5, 4px);
+        gap: 2px;
+      }
+      .mark i {
+        height: 14px;
+        background: var(--ink);
+      }
+      .mark i:last-child {
+        background: var(--signal);
+      }
+      nav {
+        padding: 10px 0;
+      }
+      .navlabel {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        padding: 10px 18px 6px;
+      }
+      nav a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 18px;
+        color: var(--ink-2);
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 500;
+        border-left: 3px solid transparent;
+      }
+      nav a:hover {
+        color: var(--ink);
+        background: var(--sunken);
+      }
+      nav a[aria-current] {
+        color: var(--ink);
+        font-weight: 700;
+        border-left-color: var(--signal);
+        background: var(--sunken);
+      }
+      nav a b {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-3);
+      }
+
+      /* ---- Content -------------------------------------------------------- */
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .topbar {
+        border-bottom: 1px solid var(--ink);
+        padding: 13px 26px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .who {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        background: var(--ink);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .window-chip {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid var(--ok);
+        color: var(--ok);
+        background: var(--ok-soft);
+        padding: 4px 8px;
+      }
+
+      .page {
+        padding: 26px 26px 40px;
+      }
+      .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        padding-bottom: 18px;
+        border-bottom: 2px solid var(--ink);
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      h1 {
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.05;
+        margin: 6px 0 6px;
+      }
+      .sub {
+        color: var(--ink-2);
+        font-size: 13.5px;
+      }
+      .counts {
+        text-align: right;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+      .counts b {
+        display: block;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        text-transform: none;
+      }
+
+      /* ---- Filter strip --------------------------------------------------- */
+      .filters {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 0;
+      }
+      .filters input,
+      .filters select {
+        font: inherit;
+        font-size: 13px;
+        border: 0;
+        border-right: 1px solid var(--rule);
+        background: transparent;
+        padding: 11px 13px;
+        color: var(--ink);
+        border-radius: 0;
+      }
+      .filters input {
+        flex: 1;
+      }
+      .filters input:focus,
+      .filters select:focus {
+        outline: 2px solid var(--signal);
+        outline-offset: -2px;
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 14px;
+        border-right: 1px solid var(--rule);
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+
+      /* ---- The table: tabular numbers, ruled rows, no cards --------------- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      caption {
+        text-align: left;
+        padding: 14px 0 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--ink);
+        white-space: nowrap;
+      }
+      td {
+        padding: 13px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: middle;
+      }
+      tbody tr:hover td {
+        background: var(--sunken);
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .title {
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+      }
+      .dept {
+        color: var(--ink-3);
+        font-size: 12px;
+      }
+      .num {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      /* Seat meter: 10 segments. Filled = taken. Count printed, never alone. */
+      .seats {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .segs {
+        display: grid;
+        grid-template-columns: repeat(10, 6px);
+        gap: 2px;
+      }
+      .segs i {
+        height: 15px;
+        background: var(--rule-2);
+      }
+      .segs i.on {
+        background: var(--ink);
+      }
+      .segs.full i.on {
+        background: var(--signal);
+      }
+      .seatnum {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .seatnum b {
+        font-weight: 700;
+      }
+      .seatnum.none {
+        color: var(--signal);
+        font-weight: 700;
+      }
+
+      /* Demand: the ratio in mono + a bar that overflows past 1.0 in signal */
+      .demand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        justify-content: flex-end;
+      }
+      .dbar {
+        width: 54px;
+        height: 4px;
+        background: var(--rule-2);
+        position: relative;
+        overflow: hidden;
+      }
+      .dbar span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--ink);
+      }
+      .dbar.over span {
+        background: var(--signal);
+      }
+
+      /* Status: glyph + word, never colour alone */
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+      }
+      .tag.ok {
+        color: var(--ok);
+        background: var(--ok-soft);
+      }
+      .tag.no {
+        color: var(--signal);
+        background: var(--signal-soft);
+      }
+      .tag.warn {
+        color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .btn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        border: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        padding: 6px 10px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        background: var(--ink);
+        color: #fff;
+      }
+      .btn[disabled] {
+        border-color: var(--rule-2);
+        color: var(--ink-3);
+        cursor: not-allowed;
+      }
+      .rowmeta {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="side">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          Allocademy
+        </div>
+        <nav aria-label="Student">
+          <p class="navlabel">Student</p>
+          <a href="#">Dashboard</a>
+          <a href="#" aria-current="page">Courses</a>
+          <a href="#">Eligibility</a>
+          <a href="#">My cart <b>3</b></a>
+          <a href="#">Results</a>
+          <a href="#">Waitlist</a>
+          <a href="#">Add / drop</a>
+          <a href="#">History</a>
+          <a href="#">Notifications <b>2</b></a>
+        </nav>
+      </aside>
+
+      <div class="main">
+        <div class="topbar">
+          <span class="window-chip">Fall 2026 · Open · closes in 21d 7h</span>
+          <div class="who">
+            <span class="avatar" aria-hidden="true">AS</span>
+            <span>Aarav Sharma<br /><span class="dept">CSE24901</span></span>
+          </div>
+        </div>
+
+        <div class="page">
+          <div class="head">
+            <div>
+              <p class="eyebrow">Fall 2026 · Registration</p>
+              <h1>Course catalogue</h1>
+              <p class="sub">Every course offered this term, with live seats and demand.</p>
+            </div>
+            <div class="counts">
+              <b>20</b>
+              courses offered
+            </div>
+          </div>
+
+          <div class="filters">
+            <input type="search" placeholder="Search by code or name…" aria-label="Search" />
+            <select aria-label="Department">
+              <option>All departments</option>
+            </select>
+            <select aria-label="Sort">
+              <option>Sort: demand, high to low</option>
+            </select>
+            <label class="toggle"><input type="checkbox" checked /> Eligible only</label>
+          </div>
+
+          <table>
+            <caption>
+              Showing 1–8 of 20 courses · seats updated 4s ago
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Course</th>
+                <th scope="col">Cr</th>
+                <th scope="col">Seats</th>
+                <th scope="col" style="text-align: right">Demand</th>
+                <th scope="col">Eligibility</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="code">CS401</td>
+                <td>
+                  <div class="title">Artificial Intelligence</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs full" aria-hidden="true"
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i
+                    ></span>
+                    <span class="seatnum none">0 of 20 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">112 · 5.6&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 93%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Join waitlist</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS404</td>
+                <td>
+                  <div class="title">Blockchain Technology</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">3</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs full" aria-hidden="true"
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i
+                    ></span>
+                    <span class="seatnum none">0 of 25 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">84 · 3.4&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 57%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Join waitlist</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS402</td>
+                <td>
+                  <div class="title">Cloud Security</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i></i><i></i
+                    ></span>
+                    <span class="seatnum"><b>6</b> of 30 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">69 · 2.3&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 38%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Add to cart</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS405</td>
+                <td>
+                  <div class="title">Machine Learning</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i
+                      ><i></i><i></i><i></i><i></i
+                    ></span>
+                    <span class="seatnum"><b>30</b> of 40 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">106 · 2.7&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 45%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Add to cart</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS403</td>
+                <td>
+                  <div class="title">Distributed Systems</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i
+                      ><i></i><i></i><i></i><i></i
+                    ></span>
+                    <span class="seatnum"><b>21</b> of 30 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">33 · 1.1&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 18%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Add to cart</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS406</td>
+                <td>
+                  <div class="title">Human-Computer Interaction</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">3</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                      ><i></i
+                    ></span>
+                    <span class="seatnum"><b>31</b> of 35 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">143 · 4.1&times;</span>
+                    <span class="dbar over" aria-hidden="true"
+                      ><span style="width: 68%"></span
+                    ></span>
+                  </div>
+                </td>
+                <td><span class="tag ok">&check; Eligible</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn">Add to cart</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">CS201</td>
+                <td>
+                  <div class="title">Data Structures and Algorithms</div>
+                  <div class="dept">Computer Science &amp; Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                      ><i></i
+                    ></span>
+                    <span class="seatnum"><b>59</b> of 60 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">5 · 0.1&times;</span>
+                    <span class="dbar" aria-hidden="true"><span style="width: 2%"></span></span>
+                  </div>
+                </td>
+                <td><span class="tag no">&times; Already passed</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn" disabled>Add to cart</button></div>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="code">ME301</td>
+                <td>
+                  <div class="title">Robotics</div>
+                  <div class="dept">Mechanical Engineering</div>
+                </td>
+                <td class="num">4</td>
+                <td>
+                  <div class="seats">
+                    <span class="segs" aria-hidden="true"
+                      ><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                      ><i></i
+                    ></span>
+                    <span class="seatnum"><b>28</b> of 30 left</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="demand">
+                    <span class="num">12 · 0.4&times;</span>
+                    <span class="dbar" aria-hidden="true"><span style="width: 7%"></span></span>
+                  </div>
+                </td>
+                <td><span class="tag warn">! Needs sem 5</span></td>
+                <td>
+                  <div class="rowmeta"><button class="btn" disabled>Add to cart</button></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course catalogue · Allocademy — Direction 2: Ledger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bone: #f3efe7;
+        --paper: #fbf9f5;
+        --ink: #14181d;
+        --navy: #16202e;
+        --navy-2: #27364a;
+        --ink-2: #4d5664;
+        --ink-3: #666e79;
+        --rule: #ded8cb;
+        --rule-2: #b4ab99;
+        --ochre: #915a0c;
+        --ochre-soft: #f7ecd9;
+        --green: #2a5d3c;
+        --green-soft: #e3eee4;
+        --red: #96281b;
+        --red-soft: #f6e5e1;
+        --serif: 'Spectral', Georgia, serif;
+        --sans: 'Public Sans', system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bone);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 228px 1fr;
+        min-height: 100vh;
+      }
+
+      /* ---- Navy rail: the chrome is dark, the work is on paper ----------- */
+      .side {
+        background: var(--navy);
+        color: #c7cfdb;
+        display: flex;
+        flex-direction: column;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 18px 20px;
+        border-bottom: 1px solid #2c3a4d;
+      }
+      .monogram {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        background: var(--bone);
+        color: var(--navy);
+        font-family: var(--serif);
+        font-weight: 700;
+        font-size: 18px;
+        line-height: 1;
+        padding-top: 2px;
+      }
+      .brand .name {
+        font-family: var(--serif);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--bone);
+        line-height: 1.1;
+      }
+      .brand .sub {
+        font-size: 9.5px;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+        color: #8d99a9;
+      }
+      nav {
+        padding: 14px 0;
+      }
+      .navlabel {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+        color: #6f7c8c;
+        padding: 8px 20px 6px;
+      }
+      nav a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 20px;
+        color: #c7cfdb;
+        text-decoration: none;
+        font-size: 13.5px;
+        border-left: 3px solid transparent;
+      }
+      nav a:hover {
+        background: #1e2a3a;
+        color: #fff;
+      }
+      nav a[aria-current] {
+        background: #1e2a3a;
+        color: #fff;
+        font-weight: 600;
+        border-left-color: var(--ochre);
+      }
+      nav a b {
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--ochre);
+        color: #fff;
+        border-radius: 2px;
+        padding: 1px 6px;
+      }
+
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        background: var(--paper);
+        border-bottom: 1px solid var(--rule-2);
+        padding: 12px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: var(--green-soft);
+        color: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 2px;
+        padding: 3px 8px;
+      }
+      .who {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .avatar {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        background: var(--navy);
+        color: var(--bone);
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 13px;
+        border-radius: 50%;
+      }
+
+      .page {
+        padding: 28px 28px 44px;
+      }
+      /* The page head is a ruled masthead, like the top of a statement */
+      .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 28px;
+        padding-bottom: 16px;
+        border-bottom: 3px double var(--rule-2);
+        margin-bottom: 22px;
+      }
+      .eyebrow {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+        color: var(--ochre);
+      }
+      h1 {
+        font-family: var(--serif);
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        line-height: 1.05;
+        margin: 6px 0 5px;
+      }
+      .sub {
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .summary {
+        text-align: right;
+        font-size: 12px;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+      .summary b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 30px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .filters {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+      .filters input,
+      .filters select {
+        font: inherit;
+        font-size: 13.5px;
+        border: 1px solid var(--rule-2);
+        background: #fff;
+        padding: 8px 10px;
+        border-radius: 2px;
+        color: var(--ink);
+      }
+      .filters input {
+        flex: 1;
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13.5px;
+        color: var(--ink-2);
+        padding-right: 6px;
+      }
+
+      /* ---- Ledger table: ruled columns, striped rows, serif figures ------ */
+      .ledger {
+        background: var(--paper);
+        border: 1px solid var(--rule-2);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      caption {
+        text-align: left;
+        padding: 11px 14px;
+        font-size: 12px;
+        color: var(--ink-3);
+        border-bottom: 1px solid var(--rule);
+        background: #fff;
+      }
+      th {
+        text-align: left;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--bone);
+        background: var(--navy);
+        padding: 9px 14px;
+        white-space: nowrap;
+      }
+      th + th {
+        border-left: 1px solid #2c3a4d;
+      }
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: middle;
+      }
+      td + td {
+        border-left: 1px solid var(--rule);
+      }
+      tbody tr:nth-child(even) {
+        background: #f7f4ee;
+      }
+      tbody tr:hover {
+        background: var(--ochre-soft);
+      }
+      .code {
+        font-family: var(--serif);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .dept {
+        color: var(--ink-3);
+        font-size: 12px;
+      }
+      .fig {
+        font-family: var(--serif);
+        font-variant-numeric: tabular-nums lining-nums;
+        font-size: 15px;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      /* Seats as a ruled fraction: big remaining figure over the capacity */
+      .seatcell {
+        white-space: nowrap;
+      }
+      .frac {
+        font-family: var(--serif);
+        font-variant-numeric: tabular-nums lining-nums;
+        font-size: 19px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .frac small {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--ink-3);
+      }
+      .frac.none {
+        color: var(--red);
+      }
+      .rule-meter {
+        margin-top: 5px;
+        height: 5px;
+        width: 92px;
+        background: #e6e0d4;
+        border: 1px solid var(--rule-2);
+        position: relative;
+      }
+      .rule-meter span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--navy);
+      }
+      .rule-meter.full span {
+        background: var(--red);
+      }
+      .seatword {
+        font-size: 11.5px;
+        color: var(--ink-3);
+        margin-top: 3px;
+      }
+
+      .demandcell {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .ratio {
+        font-family: var(--serif);
+        font-variant-numeric: tabular-nums lining-nums;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .ratio.hot {
+        color: var(--ochre);
+      }
+      .reqs {
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        border-radius: 2px;
+        padding: 4px 8px;
+        white-space: nowrap;
+        border: 1px solid currentColor;
+      }
+      .tag.ok {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+      .tag.no {
+        color: var(--red);
+        background: var(--red-soft);
+      }
+      .tag.warn {
+        color: var(--ochre);
+        background: var(--ochre-soft);
+      }
+      .btn {
+        font: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        border: 1px solid var(--navy);
+        background: var(--navy);
+        color: var(--bone);
+        border-radius: 2px;
+        padding: 7px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn.outline {
+        background: transparent;
+        color: var(--navy);
+      }
+      .btn.outline:hover {
+        background: var(--navy);
+        color: var(--bone);
+      }
+      .btn[disabled] {
+        border-color: var(--rule-2);
+        background: transparent;
+        color: var(--ink-3);
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="side">
+        <div class="brand">
+          <span class="monogram" aria-hidden="true">A</span>
+          <span>
+            <span class="name">Allocademy</span><br />
+            <span class="sub">Registrar</span>
+          </span>
+        </div>
+        <nav aria-label="Student">
+          <p class="navlabel">Student</p>
+          <a href="#">Dashboard</a>
+          <a href="#" aria-current="page">Courses</a>
+          <a href="#">Eligibility</a>
+          <a href="#">My cart <b>3</b></a>
+          <a href="#">Results</a>
+          <a href="#">Waitlist</a>
+          <a href="#">Add / drop</a>
+          <a href="#">History</a>
+          <a href="#">Notifications <b>2</b></a>
+        </nav>
+      </aside>
+
+      <div class="main">
+        <div class="topbar">
+          <span class="status">
+            <span class="pill">Open</span> Fall 2026 · registration closes Thu 22 Oct, 22:30
+          </span>
+          <span class="who">
+            <span class="avatar" aria-hidden="true">AS</span>
+            <span>Aarav Sharma<br /><span class="dept">CSE24901</span></span>
+          </span>
+        </div>
+
+        <div class="page">
+          <div class="head">
+            <div>
+              <p class="eyebrow">Fall 2026 · Registration</p>
+              <h1>Course catalogue</h1>
+              <p class="sub">Every course offered this term, with live seats and demand.</p>
+            </div>
+            <div class="summary"><b>20</b> courses offered</div>
+          </div>
+
+          <div class="filters">
+            <input type="search" placeholder="Search by code or name…" aria-label="Search" />
+            <select aria-label="Department">
+              <option>All departments</option>
+            </select>
+            <select aria-label="Sort">
+              <option>Sort: demand, high to low</option>
+            </select>
+            <label class="toggle"><input type="checkbox" checked /> Eligible only</label>
+          </div>
+
+          <div class="ledger">
+            <table>
+              <caption>
+                Showing 1–8 of 20 courses · seats updated 4 seconds ago
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Code</th>
+                  <th scope="col">Course</th>
+                  <th scope="col" style="text-align: right">Cr</th>
+                  <th scope="col">Seats remaining</th>
+                  <th scope="col" style="text-align: right">Demand</th>
+                  <th scope="col">Eligibility</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="code">CS401</td>
+                  <td>
+                    <div class="title">Artificial Intelligence</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac none">0 <small>/ 20</small></div>
+                    <div class="rule-meter full" aria-hidden="true">
+                      <span style="width: 100%"></span>
+                    </div>
+                    <div class="seatword">Full — waitlist open</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio hot">5.6&times;</div>
+                    <div class="reqs">112 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn">Join waitlist</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS404</td>
+                  <td>
+                    <div class="title">Blockchain Technology</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">3</td>
+                  <td class="seatcell">
+                    <div class="frac none">0 <small>/ 25</small></div>
+                    <div class="rule-meter full" aria-hidden="true">
+                      <span style="width: 100%"></span>
+                    </div>
+                    <div class="seatword">Full — waitlist open</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio hot">3.4&times;</div>
+                    <div class="reqs">84 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn">Join waitlist</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS402</td>
+                  <td>
+                    <div class="title">Cloud Security</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac">6 <small>/ 30</small></div>
+                    <div class="rule-meter" aria-hidden="true">
+                      <span style="width: 80%"></span>
+                    </div>
+                    <div class="seatword">24 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio hot">2.3&times;</div>
+                    <div class="reqs">69 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn outline">Add to cart</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS405</td>
+                  <td>
+                    <div class="title">Machine Learning</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac">30 <small>/ 40</small></div>
+                    <div class="rule-meter" aria-hidden="true">
+                      <span style="width: 25%"></span>
+                    </div>
+                    <div class="seatword">10 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio hot">2.7&times;</div>
+                    <div class="reqs">106 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn outline">Add to cart</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS403</td>
+                  <td>
+                    <div class="title">Distributed Systems</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac">21 <small>/ 30</small></div>
+                    <div class="rule-meter" aria-hidden="true">
+                      <span style="width: 30%"></span>
+                    </div>
+                    <div class="seatword">9 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio">1.1&times;</div>
+                    <div class="reqs">33 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn outline">Add to cart</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS406</td>
+                  <td>
+                    <div class="title">Human-Computer Interaction</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">3</td>
+                  <td class="seatcell">
+                    <div class="frac">31 <small>/ 35</small></div>
+                    <div class="rule-meter" aria-hidden="true">
+                      <span style="width: 11%"></span>
+                    </div>
+                    <div class="seatword">4 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio hot">4.1&times;</div>
+                    <div class="reqs">143 requests</div>
+                  </td>
+                  <td><span class="tag ok">&check; Eligible</span></td>
+                  <td><button class="btn outline">Add to cart</button></td>
+                </tr>
+                <tr>
+                  <td class="code">CS201</td>
+                  <td>
+                    <div class="title">Data Structures and Algorithms</div>
+                    <div class="dept">Computer Science &amp; Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac">59 <small>/ 60</small></div>
+                    <div class="rule-meter" aria-hidden="true"><span style="width: 2%"></span></div>
+                    <div class="seatword">1 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio">0.1&times;</div>
+                    <div class="reqs">5 requests</div>
+                  </td>
+                  <td><span class="tag no">&times; Already passed</span></td>
+                  <td><button class="btn" disabled>Add to cart</button></td>
+                </tr>
+                <tr>
+                  <td class="code">ME301</td>
+                  <td>
+                    <div class="title">Robotics</div>
+                    <div class="dept">Mechanical Engineering</div>
+                  </td>
+                  <td class="fig">4</td>
+                  <td class="seatcell">
+                    <div class="frac">28 <small>/ 30</small></div>
+                    <div class="rule-meter" aria-hidden="true"><span style="width: 7%"></span></div>
+                    <div class="seatword">2 taken</div>
+                  </td>
+                  <td class="demandcell">
+                    <div class="ratio">0.4&times;</div>
+                    <div class="reqs">12 requests</div>
+                  </td>
+                  <td><span class="tag warn">! Needs semester 5</span></td>
+                  <td><button class="btn" disabled>Add to cart</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

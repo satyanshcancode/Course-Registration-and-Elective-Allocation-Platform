@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course catalogue · Allocademy — Direction 3: Quad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --clay: #e8e1d6;
+        --paper: #fdfbf7;
+        --ink: #241f1a;
+        --ink-2: #5b5248;
+        --ink-3: #776e64;
+        --rule: #d6cdbe;
+        --forest: #2f5d4a;
+        --forest-2: #244a3b;
+        --forest-soft: #dfe9e3;
+        --terracotta: #a04a26;
+        --terracotta-soft: #f6e3da;
+        --amber: #8a5a06;
+        --amber-soft: #f7ecd6;
+        --display: 'Fraunces', Georgia, serif;
+        --sans: 'Work Sans', system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--clay);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 224px 1fr;
+        min-height: 100vh;
+      }
+
+      .side {
+        padding: 22px 16px;
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--display);
+        font-optical-sizing: auto;
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        color: var(--forest);
+        padding: 0 10px 20px;
+      }
+      .mark {
+        display: grid;
+        grid-template-columns: repeat(2, 6px);
+        gap: 3px;
+      }
+      .mark i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--forest);
+      }
+      .mark i:last-child {
+        background: transparent;
+        box-shadow: inset 0 0 0 1.5px var(--terracotta);
+      }
+      .navlabel {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        padding: 6px 10px 8px;
+      }
+      nav a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        margin-bottom: 1px;
+        border-radius: 7px;
+        color: var(--ink-2);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      nav a:hover {
+        background: #ded6c9;
+        color: var(--ink);
+      }
+      nav a[aria-current] {
+        background: var(--forest);
+        color: #fdfbf7;
+        font-weight: 600;
+      }
+      nav a b {
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--terracotta);
+        color: #fff;
+        border-radius: 9px;
+        padding: 1px 7px;
+      }
+      nav a[aria-current] b {
+        background: #fdfbf7;
+        color: var(--forest);
+      }
+
+      .main {
+        min-width: 0;
+        background: var(--paper);
+        border-left: 1px solid var(--rule);
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 30px;
+        border-bottom: 1px solid var(--rule);
+        position: sticky;
+        top: 0;
+        background: var(--paper);
+        z-index: 2;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 13.5px;
+        color: var(--ink-2);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        background: var(--forest-soft);
+        color: var(--forest);
+        border-radius: 20px;
+        padding: 4px 11px;
+      }
+      .who {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        background: var(--forest);
+        color: #fdfbf7;
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 13px;
+        border-radius: 50%;
+      }
+      .roll {
+        color: var(--ink-3);
+        font-size: 12px;
+      }
+
+      .page {
+        padding: 30px 30px 48px;
+      }
+      .head {
+        max-width: 60ch;
+        margin-bottom: 26px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--terracotta);
+      }
+      h1 {
+        font-family: var(--display);
+        font-optical-sizing: auto;
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.02;
+        margin: 8px 0 10px;
+      }
+      .sub {
+        color: var(--ink-2);
+        font-size: 15px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+      }
+      .filters input,
+      .filters select {
+        font: inherit;
+        font-size: 13.5px;
+        border: 1.5px solid var(--rule);
+        background: #fff;
+        padding: 9px 12px;
+        border-radius: 7px;
+        color: var(--ink);
+      }
+      .filters input[type='search'] {
+        flex: 1;
+        min-width: 220px;
+      }
+      .filters input[type='checkbox'] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--forest);
+      }
+      .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13.5px;
+        color: var(--ink-2);
+      }
+      .resultline {
+        font-size: 13px;
+        color: var(--ink-3);
+        margin-bottom: 14px;
+      }
+
+      /* ---- Course rows: a coloured department spine, no boxed cards ------ */
+      .list {
+        border-top: 1px solid var(--rule);
+      }
+      .course {
+        display: grid;
+        grid-template-columns: 4px 1fr auto auto;
+        gap: 0 20px;
+        align-items: center;
+        padding: 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .course:hover {
+        background: #f7f3ec;
+      }
+      .spine {
+        align-self: stretch;
+        background: var(--forest);
+      }
+      .course[data-dept='ME'] .spine {
+        background: var(--terracotta);
+      }
+      .course[data-dept='MA'] .spine {
+        background: var(--amber);
+      }
+      .body {
+        padding: 14px 0;
+        min-width: 0;
+      }
+      .codeline {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 2px;
+      }
+      .code {
+        font-family: var(--display);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--ink-2);
+      }
+      .cr {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+      h2 {
+        font-family: var(--display);
+        font-optical-sizing: auto;
+        font-size: 21px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        margin-bottom: 4px;
+      }
+      .dept {
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .tags {
+        display: flex;
+        gap: 7px;
+        margin-top: 9px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 3px 10px;
+        white-space: nowrap;
+      }
+      .tag.ok {
+        color: var(--forest);
+        background: var(--forest-soft);
+      }
+      .tag.no {
+        color: var(--terracotta);
+        background: var(--terracotta-soft);
+      }
+      .tag.warn {
+        color: var(--amber);
+        background: var(--amber-soft);
+      }
+
+      /* Seats as a 20-dot matrix, filled = taken, so a glance gives the
+         proportion and the figures underneath give the exact count. Twenty
+         dots whatever the capacity: one-dot-per-seat would make a 60-seat
+         course four times the height of a 20-seat one. */
+      .seatblock {
+        padding: 14px 0;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .dots {
+        display: grid;
+        grid-template-columns: repeat(10, 7px);
+        gap: 3px;
+        justify-content: end;
+        margin-bottom: 7px;
+      }
+      .dots i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: transparent;
+        box-shadow: inset 0 0 0 1.5px var(--rule);
+      }
+      .dots i.on {
+        background: var(--forest);
+        box-shadow: none;
+      }
+      .dots.full i.on {
+        background: var(--terracotta);
+      }
+      .seatnum {
+        font-family: var(--display);
+        font-optical-sizing: auto;
+        font-variant-numeric: tabular-nums lining-nums;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .seatnum small {
+        font-family: var(--sans);
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-3);
+      }
+      .seatnum.none {
+        color: var(--terracotta);
+      }
+      .demandline {
+        font-size: 12px;
+        color: var(--ink-3);
+        margin-top: 2px;
+      }
+      .demandline b {
+        color: var(--ink-2);
+      }
+      .demandline.hot b {
+        color: var(--terracotta);
+      }
+
+      .act {
+        padding: 14px 0 14px 4px;
+      }
+      .btn {
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        border: 1.5px solid var(--forest);
+        background: transparent;
+        color: var(--forest);
+        border-radius: 7px;
+        padding: 9px 15px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        background: var(--forest);
+        color: #fdfbf7;
+      }
+      .btn.solid {
+        background: var(--terracotta);
+        border-color: var(--terracotta);
+        color: #fff;
+      }
+      .btn.solid:hover {
+        background: #9a4523;
+      }
+      .btn[disabled] {
+        border-color: var(--rule);
+        color: var(--ink-3);
+        background: transparent;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="side">
+        <span class="brand">
+          <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          Allocademy
+        </span>
+        <nav aria-label="Student">
+          <p class="navlabel">Student</p>
+          <a href="#">Dashboard</a>
+          <a href="#" aria-current="page">Courses</a>
+          <a href="#">Eligibility</a>
+          <a href="#">My cart <b>3</b></a>
+          <a href="#">Results</a>
+          <a href="#">Waitlist</a>
+          <a href="#">Add / drop</a>
+          <a href="#">History</a>
+          <a href="#">Notifications <b>2</b></a>
+        </nav>
+      </aside>
+
+      <div class="main">
+        <div class="topbar">
+          <span class="status">
+            <span class="pill">&#9679; Registration open</span>
+            Fall 2026 · closes Thu 22 Oct, 22:30
+          </span>
+          <span class="who">
+            <span class="avatar" aria-hidden="true">AS</span>
+            <span>Aarav Sharma<br /><span class="roll">CSE24901</span></span>
+          </span>
+        </div>
+
+        <div class="page">
+          <div class="head">
+            <p class="eyebrow">Fall 2026 · Registration</p>
+            <h1>Course catalogue</h1>
+            <p class="sub">
+              Every course offered this term, with live seat counts, demand and whether you can take
+              it.
+            </p>
+          </div>
+
+          <div class="filters">
+            <input type="search" placeholder="Search by code or name…" aria-label="Search" />
+            <select aria-label="Department">
+              <option>All departments</option>
+            </select>
+            <select aria-label="Sort">
+              <option>Sort: demand, high to low</option>
+            </select>
+            <label class="toggle"><input type="checkbox" checked /> Eligible only</label>
+          </div>
+          <p class="resultline">Showing 1–8 of 20 courses · seats updated 4 seconds ago</p>
+
+          <div class="list">
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS401</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Artificial Intelligence</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags">
+                  <span class="tag ok">&check; You can take this</span>
+                  <span class="tag no">&times; Full — 85 waiting</span>
+                </div>
+              </div>
+              <div class="seatblock">
+                <div class="dots full" aria-hidden="true">
+                  <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                </div>
+                <div class="seatnum none">0 <small>of 20 seats left</small></div>
+                <p class="demandline hot">Demand <b>5.6&times;</b> · 112 requests</p>
+              </div>
+              <div class="act"><button class="btn solid">Join waitlist</button></div>
+            </article>
+
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS404</span><span class="cr">3 credits</span>
+                </div>
+                <h2>Blockchain Technology</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags">
+                  <span class="tag ok">&check; You can take this</span>
+                  <span class="tag no">&times; Full — 4 waiting</span>
+                </div>
+              </div>
+              <div class="seatblock">
+                <div class="dots full" aria-hidden="true">
+                  <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                </div>
+                <div class="seatnum none">0 <small>of 25 seats left</small></div>
+                <p class="demandline hot">Demand <b>3.4&times;</b> · 84 requests</p>
+              </div>
+              <div class="act"><button class="btn solid">Join waitlist</button></div>
+            </article>
+
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS402</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Cloud Security</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags"><span class="tag ok">&check; You can take this</span></div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i
+                  ><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">6 <small>of 30 seats left</small></div>
+                <p class="demandline hot">Demand <b>2.3&times;</b> · 69 requests</p>
+              </div>
+              <div class="act"><button class="btn">Add to cart</button></div>
+            </article>
+
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS405</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Machine Learning</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags"><span class="tag ok">&check; You can take this</span></div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                  ><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">30 <small>of 40 seats left</small></div>
+                <p class="demandline hot">Demand <b>2.7&times;</b> · 106 requests</p>
+              </div>
+              <div class="act"><button class="btn">Add to cart</button></div>
+            </article>
+
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS403</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Distributed Systems</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags"><span class="tag ok">&check; You can take this</span></div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                  ><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i
+                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">21 <small>of 30 seats left</small></div>
+                <p class="demandline">Demand <b>1.1&times;</b> · 33 requests</p>
+              </div>
+              <div class="act"><button class="btn">Add to cart</button></div>
+            </article>
+
+            <article class="course" data-dept="CS">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">CS201</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Data Structures and Algorithms</h2>
+                <p class="dept">Computer Science &amp; Engineering</p>
+                <div class="tags">
+                  <span class="tag no">&times; You have already passed this</span>
+                </div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">59 <small>of 60 seats left</small></div>
+                <p class="demandline">Demand <b>0.1&times;</b> · 5 requests</p>
+              </div>
+              <div class="act"><button class="btn" disabled>Add to cart</button></div>
+            </article>
+
+            <article class="course" data-dept="ME">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">ME301</span><span class="cr">4 credits</span>
+                </div>
+                <h2>Robotics</h2>
+                <p class="dept">Mechanical Engineering</p>
+                <div class="tags">
+                  <span class="tag warn">! Needs semester 5 — you are in semester 4</span>
+                </div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">28 <small>of 30 seats left</small></div>
+                <p class="demandline">Demand <b>0.4&times;</b> · 12 requests</p>
+              </div>
+              <div class="act"><button class="btn" disabled>Add to cart</button></div>
+            </article>
+
+            <article class="course" data-dept="MA">
+              <span class="spine" aria-hidden="true"></span>
+              <div class="body">
+                <div class="codeline">
+                  <span class="code">MA301</span><span class="cr">3 credits</span>
+                </div>
+                <h2>Numerical Methods</h2>
+                <p class="dept">Mathematics</p>
+                <div class="tags"><span class="tag ok">&check; You can take this</span></div>
+              </div>
+              <div class="seatblock">
+                <div class="dots" aria-hidden="true">
+                  <i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="seatnum">47 <small>of 50 seats left</small></div>
+                <p class="demandline">Demand <b>0.3&times;</b> · 14 requests</p>
+              </div>
+              <div class="act"><button class="btn">Add to cart</button></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

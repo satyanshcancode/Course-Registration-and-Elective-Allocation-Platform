@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in · Allocademy — Direction 2: Ledger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bone: #f3efe7;
+        --paper: #fbf9f5;
+        --ink: #14181d;
+        --navy: #16202e;
+        --navy-2: #27364a;
+        --ink-2: #4d5664;
+        --ink-3: #666e79;
+        --rule: #d9d3c6;
+        --rule-2: #b4ab99;
+        --ochre: #915a0c;
+        --ochre-soft: #f5e8d2;
+        --green: #2a5d3c;
+        --green-soft: #e0ebe1;
+        --red: #96281b;
+        --red-soft: #f3e1dd;
+        --serif: 'Spectral', Georgia, serif;
+        --sans: 'Public Sans', system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bone);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      /* ---- A solid navy masthead band: the institution speaks first ------- */
+      header {
+        background: var(--navy);
+        color: var(--bone);
+        padding: 20px 32px;
+        border-bottom: 4px solid var(--ochre);
+      }
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .monogram {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        background: var(--bone);
+        color: var(--navy);
+        font-family: var(--serif);
+        font-weight: 700;
+        font-size: 20px;
+        line-height: 1;
+        padding-top: 2px;
+      }
+      .wordmark .name {
+        font-family: var(--serif);
+        font-size: 21px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.1;
+      }
+      .wordmark .sub {
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #a9b4c3;
+      }
+
+      main {
+        display: grid;
+        place-items: center;
+        padding: 64px 24px;
+      }
+      .sheet {
+        width: 100%;
+        max-width: 430px;
+        background: var(--paper);
+        border: 1px solid var(--rule-2);
+        border-top: 5px solid var(--navy);
+        padding: 38px 40px 34px;
+      }
+      .eyebrow {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+        color: var(--ochre);
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-family: var(--serif);
+        font-size: 36px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        line-height: 1.05;
+        margin-bottom: 10px;
+      }
+      .lede {
+        color: var(--ink-2);
+        font-size: 14.5px;
+        margin-bottom: 28px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .field {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        margin-bottom: 7px;
+        color: var(--ink);
+      }
+      input {
+        width: 100%;
+        font: inherit;
+        font-size: 15px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--rule-2);
+        padding: 11px 12px;
+        border-radius: 2px;
+      }
+      input:focus {
+        outline: 0;
+        border-color: var(--navy);
+        box-shadow: 0 0 0 3px rgb(22 32 46 / 0.12);
+      }
+      .pwrow {
+        display: flex;
+        gap: 10px;
+      }
+      .pwrow input {
+        flex: 1;
+      }
+      .ghost {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--navy);
+        background: transparent;
+        border: 1px solid var(--rule-2);
+        border-radius: 2px;
+        padding: 0 14px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .ghost:hover {
+        background: var(--bone);
+        border-color: var(--navy);
+      }
+
+      button.primary {
+        width: 100%;
+        margin-top: 6px;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--bone);
+        background: var(--navy);
+        border: 0;
+        border-radius: 2px;
+        padding: 13px;
+        cursor: pointer;
+      }
+      button.primary:hover {
+        background: var(--navy-2);
+      }
+
+      .foot {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rule);
+        font-size: 13.5px;
+        color: var(--ink-2);
+      }
+      .foot a {
+        color: var(--navy);
+        font-weight: 600;
+        text-underline-offset: 3px;
+      }
+
+      footer {
+        padding: 18px 32px;
+        font-size: 12px;
+        color: var(--ink-3);
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid var(--rule);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wordmark">
+        <span class="monogram" aria-hidden="true">A</span>
+        <span>
+          <span class="name">Allocademy</span><br />
+          <span class="sub">University Registrar</span>
+        </span>
+      </div>
+    </header>
+
+    <main>
+      <section class="sheet" aria-labelledby="t">
+        <p class="eyebrow">Students &amp; registrar staff</p>
+        <h1 id="t">Sign in</h1>
+        <p class="lede">
+          Use your university e-mail address and password. Accounts are created by the registrar —
+          if you have an invitation e-mail, open its link to set your password.
+        </p>
+
+        <form>
+          <div class="field">
+            <label for="e">E-mail address</label>
+            <input id="e" type="email" value="aarav.sharma@university.edu" />
+          </div>
+          <div class="field">
+            <label for="p">Password</label>
+            <div class="pwrow">
+              <input id="p" type="password" value="xxxxxxxxxxxx" />
+              <button class="ghost" type="button">Show</button>
+            </div>
+          </div>
+          <button class="primary" type="button">Sign in</button>
+        </form>
+
+        <p class="foot">Forgotten your password? <a href="#">Send me a reset link</a></p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Allocademy · University Registrar</span>
+      <span>Direction 2 — Ledger</span>
+    </footer>
+  </body>
+</html>
