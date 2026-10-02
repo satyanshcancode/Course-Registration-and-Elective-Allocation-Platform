@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PageLoading } from '../components/PageLoading';
 import styles from './PublicLayout.module.css';
@@ -27,6 +27,10 @@ export function PublicLayout() {
       </main>
       <footer className={styles.footer}>
         <p>Allocademy · University Registrar</p>
+        <p className={styles.footerLinks}>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+        </p>
       </footer>
     </div>
   );

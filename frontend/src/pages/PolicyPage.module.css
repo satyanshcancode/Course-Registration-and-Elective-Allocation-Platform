@@ -1,0 +1,41 @@
+.page {
+  max-width: var(--layout-narrow);
+  margin-inline: auto;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-6);
+  padding-top: var(--space-5);
+}
+
+/* Says plainly that the university still has to fill the gaps in. */
+.template {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius-md);
+  background-color: var(--color-info-soft);
+  font-size: var(--text-sm);
+  line-height: var(--leading-dense);
+}
+
+.body section {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-hairline);
+}
+
+.body section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.body h2 {
+  font-size: var(--text-lg);
+}
+
+.body p {
+  max-width: 68ch;
+  color: var(--color-ink-muted);
+}
