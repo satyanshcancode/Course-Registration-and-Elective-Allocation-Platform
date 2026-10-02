@@ -62,7 +62,10 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--space-2) var(--space-3);
+  /* 8px rather than 12px either side: with eight columns that is 64px back,
+     which is what keeps the status column on screen at 1280 now the seat
+     matrix and a wider typeface have taken their share. */
+  padding: var(--space-2);
   border-bottom: 1px solid var(--color-rule-strong);
   background-color: var(--color-surface-sunken);
   color: var(--color-ink-muted);
@@ -74,7 +77,7 @@
 
 .cell {
   max-width: 22rem;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2);
   border-bottom: var(--border-hairline);
   vertical-align: middle;
   transition: background-color var(--duration-fast) var(--ease-standard);
