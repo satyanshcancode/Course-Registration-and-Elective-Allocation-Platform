@@ -2,7 +2,7 @@
  * Minimal row builders for integration tests. Each returns the generated id(s)
  * and accepts overrides for the columns a test cares about.
  */
-import { DEFAULT_PREFERENCE_PRIORITY_CONFIG } from '@course-reg/shared';
+import { DEFAULT_PREFERENCE_PRIORITY_CONFIG, type UserRole } from '@course-reg/shared';
 import bcrypt from 'bcryptjs';
 import type { Pool } from 'pg';
 
@@ -68,7 +68,7 @@ export function createProgram(
 
 export function createUser(
   pool: Pool,
-  overrides: { email?: string; role?: 'STUDENT' | 'ADMIN' } = {},
+  overrides: { email?: string; role?: UserRole; name?: string } = {},
 ): Promise<string> {
   const n = nextId();
   // password_changed_at is backdated a minute because that is what real
@@ -78,10 +78,15 @@ export function createUser(
   // situation that only a test can create (see services/accountTokens.ts).
   return insertReturningId(
     pool,
-    `INSERT INTO users (email, password_hash, role, password_changed_at)
-     VALUES ($1, $2, $3, now() - interval '1 minute')
+    `INSERT INTO users (email, password_hash, role, display_name, password_changed_at)
+     VALUES ($1, $2, $3, $4, now() - interval '1 minute')
      RETURNING id`,
-    [overrides.email ?? `user${n}@university.edu`, TEST_PASSWORD_HASH, overrides.role ?? 'STUDENT'],
+    [
+      overrides.email ?? `user${n}@university.edu`,
+      TEST_PASSWORD_HASH,
+      overrides.role ?? 'STUDENT',
+      overrides.name ?? null,
+    ],
   );
 }
 

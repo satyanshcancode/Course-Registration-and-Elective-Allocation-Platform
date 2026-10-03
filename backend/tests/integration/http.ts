@@ -1,4 +1,5 @@
 /** HTTP helpers shared by the API integration tests. */
+import type { UserRole } from '@course-reg/shared';
 import jwt from 'jsonwebtoken';
 import type { Pool } from 'pg';
 import type request from 'supertest';
@@ -57,7 +58,7 @@ export function tokenFromEmail(text: string): string {
 }
 
 /** A valid session cookie for a user, without going through /auth/login. */
-export function sessionFor(userId: string, role: 'STUDENT' | 'ADMIN'): string {
+export function sessionFor(userId: string, role: UserRole): string {
   const token = jwt.sign({ role }, JWT_SECRET, { subject: userId, expiresIn: '1h' });
   return `${SESSION_COOKIE_NAME}=${token}`;
 }

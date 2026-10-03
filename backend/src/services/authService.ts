@@ -1,4 +1,4 @@
-import type { CurrentUser, LoginRequest } from '@course-reg/shared';
+import { isAdminRole, type CurrentUser, type LoginRequest } from '@course-reg/shared';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 import { PASSWORD_HASH_ROUNDS } from '../config/session.js';
@@ -131,7 +131,8 @@ export function createAuthService({
       }
 
       const result = await signFor(account.id);
-      if (result.user.role === 'ADMIN') {
+      // Both staff roles are security-relevant sign-ins worth an audit row.
+      if (isAdminRole(result.user.role)) {
         await recordAdminLogin(result.user.id, context);
       }
       return result;
@@ -152,9 +153,13 @@ export function createAuthService({
       if (sessionPredatesPasswordChange(claims.issuedAt, user.passwordChangedAt)) {
         return null;
       }
+      // The role is carried THROUGH, never re-asserted. Writing a literal here
+      // once handed a co-administrator an ADMIN context and with it the staff
+      // endpoints, because 'ADMIN' is a valid AdminRole and the compiler had
+      // nothing to object to.
       return user.role === 'STUDENT'
         ? { role: 'STUDENT', userId: user.id, studentId: user.id }
-        : { role: 'ADMIN', userId: user.id };
+        : { role: user.role, userId: user.id };
     },
 
     getCurrentUser,

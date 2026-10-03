@@ -227,7 +227,14 @@ describe('GET /api/auth/me', () => {
     const cookie = sessionCookie(await login(app, 'admin@test.edu'));
 
     const response = await request(app).get('/api/auth/me').set('Cookie', cookie);
-    expect(dataOf(response)).toEqual({ id: adminId, email: 'admin@test.edu', role: 'ADMIN' });
+    // `name` is the staff display name: null for an account created without
+    // one, and present instead of a student profile.
+    expect(dataOf(response)).toEqual({
+      id: adminId,
+      email: 'admin@test.edu',
+      role: 'ADMIN',
+      name: null,
+    });
   });
 
   it('returns 401 without a cookie', async () => {
