@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as authApi from '../api/authApi';
 import { AuthProvider } from '../app/AuthProvider';
 import { LoginPage } from '../pages/auth/LoginPage';
-import { notSignedIn, ok, adminUser, studentUser } from '../test/authFixtures';
+import { notSignedIn, ok, adminUser, coAdminUser, studentUser } from '../test/authFixtures';
 import { ProtectedRoute } from './ProtectedRoute';
 
 vi.mock('../api/authApi', () => ({
@@ -99,5 +99,24 @@ describe('ProtectedRoute', () => {
     renderAt('/admin/dashboard');
 
     expect(await screen.findByRole('heading', { name: 'Admin home' })).toBeInTheDocument();
+  });
+
+  it('lets a co-administrator into the administrative area', async () => {
+    // The guard compares AREAS, not roles: both staff roles live under /admin,
+    // so `role="ADMIN"` admits a co-administrator. The one page they must not
+    // reach checks the role itself, and the server refuses it regardless.
+    api.getCurrentUser.mockResolvedValue(ok(coAdminUser));
+    renderAt('/admin/dashboard');
+
+    expect(await screen.findByRole('heading', { name: 'Admin home' })).toBeInTheDocument();
+  });
+
+  it('still sends a co-administrator out of the student area', async () => {
+    api.getCurrentUser.mockResolvedValue(ok(coAdminUser));
+    const router = renderAt('/student/courses');
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/dashboard');
+    });
   });
 });

@@ -20,6 +20,13 @@ export const adminUser: CurrentUser = {
   name: 'Priya Raman',
 };
 
+export const coAdminUser: CurrentUser = {
+  id: 'b2f5b3a0-0000-4000-8000-000000000003',
+  email: 'coadmin@university.edu',
+  role: 'CO_ADMIN',
+  name: 'Devika Menon',
+};
+
 export const notSignedIn: ApiFailure = {
   success: false,
   data: null,
