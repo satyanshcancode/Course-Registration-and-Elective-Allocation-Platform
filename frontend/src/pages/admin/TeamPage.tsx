@@ -49,11 +49,18 @@ export function TeamPage() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const resource = useAsync<TeamList>(async (signal) => {
-    const list = unwrap(await getTeam(signal));
-    setTeam(list);
-    return list;
-  });
+  // Not fetched at all for a co-administrator: the request would be refused,
+  // and asking for something you may not have is noise in the server's log and
+  // a wasted round trip. `immediate` rather than an early return, because the
+  // hook has to be called unconditionally.
+  const resource = useAsync<TeamList>(
+    async (signal) => {
+      const list = unwrap(await getTeam(signal));
+      setTeam(list);
+      return list;
+    },
+    { immediate: canManageStaff },
+  );
 
   // A co-administrator who types the URL is sent back rather than shown an
   // empty page. The server refuses every call behind it either way; this is
