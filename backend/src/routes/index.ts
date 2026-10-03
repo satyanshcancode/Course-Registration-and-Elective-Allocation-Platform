@@ -168,10 +168,14 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     ),
   );
   router.use('/admin', createAdminWaitlistRouter(waitlistController, requireAuth));
-  // Staff accounts. Mounted on /admin like the rest, but behind
-  // requireAdminManager rather than requireAdmin: this is the one thing a
-  // co-administrator may not do.
-  router.use('/admin', createTeamRouter(createTeamController(services.teamService), requireAuth));
+  // Staff accounts: the one thing a co-administrator may not do. Mounted on
+  // the full '/admin/team' prefix rather than '/admin', because its
+  // requireAdminManager would otherwise run for every admin request that
+  // passes through on its way to a router registered later.
+  router.use(
+    '/admin/team',
+    createTeamRouter(createTeamController(services.teamService), requireAuth),
+  );
   router.use(
     '/admin',
     createAdminRouter(

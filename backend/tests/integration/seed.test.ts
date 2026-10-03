@@ -120,7 +120,8 @@ describe('seedDatabase', () => {
     await seedDatabase(pool, FAST);
 
     expect(await dataFingerprint(pool)).toBe(first);
-    expect(await count(pool, 'SELECT count(*)::int AS n FROM users')).toBe(301);
+    // 300 students, one administrator and one co-administrator.
+    expect(await count(pool, 'SELECT count(*)::int AS n FROM users')).toBe(302);
   });
 
   it('stores bcrypt hashes for the documented demo accounts', async () => {
