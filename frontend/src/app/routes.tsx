@@ -75,6 +75,8 @@ const AllocationRunDetailPage = lazyNamed(
   () => import('../pages/admin/AllocationRunDetailPage'),
   'AllocationRunDetailPage',
 );
+/** Guards itself on the role as well: the route only shapes navigation. */
+const TeamPage = lazyNamed(() => import('../pages/admin/TeamPage'), 'TeamPage');
 const AdminWaitlistsPage = lazyNamed(
   () => import('../pages/admin/AdminWaitlistsPage'),
   'AdminWaitlistsPage',
@@ -172,6 +174,7 @@ export const routes: RouteObject[] = [
               { path: 'allocation-runs', element: <AllocationRunsPage /> },
               { path: 'allocation-runs/:id', element: <AllocationRunDetailPage /> },
               { path: 'waitlists', element: <AdminWaitlistsPage /> },
+              { path: 'team', element: <TeamPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

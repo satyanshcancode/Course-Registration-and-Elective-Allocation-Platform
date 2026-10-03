@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
+import { areaPathFor } from '../utils/authRedirects';
+import { roleLabel } from '../utils/roleText';
 import styles from './UserMenu.module.css';
 
 function initialsOf(name: string): string {
@@ -60,10 +62,13 @@ export function UserMenu() {
     return null;
   }
   const { user } = state;
-  const name = user.role === 'STUDENT' ? user.student.name : 'Administrator';
-  const detail = user.role === 'STUDENT' ? user.student.rollNumber : 'Registrar staff';
+  // Staff show their own name where they have one, and their role underneath:
+  // a co-administrator should be able to tell at a glance which account they
+  // are signed in as, because it decides what they are allowed to do.
+  const name = user.role === 'STUDENT' ? user.student.name : (user.name ?? roleLabel(user.role));
+  const detail = user.role === 'STUDENT' ? user.student.rollNumber : roleLabel(user.role);
   // The page lives under each role's own area so it keeps that area's layout.
-  const accountPath = user.role === 'ADMIN' ? '/admin/account' : '/student/account';
+  const accountPath = `${areaPathFor(user.role)}/account`;
 
   // Navigating away (to the account page) leaves the panel behind.
   const showing = open && openedOn === pathname;
