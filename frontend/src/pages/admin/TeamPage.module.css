@@ -6,6 +6,9 @@
 /* Two stacked lines in one cell: the fact, then what it means. */
 .who {
   display: grid;
+  /* Start, or a grid child stretches: the status badge would run the whole
+     width of its column instead of hugging its own words. */
+  justify-items: start;
   gap: var(--space-1);
   min-width: 0;
 }
