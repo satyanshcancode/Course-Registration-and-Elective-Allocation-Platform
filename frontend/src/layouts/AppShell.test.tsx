@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as authApi from '../api/authApi';
 import { routes } from '../app/routes';
 import { expectNoA11yViolations } from '../test/axe';
-import { adminUser, ok, studentUser } from '../test/authFixtures';
-import { ADMIN_NAV, STUDENT_NAV } from './navigation';
+import { adminUser, coAdminUser, ok, studentUser } from '../test/authFixtures';
+import { ADMIN_NAV, adminNavFor, STUDENT_NAV } from './navigation';
 
 vi.mock('../api/authApi', () => ({
   login: vi.fn(),
@@ -65,12 +65,25 @@ describe('layouts', { timeout: 20_000 }, () => {
     const labels = within(nav!)
       .getAllByRole('link')
       .map((link) => link.textContent);
-    expect(labels).toEqual(ADMIN_NAV.map((item) => item.label));
+    // An administrator sees the full list, Team included.
+    expect(labels).toEqual(adminNavFor(true).map((item) => item.label));
     expect(within(nav!).getByRole('link', { name: 'Allocation Runs' })).toHaveAttribute(
       'aria-current',
       'page',
     );
     expect(screen.queryByRole('link', { name: 'My Cart' })).not.toBeInTheDocument();
+  });
+
+  it('co-admin shell shows the same navigation without Team', async () => {
+    api.getCurrentUser.mockResolvedValue(ok(coAdminUser));
+    await renderAt('/admin/allocation-runs');
+
+    const nav = screen.getAllByRole('navigation', { name: 'Administration' })[0];
+    const labels = within(nav!)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(labels).toEqual(ADMIN_NAV.map((item) => item.label));
+    expect(labels).not.toContain('Team');
   });
 
   it('every lazy page renders its heading, sets document.title and takes focus', async () => {
