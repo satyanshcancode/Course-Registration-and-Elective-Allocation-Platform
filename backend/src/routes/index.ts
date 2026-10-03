@@ -12,6 +12,7 @@ import { createEligibilityController } from '../controllers/eligibilityControlle
 import { createAllocationController } from '../controllers/allocationController.js';
 import { createHealthController } from '../controllers/healthController.js';
 import { createStudentController } from '../controllers/studentController.js';
+import { createTeamController } from '../controllers/teamController.js';
 import { createWaitlistController } from '../controllers/waitlistController.js';
 import {
   createAccountRateLimiter,
@@ -36,6 +37,7 @@ import type { HealthService } from '../services/healthService.js';
 import type { RegistrationWindowService } from '../services/registrationWindowService.js';
 import type { SubmitService } from '../services/submitService.js';
 import type { StudentService } from '../services/studentService.js';
+import type { TeamService } from '../services/teamService.js';
 import type { WaitlistService } from '../services/waitlistService.js';
 import { createAccountRouter, createPublicAccountRouter } from './accountRoutes.js';
 import { createAddDropRouter } from './addDropRoutes.js';
@@ -49,6 +51,7 @@ import { createEligibilityRouter } from './eligibilityRoutes.js';
 import { createHealthRouter } from './healthRoutes.js';
 import { createRegistrationWindowRouter } from './registrationWindowRoutes.js';
 import { createStudentRouter } from './studentRoutes.js';
+import { createTeamRouter } from './teamRoutes.js';
 import { createAdminWaitlistRouter } from './waitlistRoutes.js';
 
 /** Services the HTTP layer depends on; built once in container.ts (or a test). */
@@ -56,6 +59,7 @@ export interface ApiServices {
   healthService: HealthService;
   authService: AuthService;
   accountService: AccountService;
+  teamService: TeamService;
   adminStudentService: AdminStudentService;
   adminCatalogueService: AdminCatalogueService;
   studentService: StudentService;
@@ -164,6 +168,10 @@ export function createApiRouter(services: ApiServices, options: ApiRouterOptions
     ),
   );
   router.use('/admin', createAdminWaitlistRouter(waitlistController, requireAuth));
+  // Staff accounts. Mounted on /admin like the rest, but behind
+  // requireAdminManager rather than requireAdmin: this is the one thing a
+  // co-administrator may not do.
+  router.use('/admin', createTeamRouter(createTeamController(services.teamService), requireAuth));
   router.use(
     '/admin',
     createAdminRouter(

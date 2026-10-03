@@ -1,13 +1,13 @@
 import { Router, type RequestHandler } from 'express';
 import type { AdminCatalogueController } from '../controllers/adminCatalogueController.js';
 import type { AdminStudentController } from '../controllers/adminStudentController.js';
-import { requireRole } from '../middleware/requireRole.js';
+import { requireAdmin } from '../middleware/requireRole.js';
 
 /**
  * Student records and the course catalogue: everything an administrator
  * maintains by hand, mounted under /api/admin.
  *
- * Both routers take requireAuth + requireRole('ADMIN') on the router itself, so
+ * Both routers take requireAuth + requireAdmin on the router itself, so
  * a route added later cannot be left unguarded by forgetting a middleware.
  *
  * A student is addressed by roll number and a course by code — never by the
@@ -18,7 +18,7 @@ export function createAdminStudentRouter(
   requireAuth: RequestHandler,
 ): Router {
   const router = Router();
-  router.use(requireAuth, requireRole('ADMIN'));
+  router.use(requireAuth, requireAdmin);
 
   // Before /students/:rollNumber, or "import" would be read as a roll number.
   router.post('/students/import/preview', controller.previewImport);
@@ -46,7 +46,7 @@ export function createAdminCatalogueRouter(
   requireAuth: RequestHandler,
 ): Router {
   const router = Router();
-  router.use(requireAuth, requireRole('ADMIN'));
+  router.use(requireAuth, requireAdmin);
 
   router.post('/course-catalogue/import/preview', controller.previewImport);
   router.post('/course-catalogue/import', controller.confirmImport);

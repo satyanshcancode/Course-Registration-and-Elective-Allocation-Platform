@@ -33,6 +33,12 @@ function buildApp(repository: HealthRepository) {
         requestReset: notUsed,
         changePassword: notUsed,
       },
+      teamService: {
+        list: notUsed,
+        invite: notUsed,
+        resendInvitation: notUsed,
+        setActive: notUsed,
+      },
       adminStudentService: {
         list: notUsed,
         get: notUsed,

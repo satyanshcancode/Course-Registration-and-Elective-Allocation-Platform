@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import { PageLoading } from './PageLoading';
 import type { LoginLocationState } from '../types/auth';
-import { homePathFor } from '../utils/authRedirects';
+import { areaPathFor, homePathFor } from '../utils/authRedirects';
 
 interface ProtectedRouteProps {
   role: UserRole;
@@ -32,7 +32,10 @@ export function ProtectedRoute({ role }: ProtectedRouteProps) {
           };
     return <Navigate to="/login" replace state={loginState} />;
   }
-  if (state.user.role !== role) {
+  // Compared by AREA, not by role: a co-administrator belongs in the same
+  // /admin area as an administrator, so `role="ADMIN"` admits both. The one
+  // page the two must not share guards itself on the role (see TeamPage).
+  if (areaPathFor(state.user.role) !== areaPathFor(role)) {
     return <Navigate to={homePathFor(state.user.role)} replace />;
   }
   return <Outlet />;

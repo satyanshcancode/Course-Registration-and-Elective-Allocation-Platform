@@ -73,7 +73,19 @@ export interface AccountService {
    */
   invite(
     client: PoolClient,
-    input: { userId: string; email: string; name: string; actorUserId: string; resent: boolean },
+    input: {
+      userId: string;
+      email: string;
+      name: string;
+      actorUserId: string;
+      resent: boolean;
+      /**
+       * The audit action to record. Defaults to STUDENT_INVITED; the Team
+       * service passes CO_ADMIN_INVITED, because an invitation to staff is a
+       * different security event from an invitation to a student.
+       */
+      action?: string;
+    },
   ): Promise<void>;
   /** What the activation page shows before a password is set. */
   checkToken(token: string): Promise<ActivationCheck>;
@@ -212,7 +224,10 @@ export function createAccountService({
   }
 
   return {
-    async invite(client, { userId, email, name, actorUserId, resent }) {
+    async invite(
+      client,
+      { userId, email, name, actorUserId, resent, action = ACCOUNT_ACTIONS.INVITED },
+    ) {
       const { token, expiresAt } = await issueLink(client, userId, 'ACTIVATION', actorUserId);
 
       // Audited BEFORE the send, because what this row records is that a link
@@ -221,7 +236,7 @@ export function createAccountService({
       // the send would leave a failed delivery with no trace of either.
       await auditLogsFor(client).record({
         actorUserId,
-        action: ACCOUNT_ACTIONS.INVITED,
+        action,
         entityType: 'user',
         entityId: userId,
         newValue: { email, resent, expiresAt: expiresAt.toISOString() },

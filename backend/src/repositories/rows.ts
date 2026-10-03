@@ -73,6 +73,9 @@ export interface CurrentUserRow {
   id: string;
   email: string;
   role: string;
+  /** users.display_name: the STAFF name. Null for students and older accounts. */
+  display_name: string | null;
+  /** students.name: the academic record's name. Null for staff. */
   name: string | null;
   roll_number: string | null;
   program_code: string | null;

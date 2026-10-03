@@ -17,6 +17,7 @@ export const adminUser: CurrentUser = {
   id: 'b2f5b3a0-0000-4000-8000-000000000002',
   email: 'admin@university.edu',
   role: 'ADMIN',
+  name: 'Priya Raman',
 };
 
 export const notSignedIn: ApiFailure = {

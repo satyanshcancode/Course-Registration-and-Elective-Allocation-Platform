@@ -210,6 +210,15 @@ export type {
   HealthStatus,
   OverallHealthStatus,
 } from './api/health.js';
+export type {
+  InviteCoAdminRequest,
+  InviteCoAdminResult,
+  SetTeamMemberActiveRequest,
+  TeamList,
+  TeamMember,
+  TeamMemberStatus,
+} from './api/team.js';
+export { TEAM_MEMBER_STATUSES } from './api/team.js';
 
 // Domain models, value types and rules shared by both sides.
 export * from './domain/enums.js';
