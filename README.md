@@ -177,6 +177,27 @@ exists.
 ![Students](docs/screenshots/admin-students-1280-light.png)
 ![Course catalogue administration](docs/screenshots/admin-course-catalogue-1280-light.png)
 
+### Co-administrators
+
+A registrar's office is more than one person, so **`/admin/team`** invites a
+**co-administrator**: somebody who runs registration day to day with every
+power an administrator has, except creating, inviting, deactivating or
+reactivating a member of staff. That single exception is what stops the role
+from being a way to grant itself more.
+
+They are invited by name and address, set their own password from a single-use
+link exactly as a student does, and are deactivated rather than deleted, which
+signs them out at once and keeps every audit row they wrote. The last active
+administrator cannot be deactivated, because somebody has to be able to invite
+the next one.
+
+The Team page and its navigation item are shown only to an administrator, but
+that is a courtesy: `/api/admin/team` is the one router behind
+`requireAdminManager`, and it answers `403` to a co-administrator whatever the
+interface does.
+
+![The team](docs/screenshots/admin-team-1280-light.png)
+
 ---
 
 ## Design
@@ -408,13 +429,14 @@ with the link included, so the invitation and reset flows still work.
 > the sign-in page is the form and nothing else, so no build of the app
 > displays them. Never reuse them anywhere real.
 
-| Role    | E-mail                        | Password      | Situation                                                                                        |
-| ------- | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| Admin   | `admin@university.edu`        | `Admin@123`   | Courses, the registration window, allocation, students                                           |
-| Student | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6. Eligible for AI (programme relevance +25). **No submission** — use for the cart |
-| Student | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5. Eligible for AI, no priority bonus. **No submission**                           |
-| Student | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3. **Not** eligible for AI                                                  |
-| Student | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: the highest priority (+20 +25 +40)                        |
+| Role     | E-mail                        | Password      | Situation                                                                                        |
+| -------- | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| Admin    | `admin@university.edu`        | `Admin@123`   | Everything, including the Team page                                                              |
+| Co-admin | `coadmin@university.edu`      | `CoAdmin@123` | Everything except the Team page: no nav item, and the endpoints answer 403                       |
+| Student  | `aarav.sharma@university.edu` | `Student@123` | CSE, semester 6. Eligible for AI (programme relevance +25). **No submission** — use for the cart |
+| Student  | `priya.nair@university.edu`   | `Student@123` | ECE, semester 5. Eligible for AI, no priority bonus. **No submission**                           |
+| Student  | `meera.iyer@university.edu`   | `Student@123` | Mechanical, semester 3. **Not** eligible for AI                                                  |
+| Student  | `rohan.verma@university.edu`  | `Student@123` | CSE, final year, graduating this term: the highest priority (+20 +25 +40)                        |
 
 The other 296 generated students also use `Student@123`; their e-mail is their
 roll number, e.g. `cse24004@university.edu`.
@@ -575,8 +597,16 @@ identity from the session cookie, never from the URL or the body.
     token never appears in a response body, in `localStorage` or in reach of
     JavaScript.
 - **Authorization is re-checked on every request.** The cookie is verified and
-  the user re-loaded from the database; `requireRole` answers `403` for the
-  wrong role. A student's identity always comes from the session.
+  the user re-loaded from the database; `requireAdmin` answers `403` for anyone
+  who is not staff. A student's identity always comes from the session, and the
+  session's role is carried through from the row rather than re-asserted.
+- **Three roles, and one difference between two of them.** A `CO_ADMIN` does
+  everything an `ADMIN` does — students, imports, courses, the registration
+  window, allocation, waitlists, add/drop — except create, invite, deactivate
+  or reactivate a member of staff. That is enforced by `requireAdminManager` on
+  the `/api/admin/team` router alone; no request body anywhere can set a role,
+  and the last active administrator cannot be deactivated. Audit rows name the
+  actual actor, so a co-administrator's actions are attributed to them.
 - **No account enumeration.** An unknown e-mail and a wrong password give the
   same `401`, and both run a bcrypt comparison so the timing matches.
   `/forgot-password` answers identically for a known and an unknown address —

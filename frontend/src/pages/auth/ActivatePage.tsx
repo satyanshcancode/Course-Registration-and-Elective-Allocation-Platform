@@ -168,7 +168,11 @@ export function ActivatePage({ mode }: ActivatePageProps) {
         <>
           Setting the password for <strong>{verdict.email}</strong>.
           {mode === 'activate' &&
-            ' Your programme, semester, credits and completed courses are maintained by the registrar, so there is nothing else to fill in.'}
+            // Said without naming a student's record: this same page activates
+            // a co-administrator, who has no programme or credits, and the
+            // check deliberately returns the address and nothing about who
+            // they are.
+            ' Your account details are maintained by the registrar, so there is nothing else to fill in.'}
         </>
       }
     >

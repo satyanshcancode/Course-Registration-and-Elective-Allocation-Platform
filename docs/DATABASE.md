@@ -18,6 +18,7 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
 | 0010      | `enrollments.drop_reason`, `waitlist_entries.removal_reason`                                                                                                             |
 | 0011      | The add/drop period, one elective per student, `add_drop_requests`                                                                                                       |
 | 0012      | `account_tokens`, `users.is_active` / `password_changed_at` (and a nullable `password_hash`), `courses.is_active`, a nullable `student_completed_courses.completed_term` |
+| 0013      | The `CO_ADMIN` role and `users.display_name` (the staff name)                                                                                                            |
 
 **Conventions**
 
@@ -71,7 +72,8 @@ erDiagram
         uuid id PK
         citext email UK
         text password_hash "bcrypt only"
-        text role "STUDENT | ADMIN"
+        text role "STUDENT | ADMIN | CO_ADMIN"
+        text display_name "staff name; NULL for students"
     }
     students {
         uuid user_id PK,FK
@@ -175,9 +177,21 @@ erDiagram
   stored — and since migration 0012 it may be **NULL**, which is exactly what an
   invited account is: created by an administrator, with no password until the
   student sets one from their invitation link.
+  - `role` — `STUDENT`, `ADMIN` or `CO_ADMIN`. A co-administrator has every
+    power an administrator has except managing staff accounts; the two are
+    distinguished only by `/api/admin/team`, which `requireAdminManager` holds
+    to `ADMIN` alone. `students_user_role_check` still pins a profile to
+    `STUDENT`, so no staff account can acquire academic data.
+  - `display_name` — the **staff** name, shown in the user menu and on the Team
+    page. A student's name is part of their academic record and lives on
+    `students.name`, which the registrar maintains and eligibility is judged
+    on; this one is only ever a label, so it is nullable and unconstrained
+    beyond a length check.
   - `is_active` — a deactivated account cannot sign in. Nothing is deleted, so
     every submission, enrolment, waitlist place and history row stays intact and
     referentially whole. Reactivating restores access with the same password.
+    The last active `ADMIN` cannot be deactivated: somebody must always be able
+    to invite the next one.
   - `password_changed_at` — the **session cut-off**. Every session token carries
     an `iat` (issued-at, whole seconds); a token issued before this instant is
     refused, which is how changing or resetting a password signs the other

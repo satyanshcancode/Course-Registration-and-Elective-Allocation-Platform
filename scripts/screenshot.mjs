@@ -214,6 +214,7 @@ const SHOTS = [
   ...pair('admin-allocation-runs', { as: 'admin', path: '/admin/allocation-runs' }),
   ...pair('admin-allocation-run', { as: 'admin', path: 'RUN_DETAIL' }),
   ...pair('admin-waitlists', { as: 'admin', path: '/admin/waitlists?course=CS401' }),
+  ...pair('admin-team', { as: 'admin', path: '/admin/team' }),
   ...pair('admin-account', { as: 'admin', path: '/admin/account' }),
 ];
 
