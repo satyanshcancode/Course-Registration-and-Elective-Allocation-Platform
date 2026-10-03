@@ -1,4 +1,4 @@
-import type { CurrentAdmin, CurrentStudent } from '@course-reg/shared';
+import { canManageStaff, type CurrentAdmin, type CurrentStudent } from '@course-reg/shared';
 import { useContext } from 'react';
 import { AuthContext } from '../app/AuthContext';
 import type { AuthContextValue } from '../types/auth';
@@ -17,8 +17,21 @@ export function useCurrentStudent(): CurrentStudent | null {
   return state.status === 'authenticated' && state.user.role === 'STUDENT' ? state.user : null;
 }
 
-/** The signed-in administrator, or null. */
+/** The signed-in member of staff, administrator or co-administrator, or null. */
 export function useCurrentAdmin(): CurrentAdmin | null {
   const { state } = useAuth();
-  return state.status === 'authenticated' && state.user.role === 'ADMIN' ? state.user : null;
+  // Narrowed by excluding STUDENT rather than by isAdminRole: a type guard on
+  // the role string does not narrow the user it came from, and CurrentUser has
+  // exactly two members.
+  return state.status === 'authenticated' && state.user.role !== 'STUDENT' ? state.user : null;
+}
+
+/**
+ * True only for a full administrator. The Team page and its navigation item
+ * are the only things that ask; everything else treats the two alike, and the
+ * server refuses the endpoints regardless of what the interface shows.
+ */
+export function useCanManageStaff(): boolean {
+  const { state } = useAuth();
+  return state.status === 'authenticated' && canManageStaff(state.user.role);
 }

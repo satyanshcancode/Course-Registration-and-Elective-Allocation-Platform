@@ -10,6 +10,7 @@ import {
   ENROLLMENT_SOURCES,
   HISTORY_EVENT_TYPES,
   isAcademicTerm,
+  isAdminRole,
   isAllocationConfig,
   isOneOf,
   NOTIFICATION_TYPES,
@@ -131,11 +132,17 @@ export function mapUserRow(row: UserRow): User {
   };
 }
 
-/** Session user: admins have no profile; students must have one. */
+/**
+ * Session user: staff have no academic profile; students must have one.
+ *
+ * Both staff roles are handled by the same branch on purpose. A co-admin is an
+ * administrator in everything the session cares about, and the one place the
+ * difference matters reads `role` off this very object.
+ */
 export function mapCurrentUserRow(row: CurrentUserRow): CurrentUser {
   const role = oneOf(USER_ROLES, row.role, 'users.role');
-  if (role === 'ADMIN') {
-    return { id: row.id, email: row.email, role };
+  if (isAdminRole(role)) {
+    return { id: row.id, email: row.email, role, name: row.display_name };
   }
   if (
     row.name === null ||

@@ -102,7 +102,7 @@ export function createUserRepository(pool: Pick<Pool | PoolClient, 'query'>): Us
 
     async findCurrentUser(userId) {
       const result = await pool.query<CurrentUserRow>(
-        `SELECT u.id, u.email, u.role,
+        `SELECT u.id, u.email, u.role, u.display_name,
                 s.name, s.roll_number, s.semester, s.credits_completed,
                 p.code AS program_code, p.name AS program_name
          FROM users u

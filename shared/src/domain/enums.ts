@@ -6,8 +6,28 @@
  * constraints of the same name.
  */
 
-export const USER_ROLES = ['STUDENT', 'ADMIN'] as const;
+export const USER_ROLES = ['STUDENT', 'ADMIN', 'CO_ADMIN'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+
+/**
+ * The two staff roles. A CO_ADMIN does everything an ADMIN does EXCEPT manage
+ * staff accounts, so almost every check in the system is "is this staff?" and
+ * only the Team endpoints ask "is this an ADMIN?". Both questions go through
+ * the helpers below rather than comparing the literal, which is what keeps a
+ * co-admin from being accidentally locked out of a page, or accidentally let
+ * into the one page they must not reach.
+ */
+export const ADMIN_ROLES = ['ADMIN', 'CO_ADMIN'] as const;
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+export function isAdminRole(role: UserRole): role is AdminRole {
+  return role === 'ADMIN' || role === 'CO_ADMIN';
+}
+
+/** Only a full ADMIN may create, invite, deactivate or reactivate staff. */
+export function canManageStaff(role: UserRole): boolean {
+  return role === 'ADMIN';
+}
 
 export const TERM_SEASONS = ['SPRING', 'FALL'] as const;
 export type TermSeason = (typeof TERM_SEASONS)[number];

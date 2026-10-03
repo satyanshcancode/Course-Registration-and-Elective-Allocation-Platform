@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from 'express';
 import type { AllocationController } from '../controllers/allocationController.js';
-import { requireRole } from '../middleware/requireRole.js';
+import { requireAdmin, requireRole } from '../middleware/requireRole.js';
 
 /** Admin-only: previewing, running and verifying allocation. */
 export function createAdminAllocationRouter(
@@ -8,7 +8,7 @@ export function createAdminAllocationRouter(
   requireAuth: RequestHandler,
 ): Router {
   const router = Router();
-  router.use(requireAuth, requireRole('ADMIN'));
+  router.use(requireAuth, requireAdmin);
   router.post('/allocation/preview', controller.preview);
   router.post('/allocation/run', controller.run);
   router.get('/allocation-runs', controller.listRuns);

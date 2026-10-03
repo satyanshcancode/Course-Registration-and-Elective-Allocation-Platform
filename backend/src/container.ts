@@ -11,6 +11,7 @@ import { createAdminCourseRepository } from './repositories/adminCourseRepositor
 import { createAdminStudentRepository } from './repositories/adminStudentRepository.js';
 import { createAllocationRepository } from './repositories/allocationRepository.js';
 import { createAuditLogRepository } from './repositories/auditLogRepository.js';
+import { createTeamRepository } from './repositories/teamRepository.js';
 import { createCourseCatalogueRepository } from './repositories/courseCatalogueRepository.js';
 import { createHealthRepository } from './repositories/healthRepository.js';
 import { createNotificationRepository } from './repositories/notificationRepository.js';
@@ -23,6 +24,7 @@ import { createUserRepository } from './repositories/userRepository.js';
 import { createWaitlistRepository } from './repositories/waitlistRepository.js';
 import type { ApiServices } from './routes/index.js';
 import { createAccountService } from './services/accountService.js';
+import { createTeamService } from './services/teamService.js';
 import { createActivityService } from './services/activityService.js';
 import { createAddDropService } from './services/addDropService.js';
 import { createAdminCatalogueService } from './services/adminCatalogueService.js';
@@ -101,6 +103,13 @@ export function createServices(pool: Pool, config: ServiceConfig): ApiServices {
     healthService: createHealthService(createHealthRepository(pool)),
     authService,
     accountService,
+    teamService: createTeamService({
+      pool,
+      team: createTeamRepository(pool),
+      teamFor: createTeamRepository,
+      auditLogsFor: createAuditLogRepository,
+      accountService,
+    }),
     adminStudentService: createAdminStudentService({
       pool,
       students: adminStudents,

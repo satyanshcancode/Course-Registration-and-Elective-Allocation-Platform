@@ -1,10 +1,16 @@
 import type { UserRole } from '@course-reg/shared';
 import type { LoginLocationState, LoginNotice } from '../types/auth';
 
-/** Each role's part of the app; every page for that role lives under it. */
+/**
+ * Each role's part of the app; every page for that role lives under it.
+ *
+ * Both staff roles map to the same area, which is what makes a co-admin an
+ * administrator everywhere except the one page that checks the role itself.
+ */
 const AREA_PATHS: Record<UserRole, string> = {
   STUDENT: '/student',
   ADMIN: '/admin',
+  CO_ADMIN: '/admin',
 };
 
 export function areaPathFor(role: UserRole): string {

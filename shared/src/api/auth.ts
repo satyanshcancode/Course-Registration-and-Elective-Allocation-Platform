@@ -3,6 +3,7 @@
  * travels only in an httpOnly cookie that JavaScript cannot read.
  */
 import type { AcademicTerm } from '../domain/academicTerm.js';
+import type { AdminRole } from '../domain/enums.js';
 
 export interface LoginRequest {
   email: string;
@@ -29,8 +30,15 @@ interface CurrentUserBase {
   email: string;
 }
 
+/**
+ * Staff. The role is kept on the DTO rather than flattened to a boolean,
+ * because the one place it matters (the Team page) must distinguish the two,
+ * and every other place asks `isAdminRole` instead of comparing it.
+ */
 export interface CurrentAdmin extends CurrentUserBase {
-  role: 'ADMIN';
+  role: AdminRole;
+  /** The staff member's name, or null on an account created before 0013. */
+  name: string | null;
 }
 
 export interface CurrentStudent extends CurrentUserBase {
