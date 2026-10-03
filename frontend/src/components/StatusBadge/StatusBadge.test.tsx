@@ -25,8 +25,9 @@ describe('StatusBadge', () => {
     const kinds = Object.keys(STATUS_PRESENTATION) as StatusKind[];
     const entries = kinds.flatMap((kind) => Object.values(STATUS_PRESENTATION[kind]));
 
-    // 3 allocation + 2 enrollment + 3 waitlist + 2 submission + 4 window + 2 eligibility
-    expect(entries).toHaveLength(25);
+    // 3 allocation + 3 allocationRun + 2 enrollment + 3 waitlist + 2 submission
+    // + 4 window + 2 eligibility + 6 courseStatus + 3 teamMember
+    expect(entries).toHaveLength(28);
     for (const entry of entries) {
       expect(entry.label.trim()).not.toBe('');
       expect(entry.icon).toBeDefined();
