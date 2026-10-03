@@ -10,6 +10,7 @@ import {
   ListChecks,
   ListOrdered,
   Library,
+  ShieldCheck,
   ShoppingCart,
   Users,
   type LucideIcon,
@@ -64,3 +65,18 @@ export const ADMIN_NAV: readonly NavItem[] = [
   },
   { to: '/admin/waitlists', label: 'Waitlists', icon: Hourglass },
 ];
+
+/**
+ * Staff accounts: an ADMIN only. A co-administrator does everything else on
+ * this list, so the Team item is the single visible difference between the two
+ * roles. Hiding it is a courtesy; `/api/admin/team` refuses them regardless.
+ */
+export const TEAM_NAV_ITEM: NavItem = {
+  to: '/admin/team',
+  label: 'Team',
+  icon: ShieldCheck,
+};
+
+export function adminNavFor(canManageStaff: boolean): readonly NavItem[] {
+  return canManageStaff ? [...ADMIN_NAV, TEAM_NAV_ITEM] : ADMIN_NAV;
+}

@@ -1,0 +1,57 @@
+.page {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* Two stacked lines in one cell: the fact, then what it means. */
+.who {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.name {
+  color: var(--color-ink);
+  font-weight: var(--weight-medium);
+}
+
+.unnamed {
+  color: var(--color-ink-muted);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+}
+
+.self {
+  color: var(--color-ink-muted);
+  font-weight: var(--weight-regular);
+}
+
+.email {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.formNote {
+  max-width: 54ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: var(--border-hairline);
+}

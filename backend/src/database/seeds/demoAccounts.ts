@@ -14,8 +14,14 @@ import {
 } from './students.js';
 
 export const DEMO_ADMIN_PASSWORD = 'Admin@123';
+export const DEMO_CO_ADMIN_PASSWORD = 'CoAdmin@123';
 export const DEMO_STUDENT_PASSWORD = 'Student@123';
 export const ADMIN_EMAIL = 'admin@university.edu';
+export const CO_ADMIN_EMAIL = 'coadmin@university.edu';
+
+/** Staff names shown in the user menu and on the Team page. */
+export const ADMIN_NAME = 'Priya Raman';
+export const CO_ADMIN_NAME = 'Devika Menon';
 
 interface DemoStudentSpec {
   localPart: string;

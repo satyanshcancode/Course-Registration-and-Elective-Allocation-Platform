@@ -5,6 +5,7 @@ import type {
   MyCourseStatusCode,
   RegistrationWindowStatus,
   SubmissionStatus,
+  TeamMemberStatus,
   WaitlistStatus,
 } from '@course-reg/shared';
 import {
@@ -40,6 +41,8 @@ export interface StatusKinds {
   eligibility: EligibilityStatus;
   /** The signed-in student's relationship to one course. */
   courseStatus: MyCourseStatusCode;
+  /** A staff account on the Team page. */
+  teamMember: TeamMemberStatus;
 }
 
 export type StatusKind = keyof StatusKinds;
@@ -61,6 +64,11 @@ export const STATUS_PRESENTATION: {
     ALLOCATED: { tone: 'success', icon: CircleCheck, label: 'Allocated' },
     WAITLISTED: { tone: 'warning', icon: Hourglass, label: 'Waitlisted' },
     NOT_ALLOCATED: { tone: 'danger', icon: CircleX, label: 'Not allocated' },
+  },
+  teamMember: {
+    ACTIVE: { tone: 'success', icon: CircleCheck, label: 'Active' },
+    INVITED: { tone: 'info', icon: Send, label: 'Invited' },
+    DEACTIVATED: { tone: 'neutral', icon: CircleMinus, label: 'Deactivated' },
   },
   allocationRun: {
     RUNNING: { tone: 'info', icon: Clock, label: 'Running' },

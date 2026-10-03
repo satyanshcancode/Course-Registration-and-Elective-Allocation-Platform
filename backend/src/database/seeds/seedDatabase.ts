@@ -21,7 +21,11 @@ import {
 } from './catalog.js';
 import {
   ADMIN_EMAIL,
+  ADMIN_NAME,
+  CO_ADMIN_EMAIL,
+  CO_ADMIN_NAME,
   DEMO_ADMIN_PASSWORD,
+  DEMO_CO_ADMIN_PASSWORD,
   DEMO_STUDENT_PASSWORD,
   DEMO_STUDENTS,
 } from './demoAccounts.js';
@@ -150,11 +154,21 @@ async function insertReferenceData(client: PoolClient) {
   return { programIds, courseIds };
 }
 
-async function insertAdmin(client: PoolClient, passwordHash: string): Promise<void> {
-  await client.query("INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'ADMIN')", [
-    ADMIN_EMAIL,
-    passwordHash,
-  ]);
+/**
+ * One administrator and one co-administrator, so the difference between the
+ * two roles can be shown without inviting anybody: the co-admin reaches every
+ * page except Team, and /api/admin/team answers 403 for them.
+ */
+async function insertStaff(
+  client: PoolClient,
+  adminHash: string,
+  coAdminHash: string,
+): Promise<void> {
+  await client.query(
+    `INSERT INTO users (email, display_name, password_hash, role)
+     VALUES ($1, $2, $3, 'ADMIN'), ($4, $5, $6, 'CO_ADMIN')`,
+    [ADMIN_EMAIL, ADMIN_NAME, adminHash, CO_ADMIN_EMAIL, CO_ADMIN_NAME, coAdminHash],
+  );
 }
 
 async function insertStudents(
@@ -256,15 +270,16 @@ export async function seedDatabase(pool: Pool, options: SeedOptions = {}): Promi
   const students = buildSeedStudents();
 
   // Hash each distinct demo password once; bcrypt salts make each run's hash differ.
-  const [adminHash, studentHash] = await Promise.all([
+  const [adminHash, coAdminHash, studentHash] = await Promise.all([
     bcrypt.hash(DEMO_ADMIN_PASSWORD, rounds),
+    bcrypt.hash(DEMO_CO_ADMIN_PASSWORD, rounds),
     bcrypt.hash(DEMO_STUDENT_PASSWORD, rounds),
   ]);
 
   const summary = await withTransaction(pool, async (client) => {
     await truncateApplicationTables(client);
     const { programIds, courseIds } = await insertReferenceData(client);
-    await insertAdmin(client, adminHash);
+    await insertStaff(client, adminHash, coAdminHash);
     const completedCourses = await insertStudents(
       client,
       students,
