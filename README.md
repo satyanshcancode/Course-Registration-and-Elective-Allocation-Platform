@@ -429,6 +429,13 @@ with the link included, so the invitation and reset flows still work.
 > the sign-in page is the form and nothing else, so no build of the app
 > displays them. Never reuse them anywhere real.
 
+> **These are the passwords a LOCAL stack is seeded with.** On the live site
+> the two staff passwords were rotated to random ones immediately after
+> seeding, because `admin@university.edu` can edit every student and run the
+> allocation, and a password printed in a public README must not open it. The
+> student accounts are the same there as here. See
+> [Deployment](#deployment).
+
 | Role     | E-mail                        | Password      | Situation                                                                                        |
 | -------- | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
 | Admin    | `admin@university.edu`        | `Admin@123`   | Everything, including the Team page                                                              |
@@ -672,6 +679,122 @@ Vitest runs at most 2 workers per workspace; raise it with
 
 ---
 
+## Deployment
+
+**Live: <https://allocademy.vercel.app>**
+
+One Vercel project serves both halves, which is not a convenience: the session
+cookie is `SameSite=Strict`, so the page and the API it calls have to share an
+origin. A second domain for the API would mean giving that up.
+
+```
+                    https://allocademy.vercel.app
+                                 |
+            +--------------------+--------------------+
+            |                                         |
+   frontend/dist (static)                   api/index.ts (function)
+   the built Vite bundle,                   the SAME createApp factory the
+   SPA fallback to index.html               Docker server and the tests use
+                                                      |
+                                        Supabase Postgres, ap-south-1
+                                        transaction pooler, port 6543
+```
+
+- **Region.** The function runs in `bom1` (Mumbai) and the database is in
+  `ap-south-1` (Mumbai), so a query crosses a city rather than an ocean:
+  `/api/health` reports single-digit milliseconds to the database once warm.
+- **One function, not many.** `vercel.json` rewrites `/api/*` to `api/index.ts`,
+  which exports the Express app — an app is already a `(req, res)` handler. The
+  backend is not forked, so nothing about authorization, allocation or the
+  cart can be true in one deployment and false in the other.
+- **Connections.** Every concurrent invocation is a separate instance with its
+  own pool, so `DATABASE_POOL_MAX` is **1** and Supabase's transaction pooler
+  does the real multiplexing. The free Nano compute allows 200 client
+  connections in total; ten per instance would exhaust that long before the
+  traffic justified it.
+- **Preview deployments are disabled**, and every environment variable is set
+  for Production only. A preview could therefore never reach the live
+  database even if one were created.
+
+### Redeploying
+
+Pushing to `main` deploys automatically once the repository is connected. By
+hand, from a clean checkout:
+
+```bash
+npx vercel deploy --prod
+```
+
+Migrations are **not** run by the deployment: the live database is changed
+deliberately, from a machine that has the credentials, over the **session**
+pooler (port 5432).
+
+```bash
+DATABASE_URL="$PRODUCTION_DATABASE_URL" DATABASE_SSL=true npm run migrate -w backend
+```
+
+That distinction matters. The migration runner takes a _session-scoped_
+`pg_advisory_lock` so two runners cannot apply the same file twice, and a
+session lock is exactly what transaction pooling cannot keep. Everything the
+app does at runtime uses `pg_advisory_xact_lock`, which is released at commit
+and is safe through the pooler. `npm run check:pooler` proves all of it against
+the live database — atomic rollback, `SELECT ... FOR UPDATE` blocking a second
+writer, the advisory lock excluding a second holder, being released at `COMMIT`
+and leaving nothing behind on a pooled connection.
+
+### Environment variables
+
+Set on Vercel for **Production only**, by name (values live in Vercel and in a
+local `.env`, never in the repository):
+
+| Variable                                                              | Why                                                     |
+| --------------------------------------------------------------------- | ------------------------------------------------------- |
+| `DATABASE_URL`                                                        | Supabase **transaction** pooler, port 6543              |
+| `DATABASE_SSL`                                                        | `true`; Supabase refuses plaintext                      |
+| `DATABASE_POOL_MAX`                                                   | `1`, one connection per function instance               |
+| `JWT_SECRET`                                                          | Generated for production; unrelated to any local secret |
+| `APP_BASE_URL`, `CORS_ORIGIN`                                         | The live origin; activation links are built from it     |
+| `TRUST_PROXY_HOPS`                                                    | `1`, so the rate limiters see the real client IP        |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` | The Brevo relay                                         |
+| `MAIL_FROM`, `MAIL_FROM_NAME`                                         | The sender Brevo has verified                           |
+| `LOG_LEVEL`                                                           | `info`                                                  |
+
+`NODE_ENV` is `production` on Vercel already, which is what turns on secure
+cookies and makes the app refuse to start without a mail server or with the
+example JWT secret.
+
+### What is weaker in production than in Docker
+
+- **Rate limiting is per instance.** `express-rate-limit` keeps its counters in
+  memory, and a serverless deployment has several instances, so the real limit
+  is the configured one multiplied by however many are warm. It still stops a
+  single client hammering one instance, and the expensive paths are protected
+  by the database besides — but it is not the global limit the Docker
+  deployment gets. **The fix is a shared store**: `@upstash/ratelimit` against
+  Upstash Redis, which has a free tier and is the one dependency this would be
+  worth adding.
+- **Supabase's free tier pauses a project after about a week of inactivity.**
+  The site then answers but `/api/health` reports the database unreachable
+  until the project is resumed from the Supabase dashboard, which takes a
+  minute and loses nothing. For a demo that is checked occasionally, this is
+  the thing most likely to look like a bug and is not one.
+- **Cold starts.** The first request to an idle instance pays for the pool and
+  the module graph, a second or so. Nothing is kept warm deliberately.
+
+### Demo data on the live site
+
+The demo dataset is loaded **from a developer machine**, never by the app:
+`demo:reset` refuses to run with `NODE_ENV=production`, and that guard stays.
+
+The student accounts keep the password published above — they are the point of
+the demo and can only ever see their own record. **The two staff accounts do
+not**: `admin@university.edu` can edit every student and run the allocation, so
+their passwords were rotated to random ones after seeding and are not written
+down here. Take them over with **Forgot your password?** on the sign-in page,
+which e-mails a single-use link to the address on the account.
+
+---
+
 ## Limitations
 
 Honest about what this is and is not:
@@ -692,8 +815,11 @@ Honest about what this is and is not:
 - **No live updates beyond seat counts.** Seats poll every 10 seconds; results
   and waitlist positions refresh when the page is loaded or retried. There are
   no WebSockets.
-- **Not deployed.** It runs locally under Docker, including a production-like
-  stack, but there is no hosted environment and no CI pipeline.
+- **Rate limiting is weaker on the live site than under Docker**, because the
+  limiter's counters live in each serverless instance's memory rather than in a
+  shared store. See [Deployment](#deployment); Upstash Redis is the fix.
+- **No CI pipeline.** Vercel builds and deploys every push to `main`, but lint,
+  typecheck and the test suite are run locally rather than as a gate.
 - **E-mail defaults to Mailpit.** The SMTP mailer is real and every setting
   comes from `.env`, so pointing it at a relay such as Brevo is configuration
   rather than code — but deliverability, bounces and unsubscribes are the

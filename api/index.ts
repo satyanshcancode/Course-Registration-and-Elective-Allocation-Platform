@@ -6,12 +6,15 @@
  * the wiring that `server.ts` does. The backend is NOT forked: a rule that
  * changed here would otherwise have to be kept true in two places.
  *
- * **The filename is an optional catch-all on purpose.** `api/index.ts` would
- * match only `/api`, and routing `/api/*` to it with a rewrite makes the path
- * the function sees depend on how Vercel rewrites it. `[[...path]]` matches
- * `/api` and everything under it by filesystem routing alone, so `req.url` is
- * the real request path and `createApp`'s `/api` mount behaves exactly as it
- * does locally.
+ * **Routing.** `api/index.ts` is the only function; `vercel.json` rewrites
+ * every `/api/*` request to it. A filesystem catch-all (`api/[...path].ts`)
+ * looked tidier but matched only ONE segment on a bare function, so
+ * /api/health reached Express while /api/auth/me fell through to Vercel's own
+ * 404 — the rewrite is explicit about something that turned out not to be.
+ *
+ * A rewrite selects which function serves the request without changing the
+ * URL the function sees, so `req.url` is still the real path and
+ * `createApp`'s `/api` mount behaves exactly as it does locally.
  *
  * Everything at module scope runs once per cold start and is reused by every
  * invocation that instance serves, which is the only reason a connection pool

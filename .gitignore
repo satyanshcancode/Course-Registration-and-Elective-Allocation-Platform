@@ -9,6 +9,9 @@ dist/
 # Test output
 coverage/
 
+# Live staff credentials, written by the deployment. Never committed.
+LIVE-STAFF-PASSWORDS.txt
+
 # Vercel CLI link + local pulls. Holds project ids and pulled env values.
 .vercel
 
