@@ -9,6 +9,9 @@ dist/
 # Test output
 coverage/
 
+# Vercel CLI link + local pulls. Holds project ids and pulled env values.
+.vercel
+
 # Environment (never commit real secrets; see .env.example)
 .env
 .env.*
@@ -28,3 +31,6 @@ Thumbs.db
 # Local editor settings
 .editor/settings.local.json
 .editor/launch.json
+
+.vercel
+.env*
