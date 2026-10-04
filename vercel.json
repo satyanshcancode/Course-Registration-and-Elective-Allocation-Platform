@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build:vercel",
+  "installCommand": "npm ci",
+  "outputDirectory": "frontend/dist",
+  "framework": null,
+  "regions": ["bom1"],
+  "functions": {
+    "api/[[...path]].ts": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api(?:/|$)).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

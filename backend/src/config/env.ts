@@ -6,10 +6,25 @@ import { LOG_LEVELS } from '../utils/logger.js';
 /** Repo-root .env, used when the backend runs directly on the host. */
 const ROOT_ENV_FILE = fileURLToPath(new URL('../../../.env', import.meta.url));
 
+/** "true"/"false" as a real boolean, with a default. */
+const booleanSetting = (fallback: boolean) =>
+  z
+    .enum(['true', 'false'])
+    .default(fallback ? 'true' : 'false')
+    .transform((value) => value === 'true');
+
 export const databaseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
   LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
+  /** TLS to the database. Required by Supabase; off on the Docker network. */
+  DATABASE_SSL: booleanSetting(false),
+  /**
+   * Connections per process. The default suits a long-lived server; a
+   * serverless function sets it to 1, because each concurrent invocation is a
+   * separate instance holding its own pool (see database/pool.ts).
+   */
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
 });
 
 /** The placeholder shipped in .env.example; production refuses to start with it. */
@@ -55,6 +70,16 @@ export const appEnvSchema = databaseEnvSchema
       .transform((value) => (value === undefined ? undefined : value === 'true')),
     /** Bodies of CSV imports, which are far larger than any other request. */
     CSV_BODY_LIMIT: z.string().min(1).default('2mb'),
+    /**
+     * How many reverse proxies sit in front of Express, for `trust proxy`.
+     *
+     * It decides which entry of X-Forwarded-For is believed to be the client,
+     * and the rate limiters key on that address: too low and every request
+     * looks like it came from the proxy, too high and a client can forge its
+     * own address by sending the header. One for the Vite dev proxy and for
+     * nginx; Vercel also puts exactly one hop in front of the function.
+     */
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(1),
     /**
      * Where the app is reached from a browser. Activation and reset links are
      * built from it, so it must be the address students actually open — not the

@@ -9,7 +9,10 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 function start(): void {
   const env = loadEnv(appEnvSchema);
-  const pool = createPool(env.DATABASE_URL);
+  const pool = createPool(env.DATABASE_URL, {
+    max: env.DATABASE_POOL_MAX,
+    ssl: env.DATABASE_SSL,
+  });
 
   const mailer = createMailer({
     smtpHost: env.SMTP_HOST,
@@ -26,6 +29,7 @@ function start(): void {
     jsonBodyLimit: env.JSON_BODY_LIMIT,
     csvBodyLimit: env.CSV_BODY_LIMIT,
     cookieSecure: env.COOKIE_SECURE,
+    trustProxyHops: env.TRUST_PROXY_HOPS,
     services: createServices(pool, {
       jwtSecret: env.JWT_SECRET,
       appBaseUrl: env.APP_BASE_URL,

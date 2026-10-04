@@ -24,6 +24,13 @@ export interface AppOptions {
   csvBodyLimit?: string;
   /** Adds the Secure flag to the session cookie (true in production). */
   cookieSecure: boolean;
+  /**
+   * Reverse proxies in front of Express, for `trust proxy`. The rate limiters
+   * key on the address this setting picks out of X-Forwarded-For, so it has to
+   * match the real deployment: 1 for the Vite dev proxy, for nginx and for a
+   * Vercel function.
+   */
+  trustProxyHops?: number;
   loginRateLimit?: RateLimitOptions;
   accountRateLimit?: RateLimitOptions;
   submitRateLimit?: RateLimitOptions;
@@ -40,6 +47,7 @@ export function createApp({
   jsonBodyLimit,
   csvBodyLimit = '2mb',
   cookieSecure,
+  trustProxyHops = 1,
   loginRateLimit = DEFAULT_LOGIN_RATE_LIMIT,
   accountRateLimit = DEFAULT_ACCOUNT_RATE_LIMIT,
   submitRateLimit = DEFAULT_SUBMIT_RATE_LIMIT,
@@ -49,8 +57,10 @@ export function createApp({
   const app = express();
 
   app.disable('x-powered-by');
-  // Requests arrive through the Vite dev proxy or nginx in production.
-  app.set('trust proxy', 1);
+  // Requests arrive through the Vite dev proxy, nginx, or Vercel's edge — one
+  // hop in each case, which is what the rate limiters need to see a real
+  // client address rather than the proxy's.
+  app.set('trust proxy', trustProxyHops);
 
   app.use(helmet());
   app.use(cors({ origin: corsOrigins, credentials: true }));

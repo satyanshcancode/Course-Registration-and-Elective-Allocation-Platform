@@ -287,7 +287,11 @@ describe('managing the team as an administrator', () => {
     expect(activated.status).toBe(200);
 
     // The session the activation handed back is a working co-admin session.
-    const cookie = activated.headers['set-cookie'];
+    // supertest types set-cookie as possibly absent, and an absent one would
+    // make the two checks below pass for the wrong reason.
+    const setCookie: unknown = activated.headers['set-cookie'];
+    expect(Array.isArray(setCookie)).toBe(true);
+    const cookie = setCookie as string[];
     const courses = await request(world.app)
       .get('/api/admin/courses')
       .set('Cookie', cookie)
