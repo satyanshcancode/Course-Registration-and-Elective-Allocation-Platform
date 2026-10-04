@@ -793,6 +793,11 @@ their passwords were rotated to random ones after seeding and are not written
 down here. Take them over with **Forgot your password?** on the sign-in page,
 which e-mails a single-use link to the address on the account.
 
+> **Re-seeding puts the published passwords back.** `demo:reset` rebuilds the
+> users table from the seed, so every run against the live database restores
+> `Admin@123` and `CoAdmin@123` and must be followed by rotating both again.
+> Check with a sign-in attempt: the published passwords should answer `401`.
+
 ---
 
 ## Limitations
