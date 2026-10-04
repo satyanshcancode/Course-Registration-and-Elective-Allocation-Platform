@@ -20,6 +20,11 @@ describe('parseEnv', () => {
       NODE_ENV: 'development',
       DATABASE_URL: validEnv.DATABASE_URL,
       LOG_LEVEL: 'info',
+      // Defaults suited to the Docker stack: no TLS on a private network, a
+      // real pool, and one proxy hop. Production overrides all three.
+      DATABASE_SSL: false,
+      DATABASE_POOL_MAX: 10,
+      TRUST_PROXY_HOPS: 1,
       PORT: 4000,
       CORS_ORIGIN: ['http://localhost:5173', 'http://localhost:8080'],
       JSON_BODY_LIMIT: '100kb',
