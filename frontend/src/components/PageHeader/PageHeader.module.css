@@ -5,7 +5,9 @@
   justify-content: space-between;
   gap: var(--space-3) var(--space-5);
   padding-block: var(--space-5) var(--space-4);
-  border-bottom: var(--border-hairline);
+  /* No rule under the title: the page background already separates the header
+     from the cards below it, and it is the background that covers content
+     scrolling under the sticky bar. */
   background-color: var(--color-paper);
 }
 

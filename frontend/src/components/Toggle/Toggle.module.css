@@ -1,0 +1,47 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-align: start;
+}
+
+.track {
+  position: relative;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-sunken);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.toggle[aria-checked='true'] .track {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+}
+
+.knob {
+  position: absolute;
+  top: 50%;
+  left: 0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  transform: translate(0, -50%);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.toggle[aria-checked='true'] .knob {
+  transform: translate(1rem, -50%);
+}

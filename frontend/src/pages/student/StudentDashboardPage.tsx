@@ -2,18 +2,25 @@ import {
   MAX_PREFERENCES,
   type HistoryPage,
   type RegistrationWindowSummary,
-  type CurrentWindowResponse,
   type EligibilityOverview,
   type PreferenceCart,
   type StudentAllocationResults,
-  type UnreadNotificationCount,
 } from '@course-reg/shared';
-import { BadgeCheck, Bell, BookOpen, History, ListChecks, ShoppingCart } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CircleCheck,
+  Clock,
+  GraduationCap,
+  ScanSearch,
+  ShoppingCart,
+  SquareCheckBig,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { getMyHistory } from '../../api/activityApi';
-import { apiClient } from '../../api/apiClient';
-import { getCurrentWindow } from '../../api/courseApi';
 import { getMyAllocationResults } from '../../api/allocationApi';
 import { getEligibility } from '../../api/eligibilityApi';
 import { unwrap } from '../../api/unwrap';
@@ -22,24 +29,29 @@ import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { PageHeader } from '../../components/PageHeader';
-import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
+import { ProgressRing } from '../../components/ProgressRing';
 import { Skeleton } from '../../components/Skeleton';
+import { StatTile } from '../../components/StatTile';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useCurrentStudent } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useDashboardSections } from '../../hooks/useDashboardSections';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import {
+  useRegistrationWindow,
+  type RegistrationWindowData,
+} from '../../hooks/useRegistrationWindow';
+import { useServerClock } from '../../hooks/useServerClock';
 import type { AsyncState } from '../../types/asyncState';
-import { describeEligibilityCount } from '../../utils/eligibilityText';
+import { describeCountdown } from '../../utils/countdown';
+import { firstNameOf, greetingFor } from '../../utils/greeting';
 import { formatDateTime, formatRelative } from '../../utils/formatDate';
 import { describeHistoryEvent, historyEventIcon } from '../../utils/historyText';
-import styles from '../DashboardPage.module.css';
-import dashboard from './StudentDashboardPage.module.css';
+import { WINDOW_STEPS, windowStepIndex } from '../../utils/windowTimeline';
+import styles from './StudentDashboardPage.module.css';
 
 interface DashboardData extends Record<string, unknown> {
-  registration: CurrentWindowResponse;
   eligibility: EligibilityOverview;
-  notifications: UnreadNotificationCount;
   results: StudentAllocationResults;
   activity: HistoryPage;
 }
@@ -157,188 +169,342 @@ export function StudentDashboardPage() {
   useDocumentTitle('Dashboard');
   const user = useCurrentStudent();
   const cart = useCart();
+  // The window comes from the student area's provider rather than a request of
+  // this page's own: the sidebar card, the greeting and this page's timeline
+  // then share one request AND one measurement of the server's clock.
+  const registration = useRegistrationWindow();
+  const windowState: AsyncState<RegistrationWindowData> = registration?.state ?? {
+    status: 'loading',
+  };
+  const windowData = windowState.status === 'success' ? windowState.data : undefined;
+
   // Three independent requests, together: one failure must not blank the page.
+  // The unread count is not among them either — the shell's bell loads it once
+  // for the whole student area.
   const { sections, retry } = useDashboardSections<DashboardData>({
-    registration: async (signal) => unwrap(await getCurrentWindow(signal)),
     eligibility: async (signal) => unwrap(await getEligibility(signal)),
-    notifications: async (signal) =>
-      unwrap(
-        await apiClient.get<UnreadNotificationCount>('/students/me/notifications/unread-count', {
-          signal,
-        }),
-      ),
     results: async (signal) => unwrap(await getMyAllocationResults(signal)),
     activity: async (signal) => unwrap(await getMyHistory({ limit: RECENT_EVENTS }, signal)),
   });
 
-  const registration =
-    sections.registration.status === 'success' ? sections.registration.data : undefined;
+  const eligibility =
+    sections.eligibility.status === 'success' ? sections.eligibility.data : undefined;
+  const results = sections.results.status === 'success' ? sections.results.data : null;
+
+  // The server's clock, so neither the greeting nor the countdown can be moved
+  // by a device set to the wrong date.
+  const clock = useServerClock(windowData?.clockOffsetMs ?? 0, windowData !== undefined);
 
   if (!user) {
     return null;
   }
   const { student } = user;
-  const windowSummary = registration?.window ?? null;
+  const windowSummary = windowData?.window ?? null;
+  const waitlisted = results?.results.filter((row) => row.outcome === 'WAITLISTED').length ?? 0;
+  const held = results?.allocated ?? results?.held ?? null;
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        kicker="Registration"
-        description={`Signed in as ${student.name} · ${student.rollNumber}`}
-        actions={
-          <LinkButton to="/student/courses" variant="primary" iconStart={BookOpen}>
-            Browse courses
-          </LinkButton>
+        title={`${greetingFor(clock)}, ${firstNameOf(student.name)}`}
+        titleAside={
+          <span className={styles.wave} aria-hidden="true">
+            {' '}
+            👋
+          </span>
         }
-      >
-        <RegistrationStatusBanner />
-      </PageHeader>
+        description={
+          windowSummary
+            ? `Here’s your registration overview for ${windowSummary.name}.`
+            : 'Here’s your registration overview.'
+        }
+        actions={<WindowPill window={windowSummary} clock={clock} />}
+      />
 
-      <div className={styles.grid}>
-        <div className={styles.primary}>
+      <div className={styles.page}>
+        <section className={styles.stats} aria-label="At a glance">
+          <StatTile
+            icon={BookOpen}
+            tone="info"
+            value={
+              eligibility
+                ? `${eligibility.summary.eligibleCount} / ${eligibility.summary.totalCount}`
+                : '—'
+            }
+            label="Eligible courses"
+            to="/student/eligibility"
+            linkLabel="View eligible"
+          />
+          <StatTile
+            icon={ShoppingCart}
+            tone="danger"
+            value={cart ? String(cart.cart?.items.length ?? 0) : '—'}
+            label="In your cart"
+            to="/student/cart"
+            linkLabel="View cart"
+          />
+          <StatTile
+            icon={CircleCheck}
+            tone="success"
+            value={results ? String(held ? 1 : 0) : '—'}
+            label="Confirmed"
+            to="/student/results"
+            linkLabel="View results"
+          />
+          <StatTile
+            icon={Clock}
+            tone="warning"
+            value={results ? String(waitlisted) : '—'}
+            label="On waitlist"
+            to="/student/waitlist"
+            linkLabel="View waitlist"
+          />
+        </section>
+
+        <div className={styles.row}>
           <Section
             title="Registration window"
-            kicker="Schedule"
-            state={sections.registration}
+            icon={CalendarDays}
+            state={windowState}
             onRetry={() => {
-              retry('registration');
+              registration?.retry();
             }}
           >
             {(data) =>
-              data.window ? (
-                <div className={dashboard.window}>
-                  <p className={dashboard.windowLine}>
-                    <StatusBadge kind="window" status={data.window.status} />
-                    <span className={dashboard.windowName}>{data.window.name}</span>
-                  </p>
-                  <dl className={dashboard.schedule}>
-                    <div>
-                      <dt>Opens</dt>
-                      <dd>{formatDateTime(data.window.startsAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Closes</dt>
-                      <dd>{formatDateTime(data.window.endsAt)}</dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : (
-                <p>No registration window has been scheduled yet.</p>
-              )
+              data.window ? <WindowTimeline window={data.window} clock={clock} /> : <NoWindow />
             }
           </Section>
 
           <Section
-            title="Eligibility"
-            kicker="Pre-check"
+            title="Your allocation"
+            icon={GraduationCap}
+            state={sections.results}
+            action={
+              results?.ranAt ? (
+                <Link to="/student/results" className={styles.cardLink}>
+                  View all
+                  <Icon icon={ArrowRight} />
+                </Link>
+              ) : undefined
+            }
+            onRetry={() => {
+              retry('results');
+            }}
+          >
+            {(data) => <Allocation results={data} />}
+          </Section>
+        </div>
+
+        <div className={styles.row}>
+          <Section
+            title="Eligibility status"
+            icon={SquareCheckBig}
             state={sections.eligibility}
             onRetry={() => {
               retry('eligibility');
             }}
           >
-            {(data) => (
-              <div className={dashboard.eligibility}>
-                <p className={dashboard.count}>
-                  {describeEligibilityCount(data.summary.eligibleCount, data.summary.totalCount)}
-                </p>
-                <p className={dashboard.muted}>
-                  Based on your programme, semester {data.student.semester},{' '}
-                  {data.student.creditsCompleted} credits and {data.student.completedCourses.length}{' '}
-                  passed courses.
-                </p>
-                <Link to="/student/eligibility" className={dashboard.link}>
-                  <BadgeCheck aria-hidden="true" className={dashboard.linkIcon} />
-                  See the full pre-check
-                </Link>
-              </div>
-            )}
+            {(data) => <EligibilityStatus overview={data} />}
           </Section>
 
           <Section
             title="Recent activity"
-            kicker="Your record"
+            icon={Clock}
             state={sections.activity}
+            action={
+              <Link to="/student/history" className={styles.cardLink}>
+                View all
+                <Icon icon={ArrowRight} />
+              </Link>
+            }
             onRetry={() => {
               retry('activity');
             }}
           >
             {(data) => <RecentActivity page={data} />}
           </Section>
-
-          <Card title="What to do next" kicker="Guidance" headingLevel={2}>
-            <ol className={dashboard.steps}>
-              {nextSteps(
-                windowSummary,
-                cart?.cart ?? null,
-                sections.results.status === 'success' ? sections.results.data : null,
-                // The SERVER's clock: a device set to the wrong date must not
-                // be told add/drop is still open.
-                registration ? Date.parse(registration.serverTime) : 0,
-              ).map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-          </Card>
         </div>
 
-        <div className={dashboard.side}>
-          <Section
-            title="Your result"
-            kicker="Allocation"
-            state={sections.results}
-            onRetry={() => {
-              retry('results');
-            }}
-          >
-            {(data) => <ResultSummary results={data} />}
-          </Section>
-
-          <Card title="Your cart" kicker="Preferences" headingLevel={2}>
-            <CartSummary cart={cart?.cart ?? null} />
-          </Card>
-
-          <Section
-            title="Notifications"
-            kicker="Inbox"
-            state={sections.notifications}
-            onRetry={() => {
-              retry('notifications');
-            }}
-          >
-            {(data) => (
-              <p className={dashboard.notifications}>
-                <Bell aria-hidden="true" className={dashboard.linkIcon} />
-                {data.unread === 0
-                  ? 'Nothing unread.'
-                  : `${data.unread} unread ${data.unread === 1 ? 'message' : 'messages'}.`}
-              </p>
-            )}
-          </Section>
-
-          <Card title="Your record" kicker="Student" headingLevel={2}>
-            <dl className={styles.record}>
-              <div>
-                <dt>Programme</dt>
-                <dd>{student.program.name}</dd>
-              </div>
-              <div>
-                <dt>Roll number</dt>
-                <dd className={styles.mono}>{student.rollNumber}</dd>
-              </div>
-              <div>
-                <dt>Semester</dt>
-                <dd className={styles.mono}>{student.semester}</dd>
-              </div>
-              <div>
-                <dt>Credits completed</dt>
-                <dd className={styles.mono}>{student.creditsCompleted}</dd>
-              </div>
-            </dl>
-          </Card>
-        </div>
+        <Card title="What to do next" headingLevel={2}>
+          <ol className={styles.steps}>
+            {nextSteps(
+              windowSummary,
+              cart?.cart ?? null,
+              results,
+              windowData ? clock.getTime() : 0,
+            ).map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </Card>
       </div>
     </>
+  );
+}
+
+/** The window's status and its live countdown, beside the greeting. */
+function WindowPill({ window, clock }: { window: RegistrationWindowSummary | null; clock: Date }) {
+  if (!window) {
+    return null;
+  }
+  const countdown = describeCountdown(window, clock);
+  // Where the countdown is actually spent: the catalogue while the window is
+  // open, add/drop once results are out.
+  const to = window.status === 'ALLOCATED' ? '/student/add-drop' : '/student/courses';
+
+  return (
+    <Link to={to} className={styles.pill}>
+      <span className={styles.pillTop}>
+        <StatusBadge kind="window" status={window.status} />
+      </span>
+      <span className={styles.pillBottom}>
+        {countdown.remaining ? (
+          <>
+            {countdown.label} <strong className={styles.pillValue}>{countdown.remaining}</strong>
+          </>
+        ) : (
+          countdown.text
+        )}
+      </span>
+      <Icon icon={ArrowRight} className={styles.pillArrow} />
+    </Link>
+  );
+}
+
+/** Opens, closes, and the four steps between, with the current one marked. */
+function WindowTimeline({ window, clock }: { window: RegistrationWindowSummary; clock: Date }) {
+  const current = windowStepIndex(window, clock);
+  return (
+    <div className={styles.window}>
+      <p className={styles.windowLine}>
+        <span className={styles.windowName}>{window.name}</span>
+        <StatusBadge kind="window" status={window.status} />
+      </p>
+      <dl className={styles.schedule}>
+        <div>
+          <dt>Opens</dt>
+          <dd>{formatDateTime(window.startsAt)}</dd>
+        </div>
+        <div>
+          <dt>Closes</dt>
+          <dd>{formatDateTime(window.endsAt)}</dd>
+        </div>
+      </dl>
+      {/* An ordered list, so the steps are read as a sequence; the current one
+          says so in words as well as in colour. */}
+      <ol className={styles.timeline}>
+        {WINDOW_STEPS.map((step, index) => (
+          <li
+            key={step}
+            className={styles.step}
+            data-state={index < current ? 'done' : index === current ? 'current' : 'todo'}
+          >
+            <span className={styles.dot} />
+            <span className={styles.stepLabel}>
+              {step}
+              {index === current && <span className="visually-hidden"> (now)</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function NoWindow() {
+  return <p className={styles.muted}>No registration window has been scheduled yet.</p>;
+}
+
+/**
+ * The seat the student holds, if any. A course taken during add/drop was never
+ * part of the run, so it has a seat but no explanation to show.
+ */
+function Allocation({ results }: { results: StudentAllocationResults }) {
+  if (!results.ranAt) {
+    return <p className={styles.muted}>Results appear here once allocation has run.</p>;
+  }
+  const held = results.allocated ?? results.held;
+  if (!held) {
+    return (
+      <div className={styles.allocation}>
+        <div className={styles.allocationText}>
+          <p className={styles.courseName}>No seat this round</p>
+          <p className={styles.muted}>
+            Open your results to see how close you came on each course you ranked.
+          </p>
+          <LinkButton to="/student/results" size="sm" iconEnd={ArrowRight}>
+            See details
+          </LinkButton>
+        </div>
+        <SeatCube />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.allocation}>
+      <div className={styles.allocationText}>
+        <p className={styles.courseCode}>{held.course.code}</p>
+        <p className={styles.courseName}>{held.course.name}</p>
+        <p className={styles.muted}>
+          {results.allocated
+            ? `Your choice ${results.allocated.preferenceRank}.${
+                results.allocated.type === 'PROMOTED' ? ' Promoted from the waitlist.' : ''
+              }`
+            : 'You took this seat yourself during add/drop.'}
+        </p>
+        <StatusBadge kind="allocation" status="ALLOCATED" />
+        <LinkButton to="/student/results" size="sm" iconEnd={ArrowRight}>
+          See details
+        </LinkButton>
+      </div>
+      <SeatCube />
+    </div>
+  );
+}
+
+/**
+ * Decoration: a seat drawn as a solid block inside the space that was open for
+ * it. Original artwork, drawn here rather than shipped as an image so it takes
+ * the theme's colours and costs no request.
+ */
+function SeatCube() {
+  return (
+    <svg className={styles.cube} viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+      {/* The open space around the seat: an isometric wireframe box. */}
+      <g className={styles.cubeFrame}>
+        <path d="M60 8 L112 38 L60 68 L8 38 Z" />
+        <path d="M8 38 L8 82 L60 112 L112 82 L112 38" />
+        <path d="M60 68 L60 112" />
+      </g>
+      {/* The seat itself, solid: top, left face, right face. */}
+      <path className={styles.cubeTop} d="M60 34 L95 54 L60 74 L25 54 Z" />
+      <path className={styles.cubeLeft} d="M25 54 L25 82 L60 102 L60 74 Z" />
+      <path className={styles.cubeRight} d="M95 54 L95 82 L60 102 L60 74 Z" />
+    </svg>
+  );
+}
+
+/** The proportion of the catalogue this student can take, and why. */
+function EligibilityStatus({ overview }: { overview: EligibilityOverview }) {
+  const { eligibleCount, totalCount } = overview.summary;
+  return (
+    <div className={styles.eligibility}>
+      <ProgressRing value={eligibleCount} max={totalCount} label="courses" />
+      <div className={styles.eligibilityText}>
+        <p className={styles.count}>
+          You’re eligible for {eligibleCount} of {totalCount} courses
+        </p>
+        <p className={styles.muted}>
+          Based on your programme, semester {overview.student.semester},{' '}
+          {overview.student.creditsCompleted} credits and {overview.student.completedCourses.length}{' '}
+          passed courses.
+        </p>
+        <LinkButton to="/student/eligibility" size="sm" iconStart={ScanSearch}>
+          Run full pre-check
+        </LinkButton>
+      </div>
+    </div>
   );
 }
 
@@ -346,115 +512,46 @@ export function StudentDashboardPage() {
 function RecentActivity({ page }: { page: HistoryPage }) {
   if (page.events.length === 0) {
     return (
-      <p className={dashboard.muted}>
+      <p className={styles.muted}>
         Nothing has happened yet. Submissions, allocation and add/drop changes all appear here.
       </p>
     );
   }
   return (
-    <div className={dashboard.eligibility}>
-      <ol className={dashboard.activity}>
-        {page.events.map((event) => (
-          <li key={event.id}>
-            <Icon icon={historyEventIcon(event.detail.type)} size={16} />
-            <span className={dashboard.activityText}>
-              {describeHistoryEvent(event)}{' '}
-              <time dateTime={event.at} className={dashboard.muted}>
-                {formatRelative(event.at)}
-              </time>
-            </span>
-          </li>
-        ))}
-      </ol>
-      <Link to="/student/history" className={dashboard.link}>
-        <History aria-hidden="true" className={dashboard.linkIcon} />
-        See your full history
-      </Link>
-    </div>
-  );
-}
-
-/** The outcome at a glance, once allocation has run. */
-function ResultSummary({ results }: { results: StudentAllocationResults }) {
-  if (!results.ranAt) {
-    return <p className={dashboard.muted}>Results appear once allocation has run.</p>;
-  }
-  // A course added during add/drop was never part of the run, so it has no
-  // explanation to show — only the seat itself.
-  const held = results.allocated ?? results.held;
-  return (
-    <div className={dashboard.eligibility}>
-      <p className={dashboard.count}>
-        {held ? `${held.course.code} ${held.course.name}` : 'No seat this round'}
-      </p>
-      <p className={dashboard.muted}>
-        {results.allocated
-          ? `Your choice ${results.allocated.preferenceRank}.${
-              // A seat can arrive after the run, off the waitlist.
-              results.allocated.type === 'PROMOTED' ? ' Promoted from the waitlist.' : ''
-            }`
-          : results.held
-            ? 'You took this seat yourself during add/drop.'
-            : 'You are on the waitlist for the courses you ranked.'}
-      </p>
-      <Link to="/student/results" className={dashboard.link}>
-        <ListChecks aria-hidden="true" className={dashboard.linkIcon} />
-        See why
-      </Link>
-    </div>
-  );
-}
-
-/** The cart at a glance, with the one link that continues the flow. */
-function CartSummary({ cart }: { cart: PreferenceCart | null }) {
-  if (!cart) {
-    return <Skeleton lines={2} />;
-  }
-  if (cart.status === 'SUBMITTED') {
-    return (
-      <div className={dashboard.eligibility}>
-        <p className={dashboard.count}>Submitted</p>
-        <p className={dashboard.muted}>
-          {cart.items.length} {cart.items.length === 1 ? 'choice' : 'choices'}
-          {cart.reference ? ` · ${cart.reference}` : ''}
-        </p>
-        <Link to="/student/cart" className={dashboard.link}>
-          <ShoppingCart aria-hidden="true" className={dashboard.linkIcon} />
-          See your receipt
-        </Link>
-      </div>
-    );
-  }
-  return (
-    <div className={dashboard.eligibility}>
-      <p className={dashboard.count}>
-        {cart.items.length} of {MAX_PREFERENCES} ranked
-      </p>
-      <p className={dashboard.muted}>
-        {cart.items.length === 0
-          ? 'Nothing ranked yet. Add courses from the catalogue.'
-          : `${cart.totalCredits} credits. Not submitted yet.`}
-      </p>
-      <Link to="/student/cart" className={dashboard.link}>
-        <ShoppingCart aria-hidden="true" className={dashboard.linkIcon} />
-        Open your cart
-      </Link>
-    </div>
+    <ol className={styles.activity}>
+      {page.events.map((event) => (
+        <li key={event.id} className={styles.event}>
+          <span className={styles.eventIcon}>
+            <Icon icon={historyEventIcon(event.detail.type)} />
+          </span>
+          <span className={styles.eventText}>{describeHistoryEvent(event)}</span>
+          <time dateTime={event.at} className={styles.eventTime}>
+            {formatRelative(event.at)}
+          </time>
+        </li>
+      ))}
+    </ol>
   );
 }
 
 interface SectionProps<T> {
   title: string;
-  kicker: string;
+  icon: LucideIcon;
   state: AsyncState<T>;
+  action?: ReactNode;
   onRetry: () => void;
   children: (data: T) => ReactNode;
 }
 
 /** One dashboard card with its own loading, error-with-retry and success states. */
-function Section<T>({ title, kicker, state, onRetry, children }: SectionProps<T>) {
+function Section<T>({ title, icon, state, action, onRetry, children }: SectionProps<T>) {
   return (
-    <Card title={title} kicker={kicker} headingLevel={2}>
+    <Card
+      title={title}
+      titleIcon={icon}
+      headingLevel={2}
+      actions={state.status === 'success' ? action : undefined}
+    >
       {state.status === 'loading' && <Skeleton lines={3} />}
       {state.status === 'error' && (
         <ErrorMessage

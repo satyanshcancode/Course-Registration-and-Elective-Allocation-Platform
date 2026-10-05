@@ -1,8 +1,12 @@
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Icon } from '../Icon';
 import styles from './Card.module.css';
 
 export interface CardProps {
   title?: string;
+  /** A decorative mark before the title, the way the target sets card headings. */
+  titleIcon?: LucideIcon;
   kicker?: string;
   headingLevel?: 2 | 3 | 4;
   /** Buttons or links aligned with the title. */
@@ -11,8 +15,16 @@ export interface CardProps {
   children: ReactNode;
 }
 
-/** A self-contained piece of content: a hairline-bordered <article>, no shadow. */
-export function Card({ title, kicker, headingLevel = 2, actions, footer, children }: CardProps) {
+/** A self-contained piece of content: a hairline-bordered <article>. */
+export function Card({
+  title,
+  titleIcon,
+  kicker,
+  headingLevel = 2,
+  actions,
+  footer,
+  children,
+}: CardProps) {
   const Heading = `h${headingLevel}` as const;
   return (
     <article className={styles.card}>
@@ -20,7 +32,12 @@ export function Card({ title, kicker, headingLevel = 2, actions, footer, childre
         <header className={styles.header}>
           <div>
             {kicker && <p className={styles.kicker}>{kicker}</p>}
-            {title && <Heading className={styles.title}>{title}</Heading>}
+            {title && (
+              <Heading className={styles.title}>
+                {titleIcon && <Icon icon={titleIcon} size={20} className={styles.titleIcon} />}
+                {title}
+              </Heading>
+            )}
           </div>
           {actions && <div className={styles.actions}>{actions}</div>}
         </header>

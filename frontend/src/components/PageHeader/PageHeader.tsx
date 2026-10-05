@@ -4,6 +4,11 @@ import styles from './PageHeader.module.css';
 
 export interface PageHeaderProps {
   title: string;
+  /**
+   * Rendered inside the <h1> after the title — a decorative mark that belongs
+   * to the heading rather than beside it, such as the dashboard's wave.
+   */
+  titleAside?: ReactNode;
   /** Small uppercase label above the title, e.g. "Fall 2026 · Registration". */
   kicker?: string;
   description?: ReactNode;
@@ -22,6 +27,7 @@ export interface PageHeaderProps {
 
 export function PageHeader({
   title,
+  titleAside,
   kicker,
   description,
   actions,
@@ -39,6 +45,7 @@ export function PageHeader({
         {/* tabIndex -1: focusable by script (route changes), not by Tab. */}
         <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
           {title}
+          {titleAside}
         </h1>
         {description && <p className={styles.description}>{description}</p>}
       </div>

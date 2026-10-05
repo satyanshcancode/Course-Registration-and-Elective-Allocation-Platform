@@ -11,8 +11,7 @@ import styles from './NotificationBell.module.css';
  */
 export function NotificationBell({ to }: { to: string }) {
   const unread = useUnreadNotifications()?.unread ?? 0;
-  const name =
-    unread === 0 ? 'Notifications' : `Notifications, ${unread} unread`;
+  const name = unread === 0 ? 'Notifications' : `Notifications, ${unread} unread`;
 
   return (
     <Link to={to} className={styles.bell} aria-label={name}>

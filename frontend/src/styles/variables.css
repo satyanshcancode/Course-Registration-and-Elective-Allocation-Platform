@@ -103,7 +103,8 @@
   /* A card sits on the page rather than floating above it: one very soft
      shadow, no spread. --shadow-float and --shadow-overlay stay for the
      things that genuinely leave the page (menus, dialogs, toasts). */
-  --shadow-card: 0 1px 2px rgb(var(--color-shadow) / 0.04), 0 1px 3px rgb(var(--color-shadow) / 0.03);
+  --shadow-card:
+    0 1px 2px rgb(var(--color-shadow) / 0.04), 0 1px 3px rgb(var(--color-shadow) / 0.03);
   --shadow-float:
     0 1px 2px rgb(var(--color-shadow) / 0.08), 0 8px 24px rgb(var(--color-shadow) / 0.12);
   --shadow-overlay:

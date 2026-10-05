@@ -2,7 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as activityApi from '../../api/activityApi';
-import * as apiClientModule from '../../api/apiClient';
 import * as allocationApi from '../../api/allocationApi';
 import * as courseApi from '../../api/courseApi';
 import * as eligibilityApi from '../../api/eligibilityApi';
@@ -11,6 +10,7 @@ import { fallWindow, ok, SERVER_TIME } from '../../test/catalogueFixtures';
 import { historyEvent, historyPage } from '../../test/activityFixtures';
 import { eligibilityOverview, pendingResults } from '../../test/registrationFixtures';
 import { renderRoute } from '../../test/renderRoute';
+import { RegistrationWindowProvider } from '../../hooks/useRegistrationWindow';
 import { StudentDashboardPage } from './StudentDashboardPage';
 
 vi.mock('../../api/courseApi', () => ({ getCurrentWindow: vi.fn() }));
@@ -35,17 +35,25 @@ vi.mock('../../hooks/useAuth', () => ({
 
 const windowApi = vi.mocked(courseApi);
 const eligibility = vi.mocked(eligibilityApi);
-const client = vi.mocked(apiClientModule.apiClient);
 const allocation = vi.mocked(allocationApi);
 const activity = vi.mocked(activityApi);
 
 const failure = (message: string) => ({ success: false as const, data: null, message });
 
+/**
+ * Inside the window provider, the way the student area renders it: the page
+ * reads the registration window from there rather than fetching its own.
+ */
 function renderDashboard() {
-  return renderRoute(<StudentDashboardPage />, {
-    path: '/student/dashboard',
-    routes: [{ path: '/student/eligibility', element: <p>Pre-check</p> }],
-  });
+  return renderRoute(
+    <RegistrationWindowProvider>
+      <StudentDashboardPage />
+    </RegistrationWindowProvider>,
+    {
+      path: '/student/dashboard',
+      routes: [{ path: '/student/eligibility', element: <p>Pre-check</p> }],
+    },
+  );
 }
 
 /** The card whose heading is `name`. */
@@ -58,6 +66,15 @@ function card(name: string) {
   return within(article);
 }
 
+/** The stat tile whose label is `label`. */
+function tile(label: string) {
+  const article = screen.getByText(label).closest('article');
+  if (!article) {
+    throw new Error(`No ${label} tile`);
+  }
+  return within(article);
+}
+
 describe('StudentDashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,9 +82,46 @@ describe('StudentDashboardPage', () => {
       ok({ window: { ...fallWindow, status: 'OPEN' }, serverTime: SERVER_TIME }),
     );
     eligibility.getEligibility.mockResolvedValue(ok(eligibilityOverview));
-    client.get.mockResolvedValue({ success: true, data: { unread: 3 } });
     allocation.getMyAllocationResults.mockResolvedValue(ok(pendingResults));
     activity.getMyHistory.mockResolvedValue(ok(historyPage()));
+  });
+
+  it('greets the student by their first name', async () => {
+    renderDashboard();
+
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening), Meera/);
+  });
+
+  it('counts eligible courses, the cart, confirmed seats and waitlists at a glance', async () => {
+    renderDashboard();
+
+    await screen.findByText('You’re eligible for 1 of 3 courses');
+    expect(tile('Eligible courses').getByText('1 / 3')).toBeInTheDocument();
+    expect(tile('Eligible courses').getByRole('link', { name: /View eligible/ })).toHaveAttribute(
+      'href',
+      '/student/eligibility',
+    );
+    // Allocation has not run in `pendingResults`: no seat, no waitlist.
+    expect(tile('Confirmed').getByText('0')).toBeInTheDocument();
+    expect(tile('On waitlist').getByText('0')).toBeInTheDocument();
+  });
+
+  it('marks where the window has reached on the four-step timeline', async () => {
+    renderDashboard();
+
+    const window = card('Registration window');
+    await waitFor(() => {
+      expect(window.getByText('Fall 2026')).toBeInTheDocument();
+    });
+    // All four steps, in order, with the current one saying so in words and
+    // not only in colour.
+    expect(window.getAllByRole('listitem').map((step) => step.textContent)).toEqual([
+      'Not started',
+      'Open (now)',
+      'Closing soon',
+      'Closed',
+    ]);
   });
 
   it('shows the last few events, in the same words the history page uses', async () => {
@@ -88,7 +142,7 @@ describe('StudentDashboardPage', () => {
 
     const recent = card('Recent activity');
     expect(await recent.findByText(/You were moved up from CS402 to CS401/)).toBeVisible();
-    expect(recent.getByRole('link', { name: /full history/ })).toHaveAttribute(
+    expect(recent.getByRole('link', { name: /View all/ })).toHaveAttribute(
       'href',
       '/student/history',
     );
@@ -107,12 +161,12 @@ describe('StudentDashboardPage', () => {
 
     expect(await screen.findByText('You’re eligible for 1 of 3 courses')).toBeInTheDocument();
     expect(card('Registration window').getByText('Fall 2026')).toBeInTheDocument();
-    expect(card('Notifications').getByText('3 unread messages.')).toBeInTheDocument();
-    // Every request went out; none waited for the others.
+    // Every request went out; none waited for the others, and the window was
+    // asked for once for the whole area rather than once per card.
     expect(windowApi.getCurrentWindow).toHaveBeenCalledOnce();
     expect(eligibility.getEligibility).toHaveBeenCalledOnce();
-    expect(client.get).toHaveBeenCalledOnce();
     expect(allocation.getMyAllocationResults).toHaveBeenCalledOnce();
+    expect(activity.getMyHistory).toHaveBeenCalledOnce();
   });
 
   it('keeps the other sections when one of them fails', async () => {
@@ -121,7 +175,7 @@ describe('StudentDashboardPage', () => {
     renderDashboard();
 
     // The failing section shows its own error and Retry...
-    const failed = card('Eligibility');
+    const failed = card('Eligibility status');
     await waitFor(() => {
       expect(failed.getByText('Eligibility is unavailable.')).toBeInTheDocument();
     });
@@ -129,7 +183,7 @@ describe('StudentDashboardPage', () => {
 
     // ...while the others render normally.
     expect(card('Registration window').getByText('Fall 2026')).toBeInTheDocument();
-    expect(card('Notifications').getByText('3 unread messages.')).toBeInTheDocument();
+    expect(card('Recent activity')).toBeTruthy();
   });
 
   it('retries only the section that failed', async () => {
@@ -137,7 +191,7 @@ describe('StudentDashboardPage', () => {
     eligibility.getEligibility.mockResolvedValueOnce(failure('Eligibility is unavailable.'));
 
     renderDashboard();
-    const failed = card('Eligibility');
+    const failed = card('Eligibility status');
     await waitFor(() => {
       expect(failed.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     });
@@ -148,7 +202,6 @@ describe('StudentDashboardPage', () => {
     expect(eligibility.getEligibility).toHaveBeenCalledTimes(2);
     // The healthy sections were not reloaded.
     expect(windowApi.getCurrentWindow).toHaveBeenCalledOnce();
-    expect(client.get).toHaveBeenCalledOnce();
     expect(allocation.getMyAllocationResults).toHaveBeenCalledOnce();
   });
 

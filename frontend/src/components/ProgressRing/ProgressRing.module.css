@@ -1,0 +1,31 @@
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+}
+
+.track {
+  stroke: var(--color-surface-sunken);
+}
+
+.value {
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-base) var(--ease-standard);
+}
+
+.percent {
+  position: absolute;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: var(--text-md);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+}
