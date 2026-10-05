@@ -868,6 +868,60 @@ needs, and is overridable with a repository variable of the same name.
 `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` and
 `PRODUCTION_MIGRATION_DATABASE_URL` (the session pooler URL, port 5432).
 
+### A racy integration suite (known issue)
+
+**The backend integration tests are not reliably serialised, and CI runs them
+with one worker to work around it.** This is a defect in the test suite, not in
+the pipeline, and it is recorded here rather than hidden behind a setting.
+
+The 20 integration files share ONE database and `TRUNCATE` every table in
+`beforeEach` (`tests/integration/setup.ts`). That only works if no two files
+are ever in flight at once. They are:
+
+- The stack on every failure is `deadlock detected` inside
+  `truncateApplicationTables` (`src/database/truncate.ts:18`), reached from
+  `setup.ts`'s `beforeEach`. A `TRUNCATE` can only deadlock against another
+  session holding those tables.
+- Alongside it, `duplicate key value violates unique constraint
+"departments_code_key"`. That one is proof rather than evidence: the code
+  generator in `tests/integration/fixtures.ts` counts up from a module-level
+  variable, which is monotonic _within a process_. A collision therefore
+  requires a SECOND process building fixtures against the same database.
+- And foreign-key violations across `programs`, `courses`, `students`,
+  `preference_items` and more — one file's truncate removing rows another had
+  just inserted.
+
+**Why it looked green for months.** A developer's test database is already
+migrated, so `globalSetup` has almost nothing to do and the files happen not to
+overlap. CI creates the database from scratch on every run; migrating an empty
+schema changes the timing, and the race becomes reliable rather than rare. The
+suite was passing on luck.
+
+Measured against a freshly created database, full backend suite:
+
+| `VITEST_MAX_WORKERS` | Result         |
+| -------------------- | -------------- |
+| 1                    | 693 / 693 pass |
+| 2                    | 329 failed     |
+| 4                    | 420-431 failed |
+
+**Why it is not simply fixed with configuration.** `fileParallelism: false` is
+already set at the root and does not prevent it. Vitest 4 **removed
+`poolOptions`** (root and project) and `minWorkers`, so the usual lever —
+pinning the pool to a single fork — no longer exists; `maxWorkers`, `pool`,
+`isolate` and `fileParallelism` are all that remain, and no combination of them
+measured here serialises the files dependably.
+
+**The real fix** is to stop the files sharing state: a database (or a schema)
+per worker, so truncation and fixture counters cannot collide at all. That is a
+change to the test architecture rather than a setting, and it is deliberately
+not bundled into the CI work.
+
+**Until then:** CI sets `VITEST_MAX_WORKERS=1`, overridable with a repository
+variable of the same name. Locally the default of 2 is usually fine against an
+existing database; if the suite goes inexplicably red after
+`docker compose down --volumes`, run it with `VITEST_MAX_WORKERS=1`.
+
 ---
 
 ## Limitations

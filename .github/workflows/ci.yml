@@ -60,13 +60,15 @@ jobs:
           --health-retries 20
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/course_registration
-      # Two, not more. A runner has the memory for four, and the first run
-      # proved that is not the constraint: extra forks stay warm holding
-      # connections to the one test database, and the TRUNCATE between
-      # integration files then deadlocks against them. `fileParallelism: false`
-      # serialises the FILES, not the pools the finished forks still hold.
-      # Overridable, as a repository variable, for anyone who wants to retry it.
-      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || 2 }}
+      # ONE worker, deliberately, and not the 4 a runner could afford.
+      #
+      # The integration files share a single database and truncate it in
+      # `beforeEach`, and they are not reliably serialised: see "A racy
+      # integration suite" in the README. Two workers on a FRESH database
+      # produced 329 failures, four produced 420-431, and the stack is always
+      # `deadlock detected` inside the TRUNCATE. Raise this and the suite goes
+      # red for reasons that have nothing to do with the commit.
+      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || 1 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
