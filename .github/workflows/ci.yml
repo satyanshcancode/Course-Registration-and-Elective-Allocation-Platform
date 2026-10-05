@@ -1,0 +1,169 @@
+name: CI
+
+# Every push and every pull request. Deployment lives in deploy.yml and waits
+# for this workflow to succeed, so this one never touches production.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_call:
+
+# A newer push to the same branch cancels the older run: nothing is learned
+# from finishing a build of code that has already been replaced. `main` is
+# excluded because its runs gate a deployment.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # The pins were chosen for Node 20.17 and verified on 24 (see docs/CONVENTIONS.md).
+  NODE_VERSION: '20.19.0'
+
+jobs:
+  quality:
+    name: Lint, types and formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # The frontend's `tsc -b` resolves @course-reg/shared through its
+      # `source` condition, so nothing has to be built first.
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
+
+  test:
+    name: Tests (unit + integration)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # The same major version the production compose file runs.
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: course_registration
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d course_registration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/course_registration
+      # A runner has more memory than the laptop this was tuned for; still
+      # overridable, which is the point of the setting.
+      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || 4 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      # The same database the compose file's initdb script creates, by the same
+      # rule: "<POSTGRES_DB>_test". The integration harness would create it
+      # itself, but doing it here keeps CI and the Docker stack describing the
+      # same world, and fails loudly if Postgres is not actually up.
+      - name: Create the test database
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d course_registration \
+            -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE "course_registration_test" OWNER "postgres"'
+
+      - run: npm test
+
+  build:
+    name: Build all workspaces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # build:vercel is `build` plus a typecheck of the serverless function
+      # against the backend's freshly emitted declarations — the one moment
+      # those .d.ts files exist, and the seam a plain build would not check.
+      - run: npm run build:vercel
+
+  docker:
+    name: Production Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Built, never pushed: this exists so a broken Dockerfile is caught here
+      # rather than the next time the stack is brought up by hand.
+      - name: Build the production images
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+          JWT_SECRET: ci-only-placeholder-of-at-least-32-characters
+        run: docker compose -f docker-compose.prod.yml build
+
+  security:
+    name: Secret scan and dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks reads history, so it needs all of it rather than the
+          # single commit a default checkout fetches.
+          fetch-depth: 0
+
+      - name: Scan the full history for secrets
+        run: |
+          set -euo pipefail
+          VERSION=8.21.2
+          curl -sSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          # --redact so a finding names the file and rule, never the secret
+          # itself; the log of a failed run is as public as the repository.
+          ./gitleaks detect \
+            --source . \
+            --log-opts="--all --full-history" \
+            --redact \
+            --no-banner \
+            --exit-code 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      # Production dependencies only: a vulnerability in a build tool is not
+      # shipped to anybody. Reported at high, fatal at critical.
+      - name: Audit production dependencies
+        run: |
+          set -uo pipefail
+          npm audit --omit=dev --audit-level=high || true
+          npm audit --omit=dev --json > audit.json || true
+          CRITICAL=$(node -e "
+            const a = require('./audit.json');
+            process.stdout.write(String(a.metadata?.vulnerabilities?.critical ?? 0));
+          ")
+          HIGH=$(node -e "
+            const a = require('./audit.json');
+            process.stdout.write(String(a.metadata?.vulnerabilities?.high ?? 0));
+          ")
+          echo "high: $HIGH, critical: $CRITICAL"
+          {
+            echo "### Dependency audit (production)"
+            echo ""
+            echo "- high: $HIGH"
+            echo "- critical: $CRITICAL"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::$CRITICAL critical vulnerability/vulnerabilities in production dependencies"
+            exit 1
+          fi

@@ -1,5 +1,9 @@
 # Allocademy
 
+[![CI](https://github.com/satyanshcancode/Course-Registration-and-Elective-Allocation-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/satyanshcancode/Course-Registration-and-Elective-Allocation-Platform/actions/workflows/ci.yml)
+[![Deploy](https://github.com/satyanshcancode/Course-Registration-and-Elective-Allocation-Platform/actions/workflows/deploy.yml/badge.svg)](https://github.com/satyanshcancode/Course-Registration-and-Elective-Allocation-Platform/actions/workflows/deploy.yml)
+[![Live](https://img.shields.io/badge/live-allocademy.vercel.app-2f5d4a)](https://allocademy.vercel.app)
+
 **Course registration and elective allocation, done fairly.** A live course
 catalogue, an eligibility pre-check before the window opens, a registration cart
 that submits atomically, preference-and-priority allocation for oversubscribed
@@ -800,6 +804,72 @@ which e-mails a single-use link to the address on the account.
 
 ---
 
+### CI/CD
+
+Every push and every pull request runs the whole of CI on GitHub's runners.
+A push to `main` runs it again and then, **only if all five jobs passed for
+that exact commit**, migrates the database and deploys.
+
+```mermaid
+flowchart TD
+    push["push / pull request"] --> quality["Lint, types, formatting"]
+    push --> test["Tests<br/>unit + integration<br/>PostgreSQL 16 service"]
+    push --> build["Build all workspaces<br/>+ the Vercel function"]
+    push --> docker["Production Docker images<br/>(built, never pushed)"]
+    push --> security["gitleaks (full history)<br/>npm audit (production)"]
+
+    quality --> gate{"all green?"}
+    test --> gate
+    build --> gate
+    docker --> gate
+    security --> gate
+
+    gate -- "no" --> stop["run fails<br/>nothing is deployed"]
+    gate -- "yes, and the branch is main" --> migrate["Migrate Supabase<br/>session pooler"]
+    migrate --> deploy["Deploy to Vercel<br/>production"]
+    deploy --> smoke["Smoke test<br/>GET /api/health"]
+    smoke -- "unhealthy" --> fail["run fails loudly"]
+    smoke -- "ok" --> done["live"]
+```
+
+The five CI jobs run in parallel; they share nothing, so the run takes about as
+long as its slowest job rather than their sum.
+
+| Job                            | What it is for                                                                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Lint, types and formatting** | `npm run lint`, `typecheck`, `format:check`                                                                                                                                    |
+| **Tests**                      | The full suite against a PostgreSQL 16 service container, with `<db>_test` created the same way `docker/postgres/initdb` does                                                  |
+| **Build all workspaces**       | `build:vercel` — the three workspaces in order, then a typecheck of the serverless function against the backend's emitted declarations                                         |
+| **Production Docker images**   | `docker compose -f docker-compose.prod.yml build`, so a broken Dockerfile fails here rather than the next time the stack is started                                            |
+| **Secret scan and audit**      | gitleaks over the **whole history** (`--redact`, so a finding names the rule and file, never the secret), and `npm audit --omit=dev`: high is reported, critical fails the run |
+
+`VITEST_MAX_WORKERS` defaults to 4 on a runner rather than the 2 this laptop
+needs, and is overridable with a repository variable of the same name.
+
+**Deployment is gated, single-path and verified.**
+
+- Vercel's own Git integration is switched off in
+  [`vercel.json`](vercel.json) (`git.deploymentEnabled.main: false`), so the
+  only thing that can deploy is the workflow. Two paths to production would
+  mean a commit could go live without passing CI.
+- Migrations run **before** the new code, over the **session** pooler. They are
+  safe to re-run: each file is recorded in `schema_migrations` and applied at
+  most once, under a session-scoped advisory lock that stops two runs
+  overlapping. The transaction pooler cannot hold that lock, and the direct
+  host is IPv6-only, which a GitHub runner cannot reach.
+- The smoke test is the definition of done. A build can succeed while the
+  function cannot reach the database — a paused Supabase project does exactly
+  that — so the run only goes green once `/api/health` reports the database
+  reachable.
+- `concurrency: deploy-production` with `cancel-in-progress: false`: never two
+  deployments at once, and never one cancelled half-way through a migration.
+
+**Secrets** the workflow needs, as GitHub Actions repository secrets:
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` and
+`PRODUCTION_MIGRATION_DATABASE_URL` (the session pooler URL, port 5432).
+
+---
+
 ## Limitations
 
 Honest about what this is and is not:
@@ -823,8 +893,10 @@ Honest about what this is and is not:
 - **Rate limiting is weaker on the live site than under Docker**, because the
   limiter's counters live in each serverless instance's memory rather than in a
   shared store. See [Deployment](#deployment); Upstash Redis is the fix.
-- **No CI pipeline.** Vercel builds and deploys every push to `main`, but lint,
-  typecheck and the test suite are run locally rather than as a gate.
+- **No staging environment.** CI gates every deployment, but there is one
+  database and one deployment: a migration is tried for the first time against
+  production. Preview deployments are disabled precisely because they would
+  otherwise share that database.
 - **E-mail defaults to Mailpit.** The SMTP mailer is real and every setting
   comes from `.env`, so pointing it at a relay such as Brevo is configuration
   rather than code — but deliverability, bounces and unsubscribes are the

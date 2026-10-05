@@ -1,0 +1,100 @@
+name: Deploy
+
+# Production deployments happen here and nowhere else. Vercel's own Git
+# integration is switched off in vercel.json (`git.deploymentEnabled`), so
+# there is exactly one path to production and it is this file.
+on:
+  push:
+    branches: [main]
+
+# Never two deployments at once, and never cancel one half-way: a migration
+# that is interrupted leaves the schema in a state nothing recorded.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20.19.0'
+  LIVE_URL: https://allocademy.vercel.app
+
+jobs:
+  # The whole of CI, for THIS commit. `deploy` needs it, so a red test or a
+  # leaked secret stops the deployment rather than being noticed afterwards.
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Migrate, deploy, smoke test
+    needs: ci
+    runs-on: ubuntu-latest
+    # Belt and braces: `on.push.branches` already restricts this, but a
+    # workflow_dispatch or a changed trigger should not be able to deploy a
+    # branch by accident.
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://allocademy.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      # Migrations run BEFORE the new code, so the schema is never behind the
+      # app that expects it. They are safe to re-run: every file is recorded in
+      # schema_migrations and applied at most once, under a session-scoped
+      # advisory lock so two runs cannot overlap.
+      #
+      # The SESSION pooler (port 5432), not the transaction pooler and not the
+      # direct host: a session lock cannot survive transaction pooling, and
+      # db.<ref>.supabase.co resolves to IPv6 only, which a GitHub runner
+      # cannot reach.
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_MIGRATION_DATABASE_URL }}
+          DATABASE_SSL: 'true'
+          NODE_ENV: production
+        run: npm run migrate -w backend
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx --yes vercel@latest deploy --prod --yes \
+            --token "${{ secrets.VERCEL_TOKEN }}"
+
+      # The deployment is not finished until the live site says so. A build can
+      # succeed while the function cannot reach the database — a paused
+      # Supabase project does exactly that — and this is what catches it.
+      - name: Smoke test the live site
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            BODY=$(curl -sS --max-time 20 "$LIVE_URL/api/health" || echo '')
+            STATUS=$(node -e "
+              try {
+                const b = JSON.parse(process.argv[1]);
+                process.stdout.write(
+                  b.success === true && b.data?.database?.status === 'ok' ? 'ok' : 'bad',
+                );
+              } catch { process.stdout.write('bad'); }
+            " "$BODY")
+            if [ "$STATUS" = "ok" ]; then
+              echo "live site healthy: $BODY"
+              {
+                echo "### Deployed"
+                echo ""
+                echo "- $LIVE_URL"
+                echo '- `/api/health` reports the database reachable'
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "attempt $attempt: not healthy yet ($BODY)"
+            sleep 10
+          done
+          echo "::error::$LIVE_URL/api/health did not report healthy after 6 attempts"
+          exit 1
