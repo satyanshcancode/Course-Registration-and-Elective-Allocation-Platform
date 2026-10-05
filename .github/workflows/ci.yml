@@ -30,8 +30,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      # The frontend's `tsc -b` resolves @course-reg/shared through its
-      # `source` condition, so nothing has to be built first.
+      # api/index.ts imports the backend's BUILT declarations, so ESLint's
+      # type-aware rules cannot resolve them on a fresh checkout and report
+      # every import as `any`. Building the two workspaces it depends on is
+      # the honest fix; excluding api/ from the lint would throw away the type
+      # checking that file exists to get.
+      - run: npm run build -w shared
+      - run: npm run build -w backend
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run format:check
@@ -55,9 +60,13 @@ jobs:
           --health-retries 20
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/course_registration
-      # A runner has more memory than the laptop this was tuned for; still
-      # overridable, which is the point of the setting.
-      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || 4 }}
+      # Two, not more. A runner has the memory for four, and the first run
+      # proved that is not the constraint: extra forks stay warm holding
+      # connections to the one test database, and the TRUNCATE between
+      # integration files then deadlocks against them. `fileParallelism: false`
+      # serialises the FILES, not the pools the finished forks still hold.
+      # Overridable, as a repository variable, for anyone who wants to retry it.
+      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || 2 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,12 +110,16 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       # Built, never pushed: this exists so a broken Dockerfile is caught here
       # rather than the next time the stack is brought up by hand.
+      # Compose interpolates every ${VAR:?...} before it builds anything, even
+      # though a build reads none of them, so each required variable needs SOME
+      # value. These are placeholders: nothing is started and no image keeps them.
       - name: Build the production images
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
           POSTGRES_DB: ci
           JWT_SECRET: ci-only-placeholder-of-at-least-32-characters
+          SMTP_HOST: smtp.invalid
         run: docker compose -f docker-compose.prod.yml build
 
   security:
@@ -130,6 +143,7 @@ jobs:
           # itself; the log of a failed run is as public as the repository.
           ./gitleaks detect \
             --source . \
+            --config .gitleaks.toml \
             --log-opts="--all --full-history" \
             --redact \
             --no-banner \

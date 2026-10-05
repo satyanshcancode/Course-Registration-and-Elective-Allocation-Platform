@@ -1,0 +1,35 @@
+# gitleaks configuration for the CI secret scan.
+#
+# The default rules are kept in full; this file only records the handful of
+# strings that LOOK like credentials and provably are not, so that a real one
+# still fails the build.
+#
+# The allowlist is keyed on the exact literal, not on a path. Allowing a whole
+# directory would mean a genuine secret pasted into a test tomorrow would be
+# ignored; this way `backend/tests/` is still scanned, and only these known
+# values are passed over.
+
+title = "Allocademy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-only values that are not credentials to anything"
+regexTarget = "match"
+regexes = [
+  # backend/tests/integration/{http,auth.test}.ts — signs tokens for an
+  # in-memory supertest app that exists for the length of one test file. It is
+  # long purely to satisfy the 32-character minimum the env schema enforces,
+  # and its name says what it is.
+  '''integration-test-secret-that-is-long-enough-123''',
+
+  # .env.example ships this so a fresh checkout fails loudly rather than
+  # silently running on a guessable secret: the production env schema REFUSES
+  # to start when JWT_SECRET is still this value (backend/src/config/env.ts).
+  '''replace-with-a-long-random-secret-of-at-least-32-characters''',
+
+  # backend/src/config/env.test.ts — a fake DSN asserting that the URL parser
+  # accepts a password, pointed at localhost and a database that never exists.
+  '''postgres://user:secret@localhost:5432/app''',
+]
