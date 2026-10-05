@@ -8,8 +8,8 @@ export function AdminLayout() {
   return (
     <AppShell
       navLabel="Administration"
-      areaLabel="Administration"
       homePath="/admin/dashboard"
+      searchPath="/admin/course-catalogue"
       items={items}
       footerNote="Allocademy · Registrar administration"
     />

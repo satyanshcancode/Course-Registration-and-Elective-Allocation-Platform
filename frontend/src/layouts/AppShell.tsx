@@ -1,26 +1,31 @@
 import { Suspense, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { GlobalSearch } from '../components/GlobalSearch';
 import { Icon } from '../components/Icon';
 import { PageLoading } from '../components/PageLoading';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import styles from './AppShell.module.css';
 import { MobileNav } from './MobileNav';
-import type { NavItem } from './navigation';
+import type { NavBadge, NavItem } from './navigation';
 import { UserMenu } from './UserMenu';
 import { Wordmark } from './Wordmark';
 
 export interface AppShellProps {
   /** Accessible name of the navigation landmark, e.g. "Student". */
   navLabel: string;
-  /** Kicker above the sidebar links, e.g. "Student" or "Administration". */
-  areaLabel: string;
   homePath: string;
   items: readonly NavItem[];
+  /** Where the header search sends the reader, e.g. "/student/courses". */
+  searchPath: string;
   /** Small print in the footer. */
   footerNote?: string;
   /** Optional count beside a nav item, e.g. how many courses are in the cart. */
-  itemBadge?: (item: NavItem) => ReactNode;
+  itemBadge?: (item: NavItem) => NavBadge | null;
+  /** Between the search and the account menu — the student's notification bell. */
+  headerAside?: ReactNode;
+  /** Pinned under the links — the student's registration window card. */
+  navFooter?: ReactNode;
 }
 
 /**
@@ -33,11 +38,13 @@ export interface AppShellProps {
  */
 export function AppShell({
   navLabel,
-  areaLabel,
   homePath,
   items,
+  searchPath,
   footerNote,
   itemBadge,
+  headerAside,
+  navFooter,
 }: AppShellProps) {
   const { pathname } = useLocation();
   // "/student" or "/admin": the policy pages exist under each so they keep this shell.
@@ -54,23 +61,27 @@ export function AppShell({
 
       <header className={styles.header}>
         <Wordmark to={homePath} compact />
-        <UserMenu />
+        <GlobalSearch to={searchPath} />
+        <div className={styles.headerTools}>
+          {headerAside}
+          <UserMenu />
+        </div>
       </header>
 
       {!isPhone && (
         <nav className={styles.sidebar} aria-label={navLabel}>
-          <p className={styles.area}>{areaLabel}</p>
           <ul className={styles.navList}>
             {items.map((item) => (
               <li key={item.to}>
                 <NavLink to={item.to} className={styles.navLink}>
                   <Icon icon={item.icon} size={20} />
                   <span className={styles.navLabel}>{item.label}</span>
-                  {itemBadge?.(item) && <span className={styles.navBadge}>{itemBadge(item)}</span>}
+                  <NavCount badge={itemBadge?.(item) ?? null} />
                 </NavLink>
               </li>
             ))}
           </ul>
+          {navFooter}
         </nav>
       )}
 
@@ -92,5 +103,22 @@ export function AppShell({
         </p>
       </footer>
     </div>
+  );
+}
+
+/**
+ * A count beside a nav label. `danger` is for a count that is asking to be
+ * read now (unread notifications); everything else is quieter, because a
+ * sidebar full of red is a sidebar nobody reads.
+ */
+function NavCount({ badge }: { badge: NavBadge | null }) {
+  if (badge === null || badge.count === 0) {
+    return null;
+  }
+  return (
+    <span className={styles.navBadge} data-tone={badge.tone ?? 'neutral'}>
+      {badge.count}
+      <span className="visually-hidden"> {badge.label}</span>
+    </span>
   );
 }

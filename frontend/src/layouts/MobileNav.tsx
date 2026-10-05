@@ -1,14 +1,14 @@
 import { Ellipsis } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { Icon } from '../components/Icon';
 import styles from './MobileNav.module.css';
-import type { NavItem } from './navigation';
+import type { NavBadge, NavItem } from './navigation';
 
 interface MobileNavProps {
   label: string;
   items: readonly NavItem[];
-  itemBadge?: (item: NavItem) => ReactNode;
+  itemBadge?: (item: NavItem) => NavBadge | null;
 }
 
 /**
@@ -61,7 +61,7 @@ export function MobileNav({ label, items, itemBadge }: MobileNavProps) {
             <NavLink to={item.to} className={styles.sheetLink} onClick={close}>
               <Icon icon={item.icon} size={20} />
               <span>{item.label}</span>
-              {itemBadge?.(item) && <span className={styles.badge}>{itemBadge(item)}</span>}
+              <Count badge={itemBadge?.(item) ?? null} />
             </NavLink>
           </li>
         ))}
@@ -73,7 +73,7 @@ export function MobileNav({ label, items, itemBadge }: MobileNavProps) {
               <Icon icon={item.icon} size={20} />
               <span className={styles.barLabel}>
                 {item.shortLabel ?? item.label}
-                {itemBadge?.(item) && <span className={styles.badge}>{itemBadge(item)}</span>}
+                <Count badge={itemBadge?.(item) ?? null} />
               </span>
             </NavLink>
           </li>
@@ -98,5 +98,18 @@ export function MobileNav({ label, items, itemBadge }: MobileNavProps) {
         )}
       </ul>
     </nav>
+  );
+}
+
+/** The same count the sidebar shows, at the size a thumb needs. */
+function Count({ badge }: { badge: NavBadge | null }) {
+  if (badge === null || badge.count === 0) {
+    return null;
+  }
+  return (
+    <span className={styles.badge} data-tone={badge.tone ?? 'neutral'}>
+      {badge.count}
+      <span className="visually-hidden"> {badge.label}</span>
+    </span>
   );
 }

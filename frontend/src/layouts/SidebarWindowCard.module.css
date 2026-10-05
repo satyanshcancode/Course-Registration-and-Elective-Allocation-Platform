@@ -1,0 +1,42 @@
+.card {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-3);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  font-size: var(--text-xs);
+  box-shadow: var(--shadow-card);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.text {
+  display: grid;
+  gap: var(--space-0);
+  min-width: 0;
+}
+
+.name {
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}
+
+.status {
+  color: var(--color-ink-muted);
+}
+
+.countdown {
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}

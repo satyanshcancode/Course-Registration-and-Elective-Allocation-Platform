@@ -1,0 +1,48 @@
+.form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(30rem, 100%);
+}
+
+.icon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--color-ink-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 4.25rem 0 2.25rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+.input:hover {
+  border-color: var(--color-rule-strong);
+}
+
+/* The browser's own clear button in a search field draws a second, differently
+   styled control inside ours; the Escape key still clears it. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.hint {
+  position: absolute;
+  right: var(--space-2);
+  padding: var(--space-0) var(--space-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  line-height: 1.6;
+}

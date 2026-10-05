@@ -16,6 +16,15 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+/** A count beside a nav item: the number, what it counts, and how loudly. */
+export interface NavBadge {
+  count: number;
+  /** Read after the number by assistive technology, e.g. "courses ranked". */
+  label: string;
+  /** `danger` is for a count that wants reading now; the default is quiet. */
+  tone?: 'neutral' | 'danger';
+}
+
 export interface NavItem {
   to: string;
   label: string;

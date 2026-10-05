@@ -29,19 +29,18 @@
 }
 
 .name {
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
+  color: var(--color-ink);
   font-size: var(--text-md);
-  font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.015em;
 }
 
+/* Sentence case, not a tracked-out kicker: this is the office's name, and the
+   target sets it as one. */
 .office {
   color: var(--color-ink-muted);
   font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  font-weight: var(--weight-regular);
 }
 
 @media (width < 40rem) {

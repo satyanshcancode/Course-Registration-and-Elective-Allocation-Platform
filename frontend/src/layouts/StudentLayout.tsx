@@ -5,7 +5,9 @@ import {
   useUnreadNotifications,
 } from '../hooks/useUnreadNotifications';
 import { AppShell } from './AppShell';
-import { STUDENT_NAV, type NavItem } from './navigation';
+import { NotificationBell } from './NotificationBell';
+import { SidebarWindowCard } from './SidebarWindowCard';
+import { STUDENT_NAV, type NavBadge, type NavItem } from './navigation';
 
 export function StudentLayout() {
   return (
@@ -28,22 +30,12 @@ function StudentShell() {
   const count = cart?.codes.length ?? 0;
   const unread = useUnreadNotifications()?.unread ?? 0;
 
-  const badge = (item: NavItem) => {
-    if (item.to === '/student/cart' && count > 0) {
-      return (
-        <>
-          {count}
-          <span className="visually-hidden"> {count === 1 ? 'course' : 'courses'} ranked</span>
-        </>
-      );
+  const badge = (item: NavItem): NavBadge | null => {
+    if (item.to === '/student/cart') {
+      return { count, label: count === 1 ? 'course ranked' : 'courses ranked' };
     }
-    if (item.to === '/student/notifications' && unread > 0) {
-      return (
-        <>
-          {unread}
-          <span className="visually-hidden"> unread</span>
-        </>
-      );
+    if (item.to === '/student/notifications') {
+      return { count: unread, label: 'unread', tone: 'danger' };
     }
     return null;
   };
@@ -51,10 +43,12 @@ function StudentShell() {
   return (
     <AppShell
       navLabel="Student"
-      areaLabel="Student"
       homePath="/student/dashboard"
+      searchPath="/student/courses"
       items={STUDENT_NAV}
       itemBadge={badge}
+      headerAside={<NotificationBell to="/student/notifications" />}
+      navFooter={<SidebarWindowCard />}
     />
   );
 }

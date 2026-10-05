@@ -44,14 +44,16 @@
   background-color: var(--color-accent-hover);
 }
 
+/* A hairline, not a hard rule: the label is what identifies this control,
+   and the target draws the border as barely there. */
 .button[data-variant='secondary'] {
-  border-color: var(--color-rule-strong);
+  border-color: var(--color-rule);
   background-color: var(--color-surface);
   color: var(--color-ink);
 }
 
 .button[data-variant='secondary']:hover:not(:disabled, [aria-disabled='true']) {
-  border-color: var(--color-ink-muted);
+  border-color: var(--color-rule-strong);
   background-color: var(--color-surface-sunken);
 }
 
