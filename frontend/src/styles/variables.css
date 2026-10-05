@@ -1,42 +1,47 @@
 /*
  * Design tokens. See docs/DESIGN.md for the reasoning behind every value.
  * Components use these custom properties, never raw colours or sizes.
+ *
+ * The palette and shape are sampled from docs/redesign/target-ui.png, which
+ * is the source of truth for the look: warm off-white page, near-white cards
+ * on a hairline, one deep green, and four status hues that never appear
+ * without a word or an icon beside them.
  */
 
 :root {
   color-scheme: light dark;
 
-  /* ---- Colour: Quad theme (light) ---------------------------------------
-   * Clay surrounds warm paper. Forest green is the primary and the only
-   * colour a reader is asked to recognise; terracotta means "you cannot have
-   * this" and nothing else; amber means "not yet". Every pair below clears
-   * WCAG AA against the surface it is used on (docs/DESIGN.md records them).
+  /* ---- Colour (light) ----------------------------------------------------
+   * Page and sidebar share one warm off-white so the cards are the only
+   * thing that reads as "a surface". Deep green is the primary and the only
+   * colour a reader is asked to recognise; red means "you cannot have this",
+   * amber "not yet", blue "for information".
    */
-  --color-paper: #e8e1d6;
-  --color-surface: #fdfbf7;
-  --color-surface-sunken: #f2ece1;
-  --color-ink: #241f1a;
-  --color-ink-muted: #585046;
-  --color-rule: #d6cdbe;
-  --color-rule-strong: #887d6d;
+  --color-paper: #f1eee5;
+  --color-surface: #fcfaf5;
+  --color-surface-sunken: #ebe7dc;
+  --color-ink: #1d1b16;
+  --color-ink-muted: #5a5349;
+  --color-rule: #e2ddd0;
+  --color-rule-strong: #857d6e;
 
-  --color-accent: #2f5d4a;
-  --color-accent-hover: #244a3b;
-  --color-accent-soft: #dfe9e3;
-  --color-on-accent: #fdfbf7;
+  --color-accent: #1b5c41;
+  --color-accent-hover: #15492f;
+  --color-accent-soft: #dfeae1;
+  --color-on-accent: #fcfaf5;
 
-  --color-success: #2f5d4a;
-  --color-success-soft: #dfe9e3;
+  --color-success: #1d6a46;
+  --color-success-soft: #dcefe2;
   --color-warning: #8a5a06;
-  --color-warning-soft: #f7ecd6;
-  --color-danger: #a04a26;
-  --color-danger-soft: #f6e3da;
-  --color-info: #41566b;
-  --color-info-soft: #e3e8ed;
+  --color-warning-soft: #fbeccd;
+  --color-danger: #a8342c;
+  --color-danger-soft: #fbe2de;
+  --color-info: #2b5ba3;
+  --color-info-soft: #e7eefb;
 
   --color-focus: var(--color-accent);
-  --color-backdrop: rgb(36 31 26 / 0.45);
-  --color-shadow: 36 31 26;
+  --color-backdrop: rgb(29 27 22 / 0.45);
+  --color-shadow: 46 42 33;
 
   /* ---- Typography --------------------------------------------------------- */
   /* Fraunces carries the voice: a soft serif with an optical-size axis, so
@@ -61,14 +66,15 @@
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-heading: 600;
+  /* The target sets every title in a bold serif, not a book weight. */
+  --weight-heading: 700;
 
   --leading-tight: 1.15;
   --leading-snug: 1.3;
   --leading-dense: 1.45;
   --leading-body: 1.55;
 
-  --tracking-heading: -0.028em;
+  --tracking-heading: -0.022em;
   --tracking-kicker: 0.08em;
   --tracking-code: 0.04em;
 
@@ -84,17 +90,24 @@
   --space-8: 4rem;
 
   /* ---- Shape -------------------------------------------------------------- */
-  --radius-sm: 4px;
-  --radius-md: 7px;
-  --radius-lg: 10px;
+  /* Softer than the previous set: the target's cards are ~12px, its controls
+     ~8px, and its chips ~6px. --radius-pill is only for a toggle or an avatar,
+     where the shape IS the affordance. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
   --border-hairline: 1px solid var(--color-rule);
   --border-control: 1px solid var(--color-rule-strong);
 
-  /* Shadows are only for things that genuinely float. */
+  /* A card sits on the page rather than floating above it: one very soft
+     shadow, no spread. --shadow-float and --shadow-overlay stay for the
+     things that genuinely leave the page (menus, dialogs, toasts). */
+  --shadow-card: 0 1px 2px rgb(var(--color-shadow) / 0.04), 0 1px 3px rgb(var(--color-shadow) / 0.03);
   --shadow-float:
-    0 1px 2px rgb(var(--color-shadow) / 0.08), 0 8px 24px rgb(var(--color-shadow) / 0.14);
+    0 1px 2px rgb(var(--color-shadow) / 0.08), 0 8px 24px rgb(var(--color-shadow) / 0.12);
   --shadow-overlay:
-    0 2px 6px rgb(var(--color-shadow) / 0.12), 0 24px 48px rgb(var(--color-shadow) / 0.22);
+    0 2px 6px rgb(var(--color-shadow) / 0.1), 0 24px 48px rgb(var(--color-shadow) / 0.18);
 
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
@@ -102,8 +115,8 @@
   /* ---- Layout ------------------------------------------------------------- */
   --layout-max-width: 80rem;
   --layout-narrow: 44rem;
-  --app-header-height: 3.5rem;
-  --sidebar-width: 15rem;
+  --app-header-height: 4rem;
+  --sidebar-width: 15.5rem;
   --rail-width: 4rem;
   --bottom-nav-height: 4rem;
 
@@ -131,33 +144,34 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* "Lamplight" theme: only colour tokens change, and they stay warm. */
+/* Dark theme: the same palette after dark. Only colour tokens change. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #191611;
-    --color-surface: #221d17;
-    --color-surface-sunken: #13100c;
-    --color-ink: #f0e9dd;
-    --color-ink-muted: #b6ab9b;
-    --color-rule: #3a342b;
-    --color-rule-strong: #887c68;
+    --color-paper: #15130f;
+    --color-surface: #1e1b16;
+    --color-surface-sunken: #110f0c;
+    --color-ink: #f2ece1;
+    --color-ink-muted: #b3a999;
+    --color-rule: #332e26;
+    --color-rule-strong: #8a8070;
 
-    --color-accent: #86c3a3;
-    --color-accent-hover: #9fd3b6;
-    --color-accent-soft: #1e3028;
-    --color-on-accent: #10201a;
+    --color-accent: #7cc39f;
+    --color-accent-hover: #99d4b4;
+    --color-accent-soft: #1a2f24;
+    --color-on-accent: #0d1f17;
 
-    --color-success: #86c3a3;
-    --color-success-soft: #1e3028;
+    --color-success: #7cc39f;
+    --color-success-soft: #1a2f24;
     --color-warning: #e0b468;
-    --color-warning-soft: #352a14;
-    --color-danger: #e79e78;
-    --color-danger-soft: #3a241a;
-    --color-info: #a9bace;
-    --color-info-soft: #232a31;
+    --color-warning-soft: #33280f;
+    --color-danger: #ef9a8b;
+    --color-danger-soft: #3a211b;
+    --color-info: #9ab8e6;
+    --color-info-soft: #1c2432;
 
     --color-backdrop: rgb(0 0 0 / 0.62);
     --color-shadow: 0 0 0;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   }
 }
 
