@@ -9,6 +9,10 @@ dist/
 # Test output
 coverage/
 
+# One-shot credential drops for setting CI secrets. Never committed.
+.vercel-token.txt
+.github-token.txt
+
 # Live staff credentials, written by the deployment. Never committed.
 LIVE-STAFF-PASSWORDS.txt
 
