@@ -13,7 +13,7 @@ export interface SeatMeterProps {
   label?: string;
   /** Number of students who ranked the course; shows a demand ratio. */
   demand?: number;
-  /** Numbers only, no "allocated" wording (for dense table cells). */
+  /** Numbers only, no "seats" wording (for dense table cells). */
   compact?: boolean;
 }
 
@@ -24,32 +24,27 @@ const LEVEL_WORDS: Record<SeatFillLevel, string | null> = {
 };
 
 /**
- * How many of the twenty dots are filled.
+ * What share of the bar is drawn as taken, 0..100.
  *
- * Twenty whatever the capacity: one dot per seat would make an 80-seat course
- * four times the height of a 20-seat one, and the row has to stay the same
- * height down the page. A course with any seat taken keeps at least one dot
- * filled, and one with any seat left keeps at least one empty — otherwise a
- * nearly-full course and a full one would look identical, which is the one
- * distinction this drawing exists to make.
+ * A course with any seat taken keeps a sliver drawn, and one with any seat
+ * left keeps a sliver empty — otherwise a nearly-full course and a full one
+ * would look identical, which is the one distinction this drawing exists to
+ * make.
  */
-export const SEAT_DOTS = 20;
-
-export function filledDots(allocated: number, capacity: number): number {
+export function filledPercent(allocated: number, capacity: number): number {
   if (capacity <= 0 || allocated >= capacity) {
-    return SEAT_DOTS;
+    return 100;
   }
   if (allocated <= 0) {
     return 0;
   }
-  const scaled = Math.round((allocated / capacity) * SEAT_DOTS);
-  return Math.min(SEAT_DOTS - 1, Math.max(1, scaled));
+  return Math.min(98, Math.max(2, Math.round((allocated / capacity) * 100)));
 }
 
 /**
- * Seat availability as a twenty-dot matrix with the exact numbers beside it:
- * "37 of 50 allocated · 13 left". The dots give the proportion at a glance and
- * the tone changes as it fills, but the numbers (and the word "Full") always
+ * Seat availability as a bar with the exact numbers beside it: "37 of 50
+ * seats · 13 left". The bar gives the proportion at a glance and its tone
+ * changes as the course fills, but the numbers (and the word "Full") always
  * carry the meaning — the drawing is never the only signal.
  */
 export function SeatMeter({
@@ -61,13 +56,13 @@ export function SeatMeter({
 }: SeatMeterProps) {
   const left = seatsLeft(allocated, capacity);
   const level = seatFillLevel(allocated, capacity);
-  const filled = filledDots(allocated, capacity);
+  const filled = filledPercent(allocated, capacity);
   const valueText = `${allocated} of ${capacity} allocated, ${left} left`;
 
   return (
     <div className={styles.meter} data-level={level} data-compact={compact ? 'true' : undefined}>
       <div
-        className={styles.dots}
+        className={styles.track}
         role="meter"
         aria-label={label}
         aria-valuemin={0}
@@ -75,16 +70,10 @@ export function SeatMeter({
         aria-valuenow={Math.min(allocated, capacity)}
         aria-valuetext={valueText}
       >
-        {Array.from({ length: SEAT_DOTS }, (_, index) => (
-          <span
-            key={index}
-            className={styles.dot}
-            data-taken={index < filled ? 'true' : undefined}
-            aria-hidden="true"
-          />
-        ))}
+        <span className={styles.fill} style={{ inlineSize: `${filled}%` }} />
       </div>
       <p className={styles.numbers} aria-hidden="true">
+        <span className={styles.dot} />
         {compact ? (
           <>
             <data value={allocated}>{allocated}</data>/<data value={capacity}>{capacity}</data>
@@ -92,12 +81,16 @@ export function SeatMeter({
         ) : (
           <>
             <data value={allocated}>{allocated}</data> of <data value={capacity}>{capacity}</data>{' '}
-            allocated
+            seats
             <span className={styles.separator}> · </span>
-            <strong className={styles.left}>{left === 0 ? 'none left' : `${left} left`}</strong>
+            <strong className={styles.left}>{left === 0 ? 'Full' : `${left} left`}</strong>
           </>
         )}
-        {LEVEL_WORDS[level] && <span className={styles.level}>{LEVEL_WORDS[level]}</span>}
+        {/* "Full" is already the figure beside the numbers when the course has
+            no seats left, so the tag would be saying it twice. */}
+        {LEVEL_WORDS[level] && (compact || level !== 'full') && (
+          <span className={styles.level}>{LEVEL_WORDS[level]}</span>
+        )}
         {demand !== undefined && (
           <span className={styles.demand}>Demand {formatDemandRatio(demand, capacity)}</span>
         )}

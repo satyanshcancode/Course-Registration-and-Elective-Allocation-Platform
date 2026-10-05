@@ -1,0 +1,47 @@
+/*
+ * --art-hue comes from the department (see utils/courseArtwork.ts); every
+ * other number here is the theme's, which is what keeps forty generated
+ * pictures looking like one product.
+ */
+.art {
+  position: relative;
+  height: 6rem;
+  overflow: hidden;
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--art-hue) 32% 24%),
+    hsl(calc(var(--art-hue) + 38) 38% 42%)
+  );
+}
+
+.motif {
+  width: 100%;
+  height: 100%;
+  color: hsl(var(--art-hue) 60% 86%);
+}
+
+.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.3;
+}
+
+.fill {
+  fill: currentColor;
+  opacity: 0.28;
+}
+
+@media (prefers-color-scheme: dark) {
+  .art {
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--art-hue) 28% 16%),
+      hsl(calc(var(--art-hue) + 38) 32% 28%)
+    );
+  }
+
+  .motif {
+    color: hsl(var(--art-hue) 45% 72%);
+  }
+}

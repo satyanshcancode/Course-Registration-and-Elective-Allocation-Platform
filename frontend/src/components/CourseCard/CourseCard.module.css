@@ -1,37 +1,31 @@
 /*
- * An index card: hairline border, no shadow. The department used to get a
- * coloured spine down the left edge; the department's NAME is printed on every
- * card anyway and there was no colour key to read the stripe against, so it was
- * decoration pretending to be information.
+ * A card with a band of generated artwork at the top (CourseArtwork), then
+ * everything there is to know about one offering in reading order: what it is,
+ * how you stand with it, how full it is, and what you can do about it.
  */
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-4);
+  height: 100%;
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
-/*
- * Two columns on the first row: the code and credits on the left, the status
- * stamp on the right. The stamp used to be absolutely positioned with 10rem
- * of padding reserved for it — a number that "Choice 3 · not allocated" ran
- * straight through. In the grid it reserves its own width, whatever it says.
- */
-.header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-1) var(--space-2);
+.card:hover {
+  border-color: var(--color-rule-strong);
 }
 
-.stamp {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
 }
 
 .meta {
@@ -39,26 +33,19 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
-  min-height: 1.75rem;
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 
-/* Everything after the first row spans both columns. */
-.department,
-.title,
-.summary {
-  grid-column: 1 / -1;
-}
-
-.department {
-  color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+/* Pushed to the end of the row, whatever the status badge beside it says. */
+.credits {
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .title {
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   line-height: var(--leading-snug);
 }
 
@@ -83,6 +70,7 @@
 .live {
   display: grid;
   gap: var(--space-2);
+  margin-top: auto;
   margin-inline: calc(-1 * var(--space-2));
   padding: var(--space-2);
   border-radius: var(--radius-sm);
@@ -100,75 +88,45 @@
   align-items: center;
   gap: var(--space-1) var(--space-2);
   color: var(--color-ink-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 
-.facts {
-  display: grid;
-  gap: var(--space-2);
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: var(--border-hairline);
-}
-
-/* Label column + value column, aligned like a form. */
-.fact {
-  display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.fact dt {
-  color: var(--color-ink-muted);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
-}
-
-.eligibility {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-}
-
 .reason {
-  color: var(--color-ink-muted);
-  font-size: var(--text-xs);
-}
-
-.codes {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+  line-height: var(--leading-dense);
 }
 
-.codes abbr {
-  text-decoration: none;
-}
-
-@media (width < 40rem) {
-  .meta {
-    padding-right: 0;
-    padding-top: var(--space-6);
-  }
-
-  .fact {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-0);
-  }
-}
-
-/* The cart action sits below the rule, like a stamp line at the card's foot. */
-.cart {
+/* The two things there are to do with a course, side by side. */
+.actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   padding-top: var(--space-3);
   border-top: var(--border-hairline);
+}
+
+.details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.details:hover {
+  border-color: var(--color-rule-strong);
+  background-color: var(--color-surface-sunken);
 }

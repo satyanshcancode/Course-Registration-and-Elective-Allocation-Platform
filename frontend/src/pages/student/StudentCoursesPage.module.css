@@ -36,25 +36,27 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Two joined buttons; the pressed one is filled like a stamped tab. */
+/* Two joined buttons; the pressed one is filled, like a stamped tab. */
 .views {
   display: inline-flex;
-  border: var(--border-control);
+  border: var(--border-hairline);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
+  overflow: hidden;
 }
 
 .viewButton {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  min-height: 2.25rem;
+  padding: 0 var(--space-4);
   border: 0;
   background: none;
   color: var(--color-ink-muted);
   font: inherit;
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease-standard),
@@ -62,7 +64,7 @@
 }
 
 .viewButton + .viewButton {
-  border-left: var(--border-control);
+  border-left: var(--border-hairline);
 }
 
 .viewButton:hover {
@@ -70,8 +72,8 @@
 }
 
 .viewButton[aria-pressed='true'] {
-  background-color: var(--color-accent-soft);
-  color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .list {
@@ -106,6 +108,6 @@
   gap: var(--space-3);
   padding: var(--space-4);
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
 }

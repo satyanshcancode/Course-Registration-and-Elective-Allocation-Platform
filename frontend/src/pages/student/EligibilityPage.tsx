@@ -1,24 +1,28 @@
 import type { CourseEligibility, EligibilityOverview } from '@course-reg/shared';
-import { CircleSlash, SearchX } from 'lucide-react';
+import { CalendarDays, Check, CircleSlash, RefreshCw, SearchX } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { getEligibility } from '../../api/eligibilityApi';
 import { unwrap } from '../../api/unwrap';
+import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { CourseCode } from '../../components/CourseCode';
+import { DataTable } from '../../components/DataTable';
+import type { Column } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { FormField } from '../../components/FormField';
+import { Icon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { SearchBar } from '../../components/SearchBar';
 import { Select } from '../../components/Select';
 import { Skeleton } from '../../components/Skeleton';
-import { StatusBadge } from '../../components/StatusBadge';
+import { Tabs } from '../../components/Tabs';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { describeEligibilityCount, describeReason } from '../../utils/eligibilityText';
 import { formatDateTime } from '../../utils/formatDate';
-import { Link } from 'react-router';
 import { detailPath } from './StudentCoursesPage';
 import styles from './EligibilityPage.module.css';
 
@@ -56,8 +60,7 @@ export function EligibilityPage() {
     <>
       <PageHeader
         title="Eligibility check"
-        kicker="Registration · Before you rank courses"
-        description="Every course offered this term, checked against your record. Run it before registration opens so there are no surprises."
+        description="Check which courses you are eligible for based on your academic record. Run this before registration opens."
       >
         <RegistrationStatusBanner />
       </PageHeader>
@@ -81,7 +84,21 @@ export function EligibilityPage() {
               </p>
             )}
 
-            <Card title="Your record" kicker="What this check uses" headingLevel={2}>
+            <Card
+              title="Your academic record"
+              titleIcon={CalendarDays}
+              headingLevel={2}
+              actions={
+                <div className={styles.recheck}>
+                  <Button variant="primary" size="sm" iconStart={RefreshCw} onClick={retry}>
+                    Run check again
+                  </Button>
+                  <p className={styles.checkedAt}>
+                    Last checked: {formatDateTime(data.serverTime)}
+                  </p>
+                </div>
+              }
+            >
               <dl className={styles.record}>
                 <div>
                   <dt>Programme</dt>
@@ -89,11 +106,11 @@ export function EligibilityPage() {
                 </div>
                 <div>
                   <dt>Semester</dt>
-                  <dd className={styles.mono}>{data.student.semester}</dd>
+                  <dd className={styles.figure}>{data.student.semester}</dd>
                 </div>
                 <div>
                   <dt>Credits completed</dt>
-                  <dd className={styles.mono}>{data.student.creditsCompleted}</dd>
+                  <dd className={styles.figure}>{data.student.creditsCompleted}</dd>
                 </div>
                 <div className={styles.wide}>
                   <dt>Courses passed ({data.student.completedCourses.length})</dt>
@@ -104,8 +121,9 @@ export function EligibilityPage() {
                       <ul className={styles.passed}>
                         {data.student.completedCourses.map((course) => (
                           <li key={course.code}>
-                            <CourseCode code={course.code} size="sm" />
-                            <span className={styles.passedName}>{course.name}</span>
+                            <abbr title={course.name}>
+                              <CourseCode code={course.code} size="sm" />
+                            </abbr>
                           </li>
                         ))}
                       </ul>
@@ -123,7 +141,7 @@ export function EligibilityPage() {
                 <div className={styles.filters}>
                   <SearchBar
                     label="Search courses"
-                    placeholder="Search by code or name"
+                    placeholder="Search by code or name..."
                     delayMs={SEARCH_DELAY_MS}
                     onSearch={setSearch}
                   />
@@ -153,23 +171,35 @@ export function EligibilityPage() {
                     : 'Courses appear here once the registrar publishes this term’s offerings.'}
                 </EmptyState>
               ) : (
-                <>
-                  <CourseGroup
-                    id="eligible"
-                    title="Eligible"
-                    status="ELIGIBLE"
-                    courses={eligible}
-                    emptyText="No offered course matches your record yet."
-                    open
-                  />
-                  <CourseGroup
-                    id="not-eligible"
-                    title="Not eligible"
-                    status="NOT_ELIGIBLE"
-                    courses={notEligible}
-                    emptyText="Nothing is out of reach: you can take every course shown."
-                  />
-                </>
+                <Tabs
+                  label="Eligibility"
+                  tabs={[
+                    {
+                      id: 'eligible',
+                      label: 'Eligible',
+                      meta: `(${eligible.length})`,
+                      panel: (
+                        <CourseGroup
+                          title="Eligible courses"
+                          courses={eligible}
+                          emptyText="No offered course matches your record yet."
+                        />
+                      ),
+                    },
+                    {
+                      id: 'not-eligible',
+                      label: 'Not eligible',
+                      meta: `(${notEligible.length})`,
+                      panel: (
+                        <CourseGroup
+                          title="Courses you are not eligible for"
+                          courses={notEligible}
+                          emptyText="Nothing is out of reach: you can take every course shown."
+                        />
+                      ),
+                    },
+                  ]}
+                />
               )}
             </section>
           </>
@@ -188,59 +218,87 @@ function departmentOptions(data: EligibilityOverview | undefined) {
     .map((department) => ({ value: department.code, label: department.name }));
 }
 
-interface CourseGroupProps {
-  id: string;
-  title: string;
-  status: 'ELIGIBLE' | 'NOT_ELIGIBLE';
-  courses: readonly CourseEligibility[];
-  emptyText: string;
-  /** Start expanded. "Not eligible" starts closed: it is usually the long one. */
-  open?: boolean;
+/** Every reason the check found, or the one word that says it found none. */
+function Verdict({ course }: { course: CourseEligibility }) {
+  if (course.eligible) {
+    return (
+      <span className={styles.verdictOk}>
+        <Icon icon={Check} />
+        Eligible
+      </span>
+    );
+  }
+  return (
+    <ul className={styles.reasons}>
+      {course.reasons.map((reason) => (
+        <li key={describeReason(reason)}>
+          <Icon icon={CircleSlash} className={styles.reasonIcon} />
+          <span>{describeReason(reason)}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
-/**
- * One collapsible group. A native <details> keeps the disclosure keyboard
- * accessible and searchable without any JavaScript.
- */
-function CourseGroup({ id, title, status, courses, emptyText, open }: CourseGroupProps) {
+const COLUMNS: readonly Column<CourseEligibility>[] = [
+  {
+    id: 'code',
+    header: 'Code',
+    key: 'code',
+    width: '7rem',
+    cell: (course) => <CourseCode code={course.code} size="sm" />,
+  },
+  { id: 'name', header: 'Course', key: 'name' },
+  { id: 'credits', header: 'Credits', key: 'credits', align: 'end', width: '5rem' },
+  {
+    id: 'department',
+    header: 'Department',
+    accessor: (course) => course.department.code,
+    width: '8rem',
+  },
+  {
+    id: 'verdict',
+    header: 'Reason / prerequisites',
+    // Sorted and filtered on the words the reader can actually see.
+    accessor: (course) =>
+      course.eligible ? 'Eligible' : course.reasons.map(describeReason).join('; '),
+    cell: (course) => <Verdict course={course} />,
+  },
+  {
+    id: 'action',
+    header: 'Action',
+    accessor: () => null,
+    align: 'end',
+    width: '5rem',
+    searchable: false,
+    cell: (course) => (
+      <Link to={detailPath(course.code)} className={styles.view}>
+        View<span className="visually-hidden"> {course.code}</span>
+      </Link>
+    ),
+  },
+];
+
+interface CourseGroupProps {
+  title: string;
+  courses: readonly CourseEligibility[];
+  emptyText: string;
+}
+
+/** One tab's courses, as a table. Its own filter is off: the page has one. */
+function CourseGroup({ title, courses, emptyText }: CourseGroupProps) {
   return (
-    <details className={styles.group} open={open} data-status={status}>
-      <summary className={styles.groupSummary}>
-        <StatusBadge kind="eligibility" status={status} />
-        <span className={styles.groupTitle}>
-          {title} · {courses.length}
-        </span>
-      </summary>
-      {courses.length === 0 ? (
-        <p className={styles.groupEmpty}>{emptyText}</p>
-      ) : (
-        <ul className={styles.courses} aria-label={`${title} courses`}>
-          {courses.map((course) => (
-            <li key={course.code} className={styles.course} id={`${id}-${course.code}`}>
-              <div className={styles.courseHead}>
-                <CourseCode code={course.code} size="sm" />
-                <Link to={detailPath(course.code)} className={styles.courseName}>
-                  {course.name}
-                </Link>
-                <span className={styles.courseMeta}>
-                  {course.credits} credits · {course.department.code}
-                </span>
-              </div>
-              {course.reasons.length > 0 && (
-                <ul className={styles.reasons}>
-                  {course.reasons.map((reason) => (
-                    <li key={describeReason(reason)}>
-                      <CircleSlash aria-hidden="true" className={styles.reasonIcon} />
-                      <span>{describeReason(reason)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </details>
+    <DataTable
+      caption={title}
+      captionHidden
+      rows={courses}
+      columns={COLUMNS}
+      getRowId={(course) => course.code}
+      filterable={false}
+      itemName={{ one: 'course', other: 'courses' }}
+      emptyTitle={title}
+      emptyMessage={emptyText}
+    />
   );
 }
 

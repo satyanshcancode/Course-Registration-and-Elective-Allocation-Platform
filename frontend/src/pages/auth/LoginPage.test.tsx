@@ -136,7 +136,8 @@ describe('LoginPage submission', () => {
   });
 
   it.each([
-    { user: studentUser, path: '/student/dashboard', heading: 'Dashboard' },
+    // The student dashboard greets by name; the admin one is titled.
+    { user: studentUser, path: '/student/dashboard', heading: /^Good (morning|afternoon|evening)/ },
     { user: adminUser, path: '/admin/dashboard', heading: 'Dashboard' },
   ])('sends a signed-in $user.role to $path', async ({ user: account, path, heading }) => {
     const user = userEvent.setup();
@@ -182,8 +183,8 @@ describe('leaving a session', () => {
     api.logout.mockResolvedValue(ok(null));
     const router = renderAt('/student/dashboard');
 
-    await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
-    expect(screen.getByText('Signed in as Aarav Sharma · CSE24901')).toBeInTheDocument();
+    await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ });
+    expect(screen.getByText('CSE24901')).toBeInTheDocument();
     // Sign out lives in the account menu in the header.
     await user.click(screen.getByRole('button', { name: /account/i }));
     await user.click(screen.getByRole('button', { name: 'Sign out' }));

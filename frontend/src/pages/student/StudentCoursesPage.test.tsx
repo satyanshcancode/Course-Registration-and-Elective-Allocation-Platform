@@ -56,7 +56,7 @@ describe('StudentCoursesPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Showing 1–3 of 3 courses' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 1, name: 'Course catalogue' })).toBeInTheDocument();
-    expect(screen.getByText('Fall 2026 · Registration')).toBeInTheDocument();
+    expect(screen.getByText(/Browse all courses offered in Fall 2026/)).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(3);
     expect(api.getCurrentWindow).toHaveBeenCalledTimes(1);
     expect(api.getCatalogue).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe('StudentCoursesPage', () => {
     expect(lastQuery()).toMatchObject({ credits: 4 });
 
     await user.selectOptions(screen.getByLabelText('Department'), 'ME');
-    await user.click(screen.getByLabelText('Only courses with seats left'));
+    await user.click(screen.getByRole('switch', { name: 'Only courses with seats left' }));
     await user.selectOptions(screen.getByLabelText('Sort by'), 'demandRatio');
 
     const params = new URLSearchParams(router.state.location.search);
@@ -99,7 +99,10 @@ describe('StudentCoursesPage', () => {
     await screen.findAllByRole('article');
     const calls = api.getCatalogue.mock.calls.length;
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'secu');
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search by course code, name or keyword' }),
+      'secu',
+    );
     // Still typing: nothing sent, URL unchanged.
     expect(router.state.location.search).toBe('');
     expect(api.getCatalogue).toHaveBeenCalledTimes(calls);
@@ -145,7 +148,7 @@ describe('StudentCoursesPage', () => {
     const card = (await screen.findByRole('link', { name: 'Artificial Intelligence' })).closest(
       'article',
     )!;
-    expect(card).toHaveTextContent('0 of 20 allocated · 20 left');
+    expect(card).toHaveTextContent('0 of 20 seats · 20 left');
     await waitFor(() => {
       expect(screen.getByText(/Seats updated/)).toBeInTheDocument();
     });
@@ -154,7 +157,7 @@ describe('StudentCoursesPage', () => {
       await vi.advanceTimersByTimeAsync(SEAT_POLL_INTERVAL_MS);
     });
 
-    expect(card).toHaveTextContent('6 of 20 allocated · 14 left');
+    expect(card).toHaveTextContent('6 of 20 seats · 14 left');
     // Highlighted for a moment, then back to normal.
     expect(card.querySelector('[data-changed="true"]')).not.toBeNull();
     expect(api.getSeats).toHaveBeenLastCalledWith('"v1"', expect.any(AbortSignal));

@@ -1,4 +1,4 @@
-import { Check, Minus, Plus } from 'lucide-react';
+import { Ban, Check, Minus, ShoppingCart } from 'lucide-react';
 import { CART_ACTIONS, type CartAction as CartActionState } from '../../utils/cartActions';
 import { Icon } from '../Icon';
 import styles from './CartAction.module.css';
@@ -36,7 +36,7 @@ export function CartAction({ action, code, name, compact = false }: CartActionPr
           data-action={CART_ACTIONS.add}
           data-course-code={code}
         >
-          <Icon icon={Plus} />
+          <Icon icon={ShoppingCart} />
           <span>Add to cart</span>
           <span className="visually-hidden">: {name}</span>
         </button>
@@ -71,10 +71,17 @@ export function CartAction({ action, code, name, compact = false }: CartActionPr
       );
 
     case 'ineligible':
-      // The reason itself is already on screen beside this control (the
-      // eligibility badge on a card or a row, the checklist on the detail
-      // page), so repeating it here would say the same thing twice.
-      return <p className={styles.note}>Not eligible: this course can’t be ranked.</p>;
+      // A disabled button rather than a sentence: it holds the place the Add
+      // button would take, so a row of cards does not go ragged. The reason is
+      // already on screen beside it (the eligibility line on a card or a row,
+      // the checklist on the course page), so it is not repeated here.
+      return (
+        <button type="button" className={styles.button} data-variant="ineligible" disabled>
+          <Icon icon={Ban} />
+          <span>Not eligible</span>
+          <span className="visually-hidden">: {name} can’t be ranked</span>
+        </button>
+      );
 
     case 'locked':
       return <p className={styles.note}>{action.reason}</p>;

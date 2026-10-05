@@ -11,7 +11,6 @@ import { LiveSeatsIndicator } from '../../components/LiveSeatsIndicator';
 import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { Skeleton } from '../../components/Skeleton';
-import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { useToast } from '../../components/Toast';
 import { useCart } from '../../hooks/useCart';
 import { CATALOGUE_PAGE, useCatalogue, type CatalogueData } from '../../hooks/useCatalogue';
@@ -33,8 +32,8 @@ export interface CatalogueLinkState {
 }
 
 const VIEWS: readonly { id: CatalogueView; label: string; icon: LucideIcon }[] = [
-  { id: 'cards', label: 'Cards', icon: LayoutGrid },
-  { id: 'table', label: 'Table', icon: Table2 },
+  { id: 'cards', label: 'Card view', icon: LayoutGrid },
+  { id: 'table', label: 'Table view', icon: Table2 },
 ];
 
 export function detailPath(code: string): string {
@@ -118,16 +117,16 @@ export function StudentCoursesPage() {
 
   return (
     <>
+      {/* No window line here: the sidebar card carries the name, the status
+          and the countdown on every page of the student area. What this page
+          owns is whether its seat numbers are still live. */}
       <PageHeader
         title="Course catalogue"
-        kicker={data?.window ? `${data.window.name} · Registration` : 'Registration'}
-        description="Every course offered this term, with live seat counts, demand and whether you can take it."
-      >
-        <div className={styles.statusLine}>
-          <RegistrationStatusBanner />
-          <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
-        </div>
-      </PageHeader>
+        description={`Browse all courses offered${
+          data?.window ? ` in ${data.window.name}` : ''
+        }. Check live seat counts, demand and eligibility.`}
+        actions={<LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />}
+      />
 
       <div className={styles.body}>
         <CatalogueFilterForm

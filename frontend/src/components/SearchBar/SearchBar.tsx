@@ -69,6 +69,9 @@ export function SearchBar({
   return (
     <form
       role="search"
+      // A page can hold more than one of these (two tables, say), and two
+      // unnamed `search` landmarks are ambiguous — axe's landmark-unique.
+      aria-label={label}
       className={styles.search}
       onSubmit={(event) => {
         event.preventDefault();

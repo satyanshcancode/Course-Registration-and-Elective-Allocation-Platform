@@ -14,7 +14,7 @@ function renderCard(course = makeCourse()) {
 }
 
 describe('CourseCard', () => {
-  it('shows seats, demand, eligibility and status as text, not colour alone', async () => {
+  it('shows seats, demand and status as text, not colour alone', async () => {
     const { container } = renderCard(
       makeCourse({ capacity: 50, allocated: 37, available: 13, demand: 82, demandRatio: 1.64 }),
     );
@@ -25,42 +25,46 @@ describe('CourseCard', () => {
       '/student/courses/CS401',
     );
     expect(card).toHaveTextContent('CS401');
-    expect(card).toHaveTextContent('4 credits');
-    expect(card).toHaveTextContent('37 of 50 allocated · 13 left');
+    expect(card).toHaveTextContent('CSE · 4 credits');
+    expect(card).toHaveTextContent('37 of 50 seats · 13 left');
     expect(screen.getByRole('meter', { name: 'Seats in Artificial Intelligence' })).toHaveAttribute(
       'aria-valuetext',
       '37 of 50 allocated, 13 left',
     );
     expect(card).toHaveTextContent('82 requests · 1.6×');
-    expect(card).toHaveTextContent('Oversubscribed');
-    expect(card).toHaveTextContent('Eligible');
+    // The student already has a place in this course, so the chip says THAT
+    // rather than repeating that they are eligible for it.
     expect(card).toHaveTextContent('Your status: Choice 1 · submitted');
-    expect(card).toHaveTextContent('CS201');
+    expect(card).not.toHaveTextContent('Eligible');
     await expectNoA11yViolations(container);
   });
 
   it('gives the first reason a student is not eligible', () => {
     renderCard(catalogueCourses[1]);
     const card = screen.getByRole('article');
+    // Nothing has happened with this course yet, so the chip answers the
+    // question the student came with.
     expect(card).toHaveTextContent('Not eligible');
     expect(card).toHaveTextContent('Needs semester 7, you’re in semester 6');
-    expect(card).toHaveTextContent('Not selected');
-    // 71 requests for 30 seats.
-    expect(card).toHaveTextContent('Oversubscribed');
   });
 
-  it('shows a waitlist place and no prerequisites plainly', () => {
+  it('shows a waitlist place plainly', () => {
     renderCard(catalogueCourses[2]);
     const card = screen.getByRole('article');
     expect(card).toHaveTextContent('Waitlisted · #7');
-    expect(card).toHaveTextContent('PrerequisitesNone');
-    expect(card).toHaveTextContent('38 of 40 allocated · 2 left');
-    expect(card).not.toHaveTextContent('Oversubscribed');
+    expect(card).toHaveTextContent('38 of 40 seats · 2 left');
   });
 
   it('leaves out personal fields when there are none (admin view)', () => {
     renderCard(makeCourse({ personal: null }));
-    expect(screen.queryByText('Eligibility')).not.toBeInTheDocument();
+    expect(screen.queryByText('Eligible')).not.toBeInTheDocument();
     expect(screen.queryByText(/Your status/)).not.toBeInTheDocument();
+  });
+
+  it('offers View details and the cart action side by side', () => {
+    renderCard();
+    expect(
+      screen.getByRole('link', { name: 'View details for Artificial Intelligence' }),
+    ).toBeInTheDocument();
   });
 });

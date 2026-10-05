@@ -56,6 +56,7 @@ export function GlobalSearch({ to, label = 'Search courses' }: GlobalSearchProps
     <form
       className={styles.form}
       role="search"
+      aria-label={label}
       onSubmit={(event) => {
         event.preventDefault();
         const search = value.trim();
