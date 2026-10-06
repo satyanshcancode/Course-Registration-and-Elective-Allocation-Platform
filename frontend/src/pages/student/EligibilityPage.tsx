@@ -307,6 +307,7 @@ function CourseGroup({ title, courses, emptyText }: CourseGroupProps) {
     <DataTable
       caption={title}
       captionHidden
+      bare
       rows={courses}
       columns={COLUMNS}
       getRowId={(course) => course.code}

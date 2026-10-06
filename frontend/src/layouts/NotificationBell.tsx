@@ -54,9 +54,12 @@ export function NotificationBell({ to }: { to: string }) {
       .then((response) => {
         if (response.success) {
           notifications?.setUnread(response.data.unread);
-          setItems((current) =>
-            current?.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() })) ??
-            null,
+          setItems(
+            (current) =>
+              current?.map((item) => ({
+                ...item,
+                readAt: item.readAt ?? new Date().toISOString(),
+              })) ?? null,
           );
         }
       })

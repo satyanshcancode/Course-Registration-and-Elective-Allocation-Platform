@@ -5,7 +5,7 @@
  */
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
@@ -14,24 +14,22 @@
   gap: var(--space-3);
 }
 
-.lead {
-  max-width: 68ch;
-  margin-bottom: var(--space-4);
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  line-height: var(--leading-body);
+/* The explanation, then the queues it explains. */
+.stack {
+  display: grid;
+  gap: var(--space-5);
 }
 
 .list {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item + .item {
-  padding-top: var(--space-4);
+  padding-top: var(--space-5);
   border-top: var(--border-hairline);
 }
 
@@ -48,13 +46,56 @@
   gap: var(--space-2);
 }
 
+/* A card heading, so the sans: the serif is for the page's own titles. */
 .rowTitle {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
+  font-weight: var(--weight-heading);
   line-height: var(--leading-snug);
+}
+
+/* ---- Place in line --------------------------------------------------------- */
+/* The same pill as the seat meter: an 8px track with a fill on it. */
+.position {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ahead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-base);
+}
+
+.place {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-track);
+  overflow: hidden;
+}
+
+/* The student at the back of a long queue still sees a dot, not nothing. */
+.fill {
+  display: block;
+  min-inline-size: 8px;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  transition: inline-size var(--duration-base) var(--ease-standard);
 }
 
 .queue {

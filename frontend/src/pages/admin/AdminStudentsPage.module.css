@@ -1,6 +1,6 @@
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
@@ -31,7 +31,15 @@
   }
 }
 
+/* The roll number is the row's one link, set like the eligibility table's
+   "View": semibold and underlined only when pointed at. */
 .rollLink {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.rollLink:hover {
+  text-decoration: underline;
 }

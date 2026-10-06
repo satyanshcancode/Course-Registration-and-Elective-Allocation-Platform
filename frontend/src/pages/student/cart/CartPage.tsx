@@ -243,12 +243,18 @@ export function CartPage() {
               titleIcon={CalendarDays}
               bodyFlush
               footer={
-                empty ? undefined : (
+                // An emptied cart still has to say it is unsaved: removing
+                // the last course is exactly when that matters.
+                empty && !dirty ? undefined : (
                   <p className={styles.totals} data-dirty={dirty ? 'true' : undefined}>
-                    <span>
-                      {items.length} of {MAX_PREFERENCES} courses ranked
-                    </span>
-                    <span>{totalCredits} credits</span>
+                    {!empty && (
+                      <>
+                        <span>
+                          {items.length} of {MAX_PREFERENCES} courses ranked
+                        </span>
+                        <span>{totalCredits} credits</span>
+                      </>
+                    )}
                     <span>{dirty ? 'You have unsaved changes.' : 'Everything is saved.'}</span>
                   </p>
                 )

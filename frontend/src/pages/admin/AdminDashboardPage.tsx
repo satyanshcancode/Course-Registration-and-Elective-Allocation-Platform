@@ -28,11 +28,12 @@ import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
 import { StatTile } from '../../components/StatTile';
 import { StatusBadge } from '../../components/StatusBadge';
+import { WindowCard } from '../../components/WindowCard';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useServerClock } from '../../hooks/useServerClock';
 import { formatRate } from '../../utils/allocationText';
 import { describeRequests } from '../../utils/courseText';
-import { formatDateTime } from '../../utils/formatDate';
 import { formatDemandRatio } from '../../utils/formatSeats';
 import styles from './AdminDashboardPage.module.css';
 
@@ -42,6 +43,8 @@ interface AdminDashboardData {
   detail: AdminWindowDetail;
   courses: AdminCourseList;
   runs: AllocationRunSummary[];
+  /** Server clock minus device clock, measured when the response arrived. */
+  clockOffsetMs: number;
 }
 
 const columns: Column<AdminCourseOffering>[] = [
@@ -73,10 +76,17 @@ export function AdminDashboardPage() {
       getAdminCourses(signal),
       getAllocationRuns(signal),
     ]);
-    return { detail: unwrap(detail), courses: unwrap(courses), runs: unwrap(runs) };
+    const loaded = unwrap(detail);
+    return {
+      detail: loaded,
+      courses: unwrap(courses),
+      runs: unwrap(runs),
+      clockOffsetMs: Date.parse(loaded.serverTime) - Date.now(),
+    };
   });
 
   const data = state.status === 'success' ? state.data : undefined;
+  const clock = useServerClock(data?.clockOffsetMs ?? 0, data !== undefined);
   const topCourses = [...(data?.courses.items ?? [])]
     .sort((a, b) => b.demand - a.demand || a.code.localeCompare(b.code))
     .slice(0, TOP_COURSES);
@@ -94,21 +104,16 @@ export function AdminDashboardPage() {
         title="Dashboard"
         description="The registration window, demand and what still needs a decision."
         actions={
-          <LinkButton to="/admin/registration-window" variant="primary" iconStart={CalendarClock}>
-            Registration window
-          </LinkButton>
+          <div className={styles.headerActions}>
+            {data?.detail.window && (
+              <WindowCard window={data.detail.window} clock={clock} variant="name" />
+            )}
+            <LinkButton to="/admin/registration-window" variant="primary" iconStart={CalendarClock}>
+              Registration window
+            </LinkButton>
+          </div>
         }
-      >
-        {data?.detail.window && (
-          <p className={styles.status}>
-            <StatusBadge kind="window" status={data.detail.window.status} />
-            <span>
-              {data.detail.window.name} · opens {formatDateTime(data.detail.window.startsAt)} ·
-              closes {formatDateTime(data.detail.window.endsAt)}
-            </span>
-          </p>
-        )}
-      </PageHeader>
+      />
 
       <div className={styles.page}>
         {state.status === 'error' && (
@@ -134,7 +139,7 @@ export function AdminDashboardPage() {
               <StatTile
                 icon={Users}
                 tone="success"
-                value={`${data.detail.counts.eligibleStudents} / ${data.detail.counts.totalStudents}`}
+                value={`${data.detail.counts.eligibleStudents}/${data.detail.counts.totalStudents}`}
                 label="Students eligible for a course"
                 to="/admin/students"
                 linkLabel="View students"
@@ -150,7 +155,7 @@ export function AdminDashboardPage() {
               <StatTile
                 icon={Gauge}
                 tone="warning"
-                value={`${seats.held} / ${seats.capacity}`}
+                value={`${seats.held}/${seats.capacity}`}
                 label="Seats held"
                 to="/admin/courses"
                 linkLabel="View seats"
@@ -162,7 +167,7 @@ export function AdminDashboardPage() {
             </section>
 
             <div className={styles.row}>
-              <Card title="Most demanded courses" titleIcon={ScrollText} headingLevel={2}>
+              <Card title="Most demanded courses" titleIcon={ScrollText} headingLevel={2} bodyFlush>
                 <DataTable
                   caption="The five courses with the most submitted requests"
                   captionHidden
@@ -170,6 +175,7 @@ export function AdminDashboardPage() {
                   columns={columns}
                   filterable={false}
                   paginated={false}
+                  bare
                   getRowId={(course) => course.code}
                   emptyMessage="No requests have been submitted yet."
                 />
@@ -241,21 +247,21 @@ function AllocationSummary({ runs }: { runs: readonly AllocationRunSummary[] }) 
         </div>
         <div>
           <dt>Students placed</dt>
-          <dd className={styles.mono}>
+          <dd className={styles.figure}>
             {metrics.allocated} of {metrics.students}
           </dd>
         </div>
         <div>
           <dt>Got their first choice</dt>
-          <dd className={styles.mono}>{formatRate(metrics.firstChoiceRate)}</dd>
+          <dd className={styles.figure}>{formatRate(metrics.firstChoiceRate)}</dd>
         </div>
         <div>
           <dt>Waitlist entries</dt>
-          <dd className={styles.mono}>{metrics.waitlistEntries}</dd>
+          <dd className={styles.figure}>{metrics.waitlistEntries}</dd>
         </div>
         <div>
           <dt>Justified envy</dt>
-          <dd className={styles.mono}>{metrics.justifiedEnvy}</dd>
+          <dd className={styles.figure}>{metrics.justifiedEnvy}</dd>
         </div>
       </dl>
     </Card>

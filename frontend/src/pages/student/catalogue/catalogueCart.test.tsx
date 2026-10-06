@@ -134,9 +134,10 @@ describe('adding to the cart from the catalogue', () => {
     expect(card.queryByRole('button', { name: /Add to cart/ })).not.toBeInTheDocument();
     // A disabled button holds the Add button's place, so a row of cards keeps
     // its shape; the chip beside the code says the same thing in a word, and
-    // the course page carries the reason.
+    // the course page carries the reason. Both are on the card, which is why
+    // the text appears twice.
     expect(card.getByRole('button', { name: /Not eligible/ })).toBeDisabled();
-    expect(card.getByText('Not eligible', { selector: 'span' })).toBeVisible();
+    expect(card.getAllByText('Not eligible')).toHaveLength(2);
   });
 
   it('says the cart is full once five courses are ranked', async () => {

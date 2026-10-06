@@ -39,6 +39,9 @@ describe('RegistrationWindowPage', () => {
     expect(counts).toHaveTextContent(/Students eligible for at least one\s*118 of 300/);
     expect(counts).toHaveTextContent(/Submissions so far\s*0/);
     expect(screen.getByRole('button', { name: 'Open registration' })).toBeInTheDocument();
+    // The status line is the window card beside the primary button.
+    expect(screen.getAllByText('Fall 2026').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Opens in|Closes in|Registration (opens|closed)/)).toBeInTheDocument();
   });
 
   it('shows the preference and priority fields for the scoring method', async () => {

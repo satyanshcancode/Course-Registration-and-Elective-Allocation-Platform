@@ -318,7 +318,9 @@ export function summariseHistoryEvent(event: HistoryEvent): HistorySummary {
     case 'ALLOCATED': {
       const parts = [
         detail.rank === null ? null : `${ordinal(detail.rank)} choice`,
-        detail.finalRank === null ? null : `ranked ${ordinal(detail.finalRank)} among its applicants`,
+        detail.finalRank === null
+          ? null
+          : `ranked ${ordinal(detail.finalRank)} among its applicants`,
       ].filter((part): part is string => part !== null);
       return { headline: `Allocated ${course}`, detail: sentence(parts) };
     }
@@ -435,7 +437,9 @@ function capitalise(value: string): string {
  * The tint behind an event's icon. Decorative, like the icon itself: every
  * row prints what happened in words beside it.
  */
-export function historyEventTone(type: HistoryEventType): 'success' | 'warning' | 'danger' | 'accent' {
+export function historyEventTone(
+  type: HistoryEventType,
+): 'success' | 'warning' | 'danger' | 'accent' {
   switch (type) {
     case 'ALLOCATED':
     case 'PROMOTED':

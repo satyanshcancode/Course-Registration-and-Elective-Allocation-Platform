@@ -50,6 +50,44 @@ describe('WaitlistPage', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('says how many students are ahead, with a bar and the numbers beside it', async () => {
+    renderWaitlist();
+    await screen.findByRole('heading', { name: 'Waiting for a seat' });
+
+    const card = cardFor('CS401');
+    expect(card.getByText('2 students ahead of you')).toBeVisible();
+    expect(card.getByText('Position 3 of 18')).toBeVisible();
+    const meter = card.getByRole('meter', { name: 'Your place in the CS401 queue' });
+    expect(meter).toHaveAttribute('aria-valuemin', '0');
+    expect(meter).toHaveAttribute('aria-valuemax', '18');
+    expect(meter).toHaveAttribute('aria-valuenow', '16');
+    expect(meter).toHaveAttribute('aria-valuetext', 'Position 3 of 18, 2 students ahead of you');
+  });
+
+  it('says the student is next, with a full bar, at the front of the queue', async () => {
+    api.getMyWaitlist.mockResolvedValue(
+      ok({ ...studentWaitlist, waiting: [waitlistEntry({ position: 1 })] }),
+    );
+    renderWaitlist();
+    await screen.findByRole('heading', { name: 'Waiting for a seat' });
+
+    const card = cardFor('CS401');
+    expect(card.getByText('You’re next')).toBeVisible();
+    expect(card.getByRole('meter', { name: /queue/ })).toHaveAttribute('aria-valuenow', '18');
+  });
+
+  it('prints the position alone, and no bar, when the queue length does not cover it', async () => {
+    api.getMyWaitlist.mockResolvedValue(
+      ok({ ...studentWaitlist, waiting: [waitlistEntry({ position: 3, waiting: 0 })] }),
+    );
+    renderWaitlist();
+    await screen.findByRole('heading', { name: 'Waiting for a seat' });
+
+    const card = cardFor('CS401');
+    expect(card.getByText('Position 3')).toBeVisible();
+    expect(card.queryByRole('meter', { name: /queue/ })).not.toBeInTheDocument();
+  });
+
   it('explains that a promotion is always an upgrade, naming the seat held', async () => {
     renderWaitlist();
 

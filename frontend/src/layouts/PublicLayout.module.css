@@ -5,6 +5,23 @@
   min-height: 100dvh;
 }
 
+/*
+ * Each child names its own row. Without that, hiding the header lets the main
+ * element fall into the header's fixed track and the footer take the 1fr one,
+ * which is how the sign-in page ended up two thirds of a screen tall.
+ */
+.header {
+  grid-row: 1;
+}
+
+.main {
+  grid-row: 2;
+}
+
+.footer {
+  grid-row: 3;
+}
+
 .skipLink {
   position: fixed;
   top: var(--space-2);
@@ -29,6 +46,21 @@
   background-color: var(--color-surface);
 }
 
+/*
+ * The sign-in page's green panel carries its own wordmark, so this one would
+ * be the second on the same screen — but only where that panel is drawn. Below
+ * 64rem the panel is gone and this header is the only wordmark there is.
+ */
+@media (width >= 64rem) {
+  .header[data-bleed] {
+    display: none;
+  }
+
+  .shell[data-bleed] {
+    grid-template-rows: 0 1fr auto;
+  }
+}
+
 .headerInner {
   display: flex;
   align-items: center;
@@ -43,6 +75,13 @@
   max-width: var(--layout-max-width);
   margin-inline: auto;
   padding: var(--space-6) var(--space-4) var(--space-7);
+}
+
+/* Sign-in: no gutter or top padding, and the page inside stretches to fill. */
+.main[data-bleed] {
+  display: grid;
+  max-width: none;
+  padding: 0;
 }
 
 .main:focus {

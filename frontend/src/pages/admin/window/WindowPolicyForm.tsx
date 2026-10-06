@@ -5,6 +5,7 @@ import { updateRegistrationWindow } from '../../../api/adminApi';
 import { Button } from '../../../components/Button';
 import { FormField } from '../../../components/FormField';
 import { Input } from '../../../components/Input';
+import { Notice } from '../../../components/Notice';
 import { RadioGroup } from '../../../components/RadioGroup';
 import { Textarea } from '../../../components/Textarea';
 import {
@@ -212,9 +213,9 @@ export function WindowPolicyForm({ detail, onSaved }: WindowPolicyFormProps) {
       </FormField>
 
       {errors.form && (
-        <p className={styles.formError} role="alert">
+        <Notice tone="danger" live>
           {errors.form}
-        </p>
+        </Notice>
       )}
 
       <div className={styles.actions}>

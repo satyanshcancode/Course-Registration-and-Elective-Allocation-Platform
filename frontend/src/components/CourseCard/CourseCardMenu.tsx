@@ -29,9 +29,9 @@ export function CourseCardMenu({ code, name, to, linkState, cartAction }: Course
   const [copied, setCopied] = useState(false);
 
   const copyCode = () => {
-    // Older browsers and jsdom have no clipboard; the menu simply does not
-    // claim to have copied anything.
-    void navigator.clipboard?.writeText(code).then(
+    // Older browsers and jsdom reject or throw here; the menu then simply does
+    // not claim to have copied anything.
+    void Promise.resolve(navigator.clipboard.writeText(code)).then(
       () => {
         setCopied(true);
       },

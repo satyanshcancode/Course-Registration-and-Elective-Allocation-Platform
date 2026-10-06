@@ -28,8 +28,6 @@
 
 .error {
   margin: 0 0 var(--space-2);
-  color: var(--color-danger);
-  font-size: var(--text-sm);
 }
 
 .list {

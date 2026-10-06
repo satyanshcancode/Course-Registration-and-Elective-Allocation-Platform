@@ -27,7 +27,13 @@ export interface CoursePhotoProps {
 export function CoursePhoto({ code, height = 'card', children }: CoursePhotoProps) {
   return (
     <div className={styles.band} data-height={height}>
-      <img className={styles.image} src={photoUrlFor(code)} alt="" loading="lazy" decoding="async" />
+      <img
+        className={styles.image}
+        src={photoUrlFor(code)}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
       {children}
     </div>
   );

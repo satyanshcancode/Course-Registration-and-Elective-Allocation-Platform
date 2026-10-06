@@ -38,6 +38,15 @@
   overscroll-behavior-inline: contain;
 }
 
+/* Inside a flush card, which already draws the border, the radius and the
+   shadow. The scroll region and its sticky header stay. */
+.scroll[data-bare] {
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 /* As wide as its content needs (never narrower than the container), so on
    phones the region scrolls instead of crushing columns into tall rows. */
 .grid {

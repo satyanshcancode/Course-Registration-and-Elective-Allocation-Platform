@@ -10,13 +10,15 @@ import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Icon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
-import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
+import { WindowCard } from '../../components/WindowCard';
 import { getMyAllocationResults } from '../../api/allocationApi';
 import { unwrap } from '../../api/unwrap';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useRegistrationWindow } from '../../hooks/useRegistrationWindow';
+import { useServerClock } from '../../hooks/useServerClock';
 import { describeOutcome, describeScore, explainResult } from '../../utils/allocationText';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import styles from './ResultsPage.module.css';
@@ -26,15 +28,23 @@ export function ResultsPage() {
   const { state, retry } = useAsync(async (signal) => unwrap(await getMyAllocationResults(signal)));
 
   const data = state.status === 'success' ? state.data : undefined;
+  // The window the student area already loaded, so the card costs no request.
+  const registration = useRegistrationWindow();
+  const windowState = registration?.state;
+  const windowData = windowState?.status === 'success' ? windowState.data : undefined;
+  const clock = useServerClock(windowData?.clockOffsetMs ?? 0, windowData !== undefined);
 
   return (
     <>
       <PageHeader
         title="Allocation results"
         description="Which course you were allocated, and exactly why."
-      >
-        <RegistrationStatusBanner />
-      </PageHeader>
+        actions={
+          windowData?.window ? (
+            <WindowCard window={windowData.window} clock={clock} variant="name" />
+          ) : undefined
+        }
+      />
 
       <div className={styles.body}>
         {state.status === 'error' && (

@@ -1,6 +1,6 @@
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
@@ -32,7 +32,7 @@
 
 .email {
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
 .actions {
@@ -44,12 +44,6 @@
 .form {
   display: grid;
   gap: var(--space-4);
-}
-
-.formNote {
-  max-width: 54ch;
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
 }
 
 .formActions {

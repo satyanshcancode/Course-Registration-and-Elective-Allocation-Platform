@@ -35,16 +35,19 @@ import { EmptyState } from '../../../components/EmptyState';
 import { ErrorMessage } from '../../../components/ErrorMessage';
 import { Icon } from '../../../components/Icon';
 import { LiveSeatsIndicator } from '../../../components/LiveSeatsIndicator';
+import { Notice } from '../../../components/Notice';
 import { PageHeader } from '../../../components/PageHeader';
-import { RegistrationStatusBanner } from '../../../components/RegistrationStatusBanner';
 import { SearchBar } from '../../../components/SearchBar';
 import { SeatMeter } from '../../../components/SeatMeter';
 import { Skeleton } from '../../../components/Skeleton';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { useToast } from '../../../components/Toast';
+import { WindowCard } from '../../../components/WindowCard';
 import { useAsync } from '../../../hooks/useAsync';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { useLiveSeats } from '../../../hooks/useLiveSeats';
+import { useRegistrationWindow } from '../../../hooks/useRegistrationWindow';
+import { useServerClock } from '../../../hooks/useServerClock';
 import {
   describeHeldSeat,
   describeOutcome,
@@ -103,6 +106,11 @@ export function AddDropPage() {
 
   const live = useLiveSeats({ enabled: view?.period.open === true });
   const seats = view ? seatsNewerThan(live.snapshot, live.seats, view.serverTime) : null;
+  // The window the student area already loaded, so the card costs no request.
+  const registration = useRegistrationWindow();
+  const windowState = registration?.state;
+  const windowData = windowState?.status === 'success' ? windowState.data : undefined;
+  const clock = useServerClock(windowData?.clockOffsetMs ?? 0, windowData !== undefined);
 
   /**
    * Runs one action and folds the answer back into the page. Every reply
@@ -225,13 +233,16 @@ export function AddDropPage() {
         title="Add or drop a course"
         description="Change your enrolment while the add/drop period is open."
         actions={
-          view?.period.open ? (
-            <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
-          ) : undefined
+          <>
+            {view?.period.open && (
+              <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
+            )}
+            {windowData?.window && (
+              <WindowCard window={windowData.window} clock={clock} variant="name" />
+            )}
+          </>
         }
-      >
-        <RegistrationStatusBanner />
-      </PageHeader>
+      />
 
       <div className={styles.body}>
         {/* Announcements only; the numbers themselves are not a live region. */}
@@ -260,15 +271,12 @@ export function AddDropPage() {
                 it closes; repeating it here would be noise. Outside it, this is
                 the only place the dates appear. */}
             {!view.period.open && (
-              <p className={styles.period}>
-                <Icon icon={Lock} size={16} />
-                <span>
-                  {describePeriod(view.period)}{' '}
-                  {view.period.closedReason
-                    ? `${view.period.closedReason} You can see your enrolment below, but nothing can be changed.`
-                    : ''}
-                </span>
-              </p>
+              <Notice icon={Lock}>
+                {describePeriod(view.period)}{' '}
+                {view.period.closedReason
+                  ? `${view.period.closedReason} You can see your enrolment below, but nothing can be changed.`
+                  : ''}
+              </Notice>
             )}
 
             {seatTaken && (
@@ -294,9 +302,9 @@ export function AddDropPage() {
             )}
 
             {unreachable && (
-              <p className={styles.retryNote} role="alert">
+              <Notice tone="warning" live>
                 We couldn’t confirm your change. Trying again is safe: it won’t move a second seat.
-              </p>
+              </Notice>
             )}
 
             <HeldSeat
@@ -455,10 +463,12 @@ export function AddDropPage() {
                 />
               )}
               {unreachable && (
-                <p className={styles.retryNote}>
-                  We couldn’t confirm the drop. Trying again is safe: it won’t release a second
-                  seat.
-                </p>
+                <div className={styles.dialogNote}>
+                  <Notice tone="warning">
+                    We couldn’t confirm the drop. Trying again is safe: it won’t release a second
+                    seat.
+                  </Notice>
+                </div>
               )}
             </>
           ) : null

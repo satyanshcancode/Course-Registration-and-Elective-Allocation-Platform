@@ -5,6 +5,7 @@ import { setAddDropPeriod } from '../../../api/addDropApi';
 import { Button } from '../../../components/Button';
 import { FormField } from '../../../components/FormField';
 import { Input } from '../../../components/Input';
+import { Notice } from '../../../components/Notice';
 import { Textarea } from '../../../components/Textarea';
 import { fromDateTimeLocal, toDateTimeLocal } from '../../../utils/windowForm';
 import styles from './AddDropPeriodForm.module.css';
@@ -137,9 +138,9 @@ export function AddDropPeriodForm({ detail, onSaved }: AddDropPeriodFormProps) {
       </FormField>
 
       {errors.form && (
-        <p className={styles.error} role="alert">
+        <Notice tone="danger" live>
           {errors.form}
-        </p>
+        </Notice>
       )}
 
       <div className={styles.actions}>

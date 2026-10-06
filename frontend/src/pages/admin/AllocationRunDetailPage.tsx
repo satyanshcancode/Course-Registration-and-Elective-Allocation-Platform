@@ -4,7 +4,15 @@ import type {
   AllocationVerification,
   CourseAllocationMetric,
 } from '@course-reg/shared';
-import { ArrowLeft, CircleCheck, Gauge, Info, ShieldCheck, TrendingUp } from 'lucide-react';
+import {
+  ArrowLeft,
+  CircleCheck,
+  Gauge,
+  Info,
+  ListOrdered,
+  ShieldCheck,
+  TrendingUp,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { getAllocationRun, verifyAllocationRun } from '../../api/allocationApi';
@@ -18,6 +26,7 @@ import type { Column } from '../../components/DataTable/tableLogic';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Icon } from '../../components/Icon';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -172,27 +181,16 @@ function MetricsPanel({ metrics }: { metrics: AllocationMetrics }) {
   return (
     <Card title="Outcome" titleIcon={Gauge} headingLevel={2}>
       <div className={styles.metrics}>
-        <div className={styles.rates}>
-          <Rate
-            label="Got their first choice"
-            value={metrics.firstChoiceRate}
-            note={`${metrics.allocated} of ${metrics.students} students were allocated something.`}
-          />
-          <Rate label="Got one of their top three" value={metrics.topThreeRate} />
-          <Rate
-            label="Seats filled"
-            value={metrics.seatUtilisation}
-            note={`${metrics.seatsFilled} of ${metrics.seatsOffered} offered seats.`}
-          />
-        </div>
         <dl className={styles.facts}>
           <div>
-            <dt>Average rank allocated</dt>
-            <dd>{formatAverageRank(metrics.averageAllocatedRank)}</dd>
+            <dt>Students placed</dt>
+            <dd>
+              {metrics.allocated} of {metrics.students}
+            </dd>
           </div>
           <div>
-            <dt>Students with nothing</dt>
-            <dd>{metrics.unallocated}</dd>
+            <dt>First-choice rate</dt>
+            <dd>{formatRate(metrics.firstChoiceRate)}</dd>
           </div>
           <div>
             <dt>Waitlist entries</dt>
@@ -203,10 +201,27 @@ function MetricsPanel({ metrics }: { metrics: AllocationMetrics }) {
             <dd>{metrics.justifiedEnvy}</dd>
           </div>
           <div>
+            <dt>Average rank allocated</dt>
+            <dd>{formatAverageRank(metrics.averageAllocatedRank)}</dd>
+          </div>
+          <div>
+            <dt>Students with nothing</dt>
+            <dd>{metrics.unallocated}</dd>
+          </div>
+          <div>
             <dt>Time to compute</dt>
             <dd>{metrics.runtimeMs} ms</dd>
           </div>
         </dl>
+        <div className={styles.rates}>
+          <Rate label="Got their first choice" value={metrics.firstChoiceRate} />
+          <Rate label="Got one of their top three" value={metrics.topThreeRate} />
+          <Rate
+            label="Seats filled"
+            value={metrics.seatUtilisation}
+            note={`${metrics.seatsFilled} of ${metrics.seatsOffered} offered seats.`}
+          />
+        </div>
       </div>
     </Card>
   );
@@ -250,13 +265,11 @@ const courseColumns: Column<CourseAllocationMetric>[] = [
 
 function CourseTable({ courses }: { courses: readonly CourseAllocationMetric[] }) {
   return (
-    <section aria-labelledby="courses-heading" className={styles.runs}>
-      <h2 id="courses-heading" className={styles.heading}>
-        Per course
-      </h2>
+    <Card title="Per course" titleIcon={ListOrdered} headingLevel={2} bodyFlush>
       <DataTable
         caption="How each course fared in this run"
         captionHidden
+        bare
         rows={[...courses]}
         columns={courseColumns}
         getRowId={(course) => course.course.code}
@@ -264,7 +277,7 @@ function CourseTable({ courses }: { courses: readonly CourseAllocationMetric[] }
         paginated={false}
         itemName={{ one: 'course', other: 'courses' }}
       />
-    </section>
+    </Card>
   );
 }
 
@@ -298,7 +311,11 @@ function VerifyPanel({ runId }: { runId: string }) {
           Verify reproducibility
         </Button>
 
-        {error && <p className={styles.previewError}>{error}</p>}
+        {error && (
+          <Notice tone="danger" live>
+            {error}
+          </Notice>
+        )}
         {result && (
           <div className={styles.verdict} data-reproducible={String(result.reproducible)}>
             <p className={styles.verdictLine}>

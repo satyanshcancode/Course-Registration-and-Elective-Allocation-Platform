@@ -22,19 +22,34 @@
   padding-block: var(--space-6);
 }
 
+/* Two columns from 64rem; below that the form alone, on the paper. */
+.layout[data-variant='split'] {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+  align-content: stretch;
+  padding-block: 0;
+  background-color: var(--color-paper);
+}
+
+@media (width >= 64rem) {
+  .layout[data-variant='split'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (width < 40rem) {
-  .layout {
+  .layout[data-variant='card'] {
     padding-block: var(--space-5);
   }
 }
 
-/* The same card the signed-in pages are made of. */
+/* The same card the signed-in pages are made of: 10px radius, 24px padding. */
 .panel {
   display: grid;
   gap: var(--space-4);
   align-content: start;
   width: min(100%, 28rem);
-  padding: var(--space-6);
+  padding: var(--space-5);
   border: var(--border-hairline);
   border-radius: var(--radius-lg);
   background-color: var(--color-surface);
@@ -47,6 +62,18 @@
   }
 }
 
+/* The sign-in page's form sits straight on the paper: no card, it is the page. */
+.panel[data-variant='split'] {
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 26rem);
+  padding: var(--space-6) var(--space-5);
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .mark {
   display: grid;
   place-items: center;
@@ -57,8 +84,19 @@
   color: var(--color-accent);
 }
 
+/* A card heading is the sans, like every card in the app; only the sign-in
+   page's own title is a page title and takes the serif. */
 .title {
-  font-size: var(--text-2xl);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+  letter-spacing: normal;
+}
+
+.title[data-variant='split'] {
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-heading);
 }
 
 .title:focus {
@@ -67,10 +105,11 @@
 
 .lead {
   color: var(--color-ink-muted);
+  font-size: var(--text-base);
 }
 
 .notice {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-info);
   border-radius: var(--radius-md);
   background-color: var(--color-info-soft);
@@ -116,4 +155,90 @@
   border-top: var(--border-hairline);
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
+}
+
+/* ---- The green panel beside the sign-in form ------------------------------ */
+.brand {
+  display: none;
+}
+
+@media (width >= 64rem) {
+  .brand {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    /* The cube bleeds off the bottom-right corner; the panel's edge clips it. */
+    overflow: hidden;
+    padding: var(--space-7);
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+}
+
+/*
+ * The wordmark is drawn from --color-accent and --color-ink, which on a green
+ * ground would vanish. Re-pointing the two tokens for this subtree recolours it
+ * without a second wordmark to keep in step with the first.
+ */
+.brandWordmark {
+  --color-accent: var(--color-on-accent);
+  --color-ink: var(--color-on-accent);
+  --color-ink-muted: color-mix(in srgb, var(--color-on-accent) 80%, transparent);
+  position: relative;
+  z-index: 1;
+}
+
+.brandCopy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-4);
+  max-width: 28rem;
+}
+
+.brandHeadline {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.brandLead {
+  /* Mixed toward the accent rather than made translucent: the contrast of the
+     result is a fixed colour, not whatever the cube behind it happens to be. */
+  color: color-mix(in srgb, var(--color-on-accent) 88%, var(--color-accent));
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.cube {
+  position: absolute;
+  right: calc(-1 * var(--space-8));
+  bottom: calc(-1 * var(--space-8));
+  width: min(26rem, 62%);
+  height: auto;
+  pointer-events: none;
+}
+
+.cubeFrame {
+  fill: color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  stroke: color-mix(in srgb, var(--color-on-accent) 30%, transparent);
+  stroke-width: 1.5;
+}
+
+/* Three steps of one green: lit from above, the front face, the shaded side. */
+.cubeTop {
+  fill: color-mix(in srgb, var(--color-success-bright) 72%, var(--color-on-accent));
+}
+
+.cubeRight {
+  fill: var(--color-success-bright);
+}
+
+.cubeLeft {
+  fill: color-mix(in srgb, var(--color-success-bright) 60%, var(--color-accent));
 }

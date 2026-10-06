@@ -165,7 +165,6 @@ function CapacityForm({
             min={offering.allocated}
             max={CAPACITY_LIMITS.max}
             step={1}
-            mono
             className={styles.capacity}
             value={values.capacity}
             onChange={(event) => {

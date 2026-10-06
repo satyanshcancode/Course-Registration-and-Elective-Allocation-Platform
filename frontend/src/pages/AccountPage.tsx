@@ -4,6 +4,7 @@ import { useRef, useState, type SubmitEvent } from 'react';
 import { changePassword } from '../api/accountApi';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { Notice } from '../components/Notice';
 import { PageHeader } from '../components/PageHeader';
 import { PasswordField } from '../components/PasswordField';
 import { useToast } from '../components/Toast';
@@ -116,7 +117,7 @@ export function AccountPage() {
       <PageHeader title="Account" description="Who you are signed in as, and your password." />
 
       <div className={styles.body}>
-        <Card title="Signed in as" titleIcon={UserRound}>
+        <Card title="Signed in as" titleIcon={UserRound} headingLevel={2}>
           <dl className={styles.record}>
             <div className={styles.entry}>
               <dt>E-mail</dt>
@@ -156,16 +157,18 @@ export function AccountPage() {
             )}
           </dl>
           {user.role === 'STUDENT' && (
-            <p className={styles.note}>
-              Your academic record is maintained by the registrar. If anything here is wrong, ask
-              them to correct it. It is what your eligibility is judged on.
-            </p>
+            <div className={styles.note}>
+              <Notice>
+                Your academic record is maintained by the registrar. If anything here is wrong, ask
+                them to correct it. It is what your eligibility is judged on.
+              </Notice>
+            </div>
           )}
         </Card>
 
-        <Card title="Change password" titleIcon={KeyRound}>
+        <Card title="Change password" titleIcon={KeyRound} headingLevel={2}>
           <div className={styles.alert} role="alert">
-            {serverError && <p>{serverError}</p>}
+            {serverError && <Notice tone="danger">{serverError}</Notice>}
           </div>
           <form
             className={styles.form}

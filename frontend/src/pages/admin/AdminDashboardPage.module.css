@@ -1,25 +1,21 @@
 .page {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
-.status {
-  display: inline-flex;
+.headerActions {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1) var(--space-2);
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
+  gap: var(--space-grid);
 }
 
 /* ---- Rows ---------------------------------------------------------------- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-grid);
 }
 
 /* The table wants the wider share; the policy record is a narrow column. */
@@ -27,11 +23,21 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
   align-items: start;
-  gap: var(--space-4);
+  gap: var(--space-grid);
 }
 
 @media (width < 64rem) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width < 40rem) {
+  .stats {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -79,17 +85,21 @@
 .record dt,
 .facts dt {
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
 .record dd,
 .facts dd {
   margin: 0;
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   overflow-wrap: anywhere;
 }
 
 .mono {
   font-family: var(--font-mono);
+}
+
+.figure {
   font-variant-numeric: tabular-nums;
 }

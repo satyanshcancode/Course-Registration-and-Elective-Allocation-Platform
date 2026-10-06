@@ -9,13 +9,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
 }
 
 .numbers div {
   display: grid;
   gap: var(--space-0);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
 }
 
 .numbers div + div {
@@ -24,15 +24,13 @@
 
 .numbers dt {
   color: var(--color-ink-muted);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  font-size: var(--text-sm);
 }
 
 .numbers dd {
   margin: 0;
-  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 

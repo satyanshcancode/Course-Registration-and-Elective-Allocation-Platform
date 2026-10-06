@@ -4,7 +4,7 @@ import {
   type NotificationItem,
   type NotificationType,
 } from '@course-reg/shared';
-import { Bell, BellDot, BellOff, Check, Circle, Inbox } from 'lucide-react';
+import { Bell, BellOff, Check, Inbox } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
@@ -13,19 +13,17 @@ import {
   markNotificationRead,
 } from '../../api/activityApi';
 import { unwrap } from '../../api/unwrap';
-import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
-import { Icon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
 import { useToast } from '../../components/Toast';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useUnreadNotifications } from '../../hooks/useUnreadNotifications';
-import { formatDateTime } from '../../utils/formatDate';
+import { formatDateTime, formatRelative } from '../../utils/formatDate';
 import styles from './NotificationsPage.module.css';
 
 /** Where a message is acted on. The inbox is a signpost, not a destination. */
@@ -240,6 +238,7 @@ export function NotificationsPage() {
   );
 }
 
+/** The same shape as the header bell's popover, with the destination added. */
 function Message({
   item,
   onRead,
@@ -251,29 +250,29 @@ function Message({
   const destination = DESTINATIONS[item.type];
   return (
     <article className={styles.message} data-unread={isUnread}>
-      <span className={styles.tile} aria-hidden="true">
-        <Icon icon={isUnread ? BellDot : Bell} />
-      </span>
-      <div className={styles.text}>
-        <div className={styles.head}>
-          <h3 className={styles.title}>{item.title}</h3>
-          {/* Icon AND text: unread is never carried by colour alone. */}
-          <Badge tone={isUnread ? 'accent' : 'neutral'} icon={isUnread ? Circle : Check}>
-            {isUnread ? 'Unread' : 'Read'}
-          </Badge>
-        </div>
-        <p className={styles.bodyText}>{item.body}</p>
-        <p className={styles.meta}>
-          <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
-          <Link to={destination.to} className={styles.link}>
-            {destination.label}
-          </Link>
-        </p>
+      <div className={styles.head}>
+        {/* A dot AND a heavier title AND a word: unread is never colour alone. */}
+        {isUnread && <span className={styles.unreadDot} aria-hidden="true" />}
+        <span className="visually-hidden">{isUnread ? 'Unread' : 'Read'}</span>
+        <h3 className={styles.title}>{item.title}</h3>
       </div>
+      <time
+        className={styles.time}
+        dateTime={item.createdAt}
+        title={formatDateTime(item.createdAt)}
+      >
+        {formatRelative(item.createdAt)}
+      </time>
+      <p className={styles.bodyText}>{item.body}</p>
+      <Link to={destination.to} className={styles.link}>
+        {destination.label}
+      </Link>
       {isUnread && (
         <Button
           variant="ghost"
           size="sm"
+          iconStart={Check}
+          className={styles.markRead}
           onClick={() => void onRead(item.id)}
           aria-label={`Mark "${item.title}" as read`}
         >

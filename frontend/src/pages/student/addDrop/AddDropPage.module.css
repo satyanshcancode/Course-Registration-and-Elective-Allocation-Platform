@@ -5,7 +5,7 @@
  */
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
@@ -24,26 +24,12 @@
   white-space: nowrap;
 }
 
-/* Information, not an alarm: the same banner the cart uses for its notes. */
-.period {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-info-soft);
-  color: var(--color-info);
-  font-size: var(--text-sm);
-}
-
 /* A lost race: stated plainly, with the one useful next step beside it. */
 .race {
   display: grid;
   justify-items: start;
   gap: var(--space-2);
   padding: var(--space-4);
-  border: 1px solid var(--color-warning);
   border-radius: var(--radius-lg);
   background-color: var(--color-warning-soft);
 }
@@ -52,23 +38,16 @@
   font-weight: var(--weight-semibold);
 }
 
-.raceBody,
-.retryNote {
+.raceBody {
   max-width: 60ch;
+  color: var(--color-ink-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
 }
 
-.raceBody {
-  color: var(--color-ink-muted);
-}
-
-.retryNote {
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-warning-soft);
-  color: var(--color-ink);
+/* The note inside the drop dialog, which has no grid of its own to space it. */
+.dialogNote {
+  margin-top: var(--space-3);
 }
 
 .lead {
@@ -81,14 +60,14 @@
 
 .list {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item + .item {
-  padding-top: var(--space-4);
+  padding-top: var(--space-5);
   border-top: var(--border-hairline);
 }
 
@@ -115,12 +94,15 @@
   gap: var(--space-2);
 }
 
+/* A card heading, so the sans: the serif is for the page's own titles. */
 .rowTitle {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
+  font-weight: var(--weight-heading);
   line-height: var(--leading-snug);
 }
 

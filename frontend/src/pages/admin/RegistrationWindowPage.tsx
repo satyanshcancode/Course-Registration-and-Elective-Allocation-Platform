@@ -12,26 +12,41 @@ import {
   openRegistrationWindow,
 } from '../../api/adminApi';
 import { unwrap } from '../../api/unwrap';
+import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { FormField } from '../../components/FormField';
-import { Icon } from '../../components/Icon';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Textarea } from '../../components/Textarea';
 import { useToast } from '../../components/Toast';
+import { WindowCard } from '../../components/WindowCard';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useServerClock } from '../../hooks/useServerClock';
 import { formatDateTime } from '../../utils/formatDate';
 import { AddDropPeriodForm } from './window/AddDropPeriodForm';
 import { WindowPolicyForm } from './window/WindowPolicyForm';
 import styles from './RegistrationWindowPage.module.css';
 
 type WindowAction = 'open' | 'close';
+
+/** A window detail with the server's clock measured where it arrived. */
+interface Measured {
+  detail: AdminWindowDetail;
+  /** Server clock minus device clock, for the countdown. */
+  clockOffsetMs: number;
+}
+
+const measured = (detail: AdminWindowDetail): Measured => ({
+  detail,
+  clockOffsetMs: Date.parse(detail.serverTime) - Date.now(),
+});
 
 const ACTION_COPY: Readonly<
   Record<WindowAction, { title: string; confirmLabel: string; button: string }>
@@ -50,15 +65,19 @@ const ACTION_COPY: Readonly<
 
 export function RegistrationWindowPage() {
   useDocumentTitle('Registration window');
-  const { state, retry } = useAsync(async (signal) => unwrap(await getRegistrationWindow(signal)));
+  const { state, retry } = useAsync(async (signal) =>
+    measured(unwrap(await getRegistrationWindow(signal))),
+  );
   const toast = useToast();
-  const [saved, setSaved] = useState<AdminWindowDetail | null>(null);
+  const [saved, setSaved] = useState<Measured | null>(null);
   const [action, setAction] = useState<WindowAction | null>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
   // The newest detail wins: a save or an open/close replaces the loaded one.
-  const detail = saved ?? (state.status === 'success' ? state.data : undefined);
+  const current = saved ?? (state.status === 'success' ? state.data : undefined);
+  const detail = current?.detail;
+  const clock = useServerClock(current?.clockOffsetMs ?? 0, current !== undefined);
 
   const runAction = async (which: WindowAction) => {
     const request = reason.trim() ? { reason: reason.trim() } : {};
@@ -69,7 +88,7 @@ export function RegistrationWindowPage() {
       setActionError(response.message);
       return;
     }
-    setSaved(response.data);
+    setSaved(measured(response.data));
     setAction(null);
     setReason('');
     setActionError(null);
@@ -84,6 +103,7 @@ export function RegistrationWindowPage() {
         actions={
           detail?.window && (
             <>
+              <WindowCard window={detail.window} clock={clock} variant="name" />
               {detail.window.status === 'DRAFT' && (
                 <Button
                   variant="primary"
@@ -111,17 +131,7 @@ export function RegistrationWindowPage() {
             </>
           )
         }
-      >
-        {detail?.window && (
-          <p className={styles.status}>
-            <StatusBadge kind="window" status={detail.window.status} />
-            <span>
-              Opens {formatDateTime(detail.window.startsAt)} · closes{' '}
-              {formatDateTime(detail.window.endsAt)}
-            </span>
-          </p>
-        )}
-      </PageHeader>
+      />
 
       <div className={styles.body}>
         {state.status === 'error' && (
@@ -141,9 +151,22 @@ export function RegistrationWindowPage() {
 
         {detail?.window && (
           <>
-            <Card title="This window" titleIcon={Gauge} headingLevel={2}>
+            <Card
+              title="This window"
+              titleIcon={Gauge}
+              titleAside={<StatusBadge kind="window" status={detail.window.status} />}
+              headingLevel={2}
+            >
               <div role="group" aria-label="This window at a glance">
                 <dl className={styles.figures}>
+                  <div>
+                    <dt>Opens</dt>
+                    <dd className={styles.figure}>{formatDateTime(detail.window.startsAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Closes</dt>
+                    <dd className={styles.figure}>{formatDateTime(detail.window.endsAt)}</dd>
+                  </div>
                   <div>
                     <dt>Courses offered</dt>
                     <dd className={styles.figure}>{detail.counts.offeredCourses}</dd>
@@ -172,7 +195,7 @@ export function RegistrationWindowPage() {
                 <WindowPolicyForm
                   detail={detail}
                   onSaved={(updated, message) => {
-                    setSaved(updated);
+                    setSaved(measured(updated));
                     toast.show({ tone: 'success', title: message });
                   }}
                 />
@@ -187,7 +210,7 @@ export function RegistrationWindowPage() {
                 <AddDropPeriodForm
                   detail={detail}
                   onSaved={(updated, message) => {
-                    setSaved(updated);
+                    setSaved(measured(updated));
                     toast.show({ tone: 'success', title: message });
                   }}
                 />
@@ -238,9 +261,9 @@ export function RegistrationWindowPage() {
                 )}
               </FormField>
               {actionError && (
-                <p className={styles.error} role="alert">
+                <Notice tone="danger" live>
                   {actionError}
-                </p>
+                </Notice>
               )}
             </div>
           }
@@ -263,21 +286,20 @@ function FrozenPolicy({ detail }: { detail: AdminWindowDetail }) {
       titleIcon={ShieldCheck}
       headingLevel={2}
       actions={
-        <p className={styles.frozen}>
-          <Icon icon={Lock} size={16} />
+        <Badge tone="neutral" icon={Lock}>
           Policy frozen
-        </p>
+        </Badge>
       }
+      footer={`${detail.counts.offeredCourses} courses offered in ${detail.window?.name}.`}
     >
-      <p className={styles.frozenNote}>
-        The policy was frozen when registration opened, so students are judged by the rules they
-        submitted against. The database rejects a change to these values even if it is attempted
-        directly.
-      </p>
-      {detail.policy && <PolicySummary policy={detail.policy} randomSeed={detail.randomSeed} />}
-      <p className={styles.offered}>
-        {detail.counts.offeredCourses} courses offered in {detail.window?.name}.
-      </p>
+      <div className={styles.frozen}>
+        <Notice icon={Lock}>
+          The policy was frozen when registration opened, so students are judged by the rules they
+          submitted against. The database rejects a change to these values even if it is attempted
+          directly.
+        </Notice>
+        {detail.policy && <PolicySummary policy={detail.policy} randomSeed={detail.randomSeed} />}
+      </div>
     </Card>
   );
 }

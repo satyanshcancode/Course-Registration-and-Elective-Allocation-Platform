@@ -29,6 +29,8 @@ import {
   groupByDay,
   historyEventIcon,
   historyEventLabel,
+  historyEventTone,
+  summariseHistoryEvent,
 } from '../../utils/historyText';
 import { describeSeatOrigin, describeStanding } from '../../utils/statusText';
 import styles from './HistoryPage.module.css';
@@ -323,13 +325,17 @@ function Days({ events }: { events: readonly HistoryEvent[] }) {
 
 function Event({ event }: { event: HistoryEvent }) {
   const type = event.detail.type;
+  // The headline is the dashboard's, so a row reads the same in both places;
+  // the grey line is the full sentence, which already carries every qualifier
+  // the dashboard's second line would add.
+  const { headline } = summariseHistoryEvent(event);
   return (
     <article className={styles.event}>
-      <span className={styles.marker} aria-hidden="true">
+      <span className={styles.marker} data-tone={historyEventTone(type)} aria-hidden="true">
         <Icon icon={historyEventIcon(type)} />
       </span>
       <div className={styles.eventText}>
-        <p className={styles.eventLabel}>{historyEventLabel(type)}</p>
+        <p className={styles.eventLabel}>{headline}</p>
         <p className={styles.eventBody}>{describeHistoryEvent(event)}</p>
       </div>
       <time dateTime={event.at} className={styles.eventTime} title={formatDateTime(event.at)}>

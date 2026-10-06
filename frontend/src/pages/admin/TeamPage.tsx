@@ -17,6 +17,7 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { FormField } from '../../components/FormField';
 import { Input } from '../../components/Input';
 import { Modal } from '../../components/Modal';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useToast } from '../../components/Toast';
@@ -337,10 +338,10 @@ function InviteDialog({ open, onClose, onInvited }: InviteDialogProps) {
           void submit(event);
         }}
       >
-        <p className={styles.formNote}>
+        <Notice>
           They receive an e-mail with a single-use link and set their own password. A
           co-administrator can do everything an administrator can, except manage these accounts.
-        </p>
+        </Notice>
         <FormField label="Name" error={errors.name} required>
           {(control) => (
             <Input

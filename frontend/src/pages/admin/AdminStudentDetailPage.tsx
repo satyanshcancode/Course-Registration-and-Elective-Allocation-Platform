@@ -33,6 +33,7 @@ import { CourseCode } from '../../components/CourseCode';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Modal } from '../../components/Modal';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PageLoading } from '../../components/PageLoading';
 import { useToast } from '../../components/Toast';
@@ -204,7 +205,7 @@ export function AdminStudentDetailPage() {
               </Button>
             )}
             <Button
-              variant={student.status === 'INACTIVE' ? 'secondary' : 'danger'}
+              variant={student.status === 'INACTIVE' ? 'secondary' : 'dangerOutline'}
               iconStart={student.status === 'INACTIVE' ? CircleCheck : CircleSlash}
               onClick={() => {
                 setConfirming(student.status === 'INACTIVE' ? 'reactivate' : 'deactivate');
@@ -221,71 +222,75 @@ export function AdminStudentDetailPage() {
       </PageHeader>
 
       <div className={styles.body}>
-        <Card
-          title="Record"
-          titleIcon={UserRound}
-          titleAside={
-            <Badge
-              tone={STATUS_TONES[student.status]}
-              icon={STATUS_ICONS[student.status]}
-              status={student.status}
-            >
-              {wording.label}
-            </Badge>
-          }
-        >
-          {detail.invitationExpiresAt !== null && (
-            <p className={styles.expiry}>
-              {describeInvitationExpiry(detail.invitationExpiresAt, detail.loadedAt)}
-            </p>
-          )}
+        <div className={styles.wide}>
+          <Card
+            title="Record"
+            titleIcon={UserRound}
+            titleAside={
+              <Badge
+                tone={STATUS_TONES[student.status]}
+                icon={STATUS_ICONS[student.status]}
+                status={student.status}
+              >
+                {wording.label}
+              </Badge>
+            }
+          >
+            {detail.invitationExpiresAt !== null && (
+              <div className={styles.expiry}>
+                <Notice tone="warning">
+                  {describeInvitationExpiry(detail.invitationExpiresAt, detail.loadedAt)}
+                </Notice>
+              </div>
+            )}
 
-          <dl className={styles.record}>
-            <div className={styles.entry}>
-              <dt>Roll number</dt>
-              <dd className={styles.mono}>{student.rollNumber}</dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>E-mail</dt>
-              <dd>{student.email}</dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>Programme</dt>
-              <dd>
-                {student.program.name}{' '}
-                <span className={styles.muted}>({student.program.code})</span>
-              </dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>Semester</dt>
-              <dd>{student.semester}</dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>Credits completed</dt>
-              <dd>{student.creditsCompleted}</dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>Expected graduation</dt>
-              <dd>{student.expectedGraduationTerm}</dd>
-            </div>
-            <div className={styles.entry}>
-              <dt>Completed courses</dt>
-              <dd>
-                {detail.completedCourses.length === 0 ? (
-                  <span className={styles.muted}>None recorded</span>
-                ) : (
-                  <ul className={styles.courses}>
-                    {detail.completedCourses.map((course) => (
-                      <li key={course.code}>
-                        <CourseCode code={course.code} size="sm" /> {course.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </dd>
-            </div>
-          </dl>
-        </Card>
+            <dl className={styles.record}>
+              <div className={styles.entry}>
+                <dt>Roll number</dt>
+                <dd className={styles.mono}>{student.rollNumber}</dd>
+              </div>
+              <div className={styles.entry}>
+                <dt>E-mail</dt>
+                <dd>{student.email}</dd>
+              </div>
+              <div className={styles.entry}>
+                <dt>Programme</dt>
+                <dd>
+                  {student.program.name}{' '}
+                  <span className={styles.muted}>({student.program.code})</span>
+                </dd>
+              </div>
+              <div className={styles.entry}>
+                <dt>Semester</dt>
+                <dd>{student.semester}</dd>
+              </div>
+              <div className={styles.entry}>
+                <dt>Credits completed</dt>
+                <dd>{student.creditsCompleted}</dd>
+              </div>
+              <div className={styles.entry}>
+                <dt>Expected graduation</dt>
+                <dd>{student.expectedGraduationTerm}</dd>
+              </div>
+              <div className={styles.entry} data-wide="true">
+                <dt>Completed courses</dt>
+                <dd>
+                  {detail.completedCourses.length === 0 ? (
+                    <span className={styles.muted}>None recorded</span>
+                  ) : (
+                    <ul className={styles.courses}>
+                      {detail.completedCourses.map((course) => (
+                        <li key={course.code}>
+                          <CourseCode code={course.code} size="sm" /> {course.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </Card>
+        </div>
 
         <Card title="Registration status" titleIcon={ListChecks}>
           <p className={styles.note}>As the student sees it.</p>

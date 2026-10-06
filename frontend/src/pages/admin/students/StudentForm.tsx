@@ -342,7 +342,7 @@ export function StudentForm({
               ? 'Create and send invitation'
               : 'Save changes'}
         </Button>
-        <Button type="button" variant="ghost" disabled={submitting} onClick={onCancel}>
+        <Button type="button" variant="secondary" disabled={submitting} onClick={onCancel}>
           Cancel
         </Button>
       </div>

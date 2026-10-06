@@ -262,19 +262,13 @@ export function AdminCataloguePage() {
       cell: (row) => (
         <div className={styles.rowActions}>
           {/* No onClick: one delegated listener on the tbody handles these. */}
-          <button
-            type="button"
-            className={styles.rowButton}
-            data-action="edit"
-            data-course-code={row.code}
-          >
-            <Pencil aria-hidden="true" className={styles.rowIcon} />
+          <Button size="sm" iconStart={Pencil} data-action="edit" data-course-code={row.code}>
             Edit<span className="visually-hidden"> {row.code}</span>
-          </button>
+          </Button>
           {row.isActive ? (
-            <button
-              type="button"
-              className={styles.rowButton}
+            <Button
+              size="sm"
+              iconStart={CircleSlash}
               data-action="retire"
               data-course-code={row.code}
               disabled={!row.canDeactivate}
@@ -282,19 +276,17 @@ export function AdminCataloguePage() {
                 row.canDeactivate ? undefined : 'A window that is open or later offers this course.'
               }
             >
-              <CircleSlash aria-hidden="true" className={styles.rowIcon} />
               Retire<span className="visually-hidden"> {row.code}</span>
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              className={styles.rowButton}
+            <Button
+              size="sm"
+              iconStart={RotateCcw}
               data-action="reinstate"
               data-course-code={row.code}
             >
-              <RotateCcw aria-hidden="true" className={styles.rowIcon} />
               Reinstate<span className="visually-hidden"> {row.code}</span>
-            </button>
+            </Button>
           )}
         </div>
       ),

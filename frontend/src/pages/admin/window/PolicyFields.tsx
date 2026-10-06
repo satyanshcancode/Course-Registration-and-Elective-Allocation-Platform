@@ -3,6 +3,7 @@ import { Dice5 } from 'lucide-react';
 import { Button } from '../../../components/Button';
 import { FormField } from '../../../components/FormField';
 import { Input } from '../../../components/Input';
+import { Notice } from '../../../components/Notice';
 import { firstIncreasingRank, withPriorityPoint, withWeight } from '../../../utils/windowForm';
 import styles from './PolicyFields.module.css';
 
@@ -57,10 +58,10 @@ export function PolicyFields({
           Seats go to whoever submits first, ordered by the server’s own submission sequence, never
           by a clock the student controls.
         </p>
-        <p className={styles.caution}>
+        <Notice tone="warning">
           First-come-first-served rewards a fast connection rather than need or merit, which is the
           problem this platform exists to fix. It is kept as a baseline to compare against.
-        </p>
+        </Notice>
       </div>
     );
   }
@@ -141,9 +142,9 @@ export function PolicyFields({
       </fieldset>
 
       {error && (
-        <p className={styles.error} role="alert">
+        <Notice tone="danger" live>
           {error}
-        </p>
+        </Notice>
       )}
 
       <div className={styles.seed}>

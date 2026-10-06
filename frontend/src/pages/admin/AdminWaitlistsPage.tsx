@@ -17,6 +17,7 @@ import { DataTable, type DataTableStatus } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
 import { EmptyState } from '../../components/EmptyState';
 import { FormField } from '../../components/FormField';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { SeatMeter } from '../../components/SeatMeter';
 import { Select } from '../../components/Select';
@@ -113,11 +114,11 @@ export function AdminWaitlistsPage() {
 
       <div className={styles.body}>
         {view && !allocated && (
-          <p className={styles.notice}>
+          <Notice tone="warning">
             Waitlists exist once allocation has run. This window is{' '}
             <strong>{view.window?.status.toLowerCase() ?? 'not scheduled'}</strong>, so nobody is
             waiting yet and nothing can be promoted.
-          </p>
+          </Notice>
         )}
 
         <Card>
@@ -257,6 +258,20 @@ function CourseWaitlist({
         titleAside={<CourseCode code={course.code} />}
         headingLevel={2}
       >
+        <dl className={styles.summary}>
+          <div>
+            <dt>Capacity</dt>
+            <dd>{course.capacity}</dd>
+          </div>
+          <div>
+            <dt>Allocated</dt>
+            <dd>{course.allocated}</dd>
+          </div>
+          <div>
+            <dt>Available</dt>
+            <dd>{course.available}</dd>
+          </div>
+        </dl>
         <SeatMeter
           allocated={course.allocated}
           capacity={course.capacity}

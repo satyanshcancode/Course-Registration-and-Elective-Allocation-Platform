@@ -5,19 +5,13 @@
  */
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
 .skeleton {
   display: grid;
   gap: var(--space-3);
-}
-
-/* A section that holds a table has no card of its own (the table already has
-   one), so its heading is set the way the student pages set theirs. */
-.heading {
-  font-size: var(--text-md);
 }
 
 .subheading {
@@ -27,10 +21,9 @@
 .stage,
 .preview,
 .metrics,
-.runs,
 .verify {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .stageStatus {
@@ -41,6 +34,11 @@
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
+}
+
+/* Text inside a flush card keeps the card's own 24px gutter. */
+.inset {
+  padding-inline: var(--space-5);
 }
 
 .note {
@@ -67,15 +65,6 @@
   gap: var(--space-2);
 }
 
-.previewError {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-danger);
-  border-radius: var(--radius-md);
-  background-color: var(--color-danger-soft);
-  color: var(--color-danger);
-  font-size: var(--text-sm);
-}
-
 /* The comparison table: rows are measures, columns are methods. */
 .tableWrap {
   overflow-x: auto;
@@ -89,22 +78,40 @@
 
 .table th,
 .table td {
+  /* 48px rows, as the shared tables have them. */
+  min-height: 3rem;
   padding: var(--space-2) var(--space-3);
   border-bottom: var(--border-hairline);
   text-align: start;
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+/* The rules run edge to edge; the text lines up with the card's gutter. */
+.table th:first-child,
+.table td:first-child {
+  padding-inline-start: var(--space-5);
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-inline-end: var(--space-5);
 }
 
 .table thead th {
-  border-block: var(--border-hairline);
-  background-color: var(--color-surface-sunken);
+  border-block-start: var(--border-hairline);
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-regular);
+  white-space: nowrap;
 }
 
 .table tbody th {
   font-weight: var(--weight-regular);
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .willUse {
@@ -150,7 +157,7 @@
   gap: var(--space-2);
   padding: var(--space-4);
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface-sunken);
 }
 
@@ -167,19 +174,20 @@
 /* Key/value pairs in a responsive grid. */
 .facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
 }
 
 .facts dt {
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
 .facts dd {
   margin: 0;
   margin-block-start: var(--space-1);
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
 }
 
@@ -201,8 +209,10 @@
 
 .rates {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--space-4) var(--space-5);
+  padding-block-start: var(--space-4);
+  border-block-start: var(--border-hairline);
 }
 
 .rate {
@@ -215,12 +225,15 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
+  margin: 0;
+  color: var(--color-ink-muted);
   font-size: var(--text-sm);
 }
 
 .rateValue {
+  color: var(--color-ink);
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-semibold);
 }
 
 /* A slim horizontal bar; the number beside it is the real answer. */
@@ -245,7 +258,7 @@
 .verdict {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-4);
   border: var(--border-control);
   border-radius: var(--radius-md);
 }

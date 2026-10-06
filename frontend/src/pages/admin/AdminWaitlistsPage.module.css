@@ -4,19 +4,8 @@
  */
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
-}
-
-.notice {
-  max-width: 68ch;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-md);
-  background-color: var(--color-warning-soft);
-  color: var(--color-ink);
-  font-size: var(--text-sm);
-  line-height: var(--leading-body);
 }
 
 .statusCell {
@@ -28,9 +17,29 @@
 
 .reason {
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
 .picker {
   max-width: 28rem;
+}
+
+/* A waitlist's summary: muted labels over their figures, then the meter. */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0 0 var(--space-4);
+}
+
+.summary dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.summary dd {
+  margin: 0;
+  margin-block-start: var(--space-1);
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
 }

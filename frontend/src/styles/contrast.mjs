@@ -99,7 +99,9 @@ for (const [fg, bg, min, what] of PAIRS) {
 }
 process.stdout.write(
   `\n${PAIRS.length} pairs checked. ${
-    failures === 0 ? 'Every one meets its WCAG AA threshold.' : `${failures} pair(s) BELOW threshold.`
+    failures === 0
+      ? 'Every one meets its WCAG AA threshold.'
+      : `${failures} pair(s) BELOW threshold.`
   }\n`,
 );
 process.exitCode = failures === 0 ? 0 : 1;

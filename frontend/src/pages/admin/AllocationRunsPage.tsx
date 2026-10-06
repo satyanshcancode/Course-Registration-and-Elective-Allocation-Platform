@@ -11,6 +11,7 @@ import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -114,27 +115,27 @@ export function AllocationRunsPage() {
               </p>
 
               {window.status === 'DRAFT' && (
-                <p className={styles.note}>
+                <Notice>
                   Allocation runs after registration has opened and closed.{' '}
                   <Link to="/admin/registration-window">Schedule and open the window</Link> first.
-                </p>
+                </Notice>
               )}
 
               {window.status === 'OPEN' && (
-                <p className={styles.note}>
+                <Notice tone="warning">
                   Registration is still open, so the preferences are not final. Allocation runs once
                   the window is closed.{' '}
                   <Link to="/admin/registration-window">close it on the window page</Link> when the
                   deadline passes.
-                </p>
+                </Notice>
               )}
 
               {window.status === 'ALLOCATED' && completed && (
-                <p className={styles.note}>
+                <Notice tone="success">
                   Allocation has already run for this window. It can only be done once;{' '}
                   <Link to={`/admin/allocation-runs/${completed.id}`}>open the run</Link> to see
                   what it decided.
-                </p>
+                </Notice>
               )}
 
               {window.status === 'CLOSED' && (
@@ -153,7 +154,11 @@ export function AllocationRunsPage() {
                   </Button>
                 </div>
               )}
-              {previewError && <p className={styles.previewError}>{previewError}</p>}
+              {previewError && (
+                <Notice tone="danger" live>
+                  {previewError}
+                </Notice>
+              )}
             </div>
           </Card>
         )}
@@ -163,25 +168,27 @@ export function AllocationRunsPage() {
             title={`Preview · ${preview.submissions} submissions`}
             titleIcon={Scale}
             headingLevel={2}
+            bodyFlush
           >
             <div className={styles.preview}>
-              <p className={styles.note}>
-                Both methods were run on a fresh snapshot of this window. Nothing was written.
-              </p>
+              <div className={styles.inset}>
+                <p className={styles.note}>
+                  Both methods were run on a fresh snapshot of this window. Nothing was written.
+                </p>
+              </div>
               <MethodComparison
                 methods={preview.methods}
                 caption={`First come, first served compared with Preference + Priority for ${preview.window.name}`}
               />
-              <TradeOffs preview={preview} />
+              <div className={styles.inset}>
+                <TradeOffs preview={preview} />
+              </div>
             </div>
           </Card>
         )}
 
         {data && (
-          <section aria-labelledby="runs-heading" className={styles.runs}>
-            <h2 id="runs-heading" className={styles.heading}>
-              Runs
-            </h2>
+          <Card title="Runs" titleIcon={ListOrdered} headingLevel={2} bodyFlush={runs.length > 0}>
             {runs.length === 0 ? (
               <EmptyState title="No allocation runs yet" icon={ListOrdered} headingLevel={3}>
                 <p>
@@ -193,6 +200,7 @@ export function AllocationRunsPage() {
               <DataTable
                 caption="Allocation runs"
                 captionHidden
+                bare={runs.length > 0}
                 rows={runs}
                 columns={runColumns}
                 getRowId={(run) => run.id}
@@ -201,7 +209,7 @@ export function AllocationRunsPage() {
                 itemName={{ one: 'run', other: 'runs' }}
               />
             )}
-          </section>
+          </Card>
         )}
       </div>
 

@@ -1,11 +1,11 @@
 /*
- * The result reads like a posted notice: the outcome first and large, then
- * the reasoning underneath in the registrar's own words. The shell supplies the
- * page's width and side padding.
+ * The outcome first and large, then the reasoning underneath in the
+ * registrar's own words, on the same cards as every other page. The shell
+ * supplies the page's width and side padding.
  */
 .body {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   padding-block: var(--space-5);
 }
 
@@ -14,11 +14,12 @@
   gap: var(--space-3);
 }
 
-/* The tint carries the mood; the icon and the words carry the meaning. */
+/* The tint carries the mood; the icon and the words carry the meaning. It is
+   a card in shape and padding, so it sits in the grid like one. */
 .headline {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-5);
   border-radius: var(--radius-lg);
 }
 
@@ -64,7 +65,7 @@
 /* ---- Every course ranked -------------------------------------------------- */
 .results {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -72,13 +73,13 @@
 
 /* A hairline between courses rather than a box round each: the card is the box. */
 .item + .item {
-  padding-top: var(--space-4);
+  padding-top: var(--space-5);
   border-top: var(--border-hairline);
 }
 
 .card {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .cardHeader {
@@ -89,12 +90,15 @@
   gap: var(--space-2);
 }
 
+/* A card heading, so the sans: the serif is for the page's own titles. */
 .cardTitle {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
+  font-weight: var(--weight-heading);
   line-height: var(--leading-snug);
 }
 
@@ -109,8 +113,9 @@
 
 .breakdown {
   padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline);
   border-radius: var(--radius-md);
-  background-color: var(--color-surface-sunken);
+  background-color: var(--color-surface-raised);
   font-size: var(--text-sm);
 }
 

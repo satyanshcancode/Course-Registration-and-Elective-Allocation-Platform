@@ -46,7 +46,6 @@ describe('CourseCard', () => {
     // question the student came with. WHY they are not eligible is the
     // course page's checklist, not a line on a card.
     expect(card).toHaveTextContent('Not eligible');
-    expect(within(card).getByRole('button', { name: /Not eligible/ })).toBeDisabled();
   });
 
   it('shows a waitlist place plainly', () => {

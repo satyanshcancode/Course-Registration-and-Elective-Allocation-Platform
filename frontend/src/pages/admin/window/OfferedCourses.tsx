@@ -1,5 +1,6 @@
 import type { WindowCourseOption } from '@course-reg/shared';
 import { Checkbox } from '../../../components/Checkbox';
+import { Notice } from '../../../components/Notice';
 import styles from './OfferedCourses.module.css';
 
 export interface OfferedCoursesProps {
@@ -43,9 +44,11 @@ export function OfferedCourses({ courses, selected, error, onChange }: OfferedCo
         </p>
       </div>
       {error && (
-        <p id="offered-error" className={styles.error} role="alert">
-          {error}
-        </p>
+        <div id="offered-error" className={styles.error}>
+          <Notice tone="danger" live>
+            {error}
+          </Notice>
+        </div>
       )}
       <ul className={styles.list}>
         {courses.map((course) => (

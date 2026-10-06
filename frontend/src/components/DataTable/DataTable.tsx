@@ -49,6 +49,12 @@ export interface DataTableProps<T> {
    */
   paginated?: boolean;
   /**
+   * Drop the table's own border, radius and shadow. For a table inside a
+   * `<Card bodyFlush>`, which already draws all three — two of them nested is
+   * the one thing the target never does.
+   */
+  bare?: boolean;
+  /**
    * How many rows exist in total, for a server-paged table. Without it the
    * summary can only count the rows it was handed, and a page of 20 out of 300
    * reads as "of 20" beside a pager offering 15 pages.
@@ -84,6 +90,7 @@ export function DataTable<T>({
   emptyTitle = 'Nothing to show yet',
   emptyMessage,
   paginated = true,
+  bare = false,
   totalRows,
   onBodyClick,
 }: DataTableProps<T>) {
@@ -149,6 +156,7 @@ export function DataTable<T>({
 
       <div
         className={styles.scroll}
+        data-bare={bare || undefined}
         role="region"
         aria-labelledby={captionId}
         aria-busy={loading || undefined}

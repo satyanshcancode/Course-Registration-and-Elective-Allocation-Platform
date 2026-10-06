@@ -3,8 +3,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
   align-items: start;
-  gap: var(--space-4);
-  padding-block: var(--space-2) var(--space-5);
+  gap: var(--space-grid);
+  padding-block: var(--space-5);
 }
 
 /* ---- Signed in as ------------------------------------------------------- */
@@ -35,6 +35,8 @@
 
 .entry dd {
   margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
 }
 
 @media (width < 30rem) {
@@ -51,15 +53,11 @@
 
 .muted {
   color: var(--color-ink-muted);
+  font-weight: var(--weight-regular);
 }
 
 .note {
   margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: var(--border-hairline);
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  line-height: var(--leading-dense);
 }
 
 /* ---- Change password ---------------------------------------------------- */
@@ -73,20 +71,7 @@
   justify-content: flex-start;
 }
 
-.alert {
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  border: 1px solid var(--color-danger);
-  border-radius: var(--radius-md);
-  background-color: var(--color-danger-soft);
-  color: var(--color-danger);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
-
 /* Stays in the DOM so inserted messages are announced; empty, it takes no space. */
-.alert:empty {
-  margin-bottom: 0;
-  padding: 0;
-  border: 0;
+.alert:not(:empty) {
+  margin-bottom: var(--space-4);
 }

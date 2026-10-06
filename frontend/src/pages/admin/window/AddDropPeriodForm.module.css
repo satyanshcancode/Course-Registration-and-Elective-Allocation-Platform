@@ -29,8 +29,3 @@
   font-size: var(--text-sm);
   line-height: var(--leading-body);
 }
-
-.error {
-  color: var(--color-danger);
-  font-size: var(--text-sm);
-}

@@ -105,6 +105,7 @@ export function LoginPage() {
     <AuthPanel
       icon={LogIn}
       title="Sign in"
+      variant="split"
       lead="Use your university e-mail address and password. Accounts are created by the registrar. If you have an invitation e-mail, open its link to set your password."
       notice={notice ? NOTICES[notice] : undefined}
       error={serverError}
