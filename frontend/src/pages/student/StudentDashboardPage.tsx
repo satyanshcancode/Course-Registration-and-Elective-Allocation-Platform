@@ -473,16 +473,16 @@ function Allocation({ results }: { results: StudentAllocationResults }) {
 function SeatCube() {
   return (
     <svg className={styles.cube} viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-      {/* The open space around the seat: an isometric wireframe box. */}
+      {/* The seat itself, solid: top face, then the two it stands on. */}
+      <path className={styles.cubeTop} d="M60 30 L100 53 L60 76 L20 53 Z" />
+      <path className={styles.cubeLeft} d="M20 53 L20 90 L60 113 L60 76 Z" />
+      <path className={styles.cubeRight} d="M100 53 L100 90 L60 113 L60 76 Z" />
+      {/* The space it was open in: the same box drawn larger, in outline. */}
       <g className={styles.cubeFrame}>
-        <path d="M60 8 L112 38 L60 68 L8 38 Z" />
-        <path d="M8 38 L8 82 L60 112 L112 82 L112 38" />
-        <path d="M60 68 L60 112" />
+        <path d="M60 6 L114 37 L114 83 L60 114 L6 83 L6 37 Z" />
+        <path d="M6 37 L60 68 L114 37" />
+        <path d="M60 68 L60 114" />
       </g>
-      {/* The seat itself, solid: top, left face, right face. */}
-      <path className={styles.cubeTop} d="M60 34 L95 54 L60 74 L25 54 Z" />
-      <path className={styles.cubeLeft} d="M25 54 L25 82 L60 102 L60 74 Z" />
-      <path className={styles.cubeRight} d="M95 54 L95 82 L60 102 L60 74 Z" />
     </svg>
   );
 }

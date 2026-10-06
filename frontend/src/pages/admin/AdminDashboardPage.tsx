@@ -155,14 +155,10 @@ export function AdminDashboardPage() {
                 to="/admin/courses"
                 linkLabel="View seats"
               />
-              <StatTile
-                icon={ListOrdered}
-                tone="danger"
-                value={String(data.runs.length)}
-                label="Allocation runs"
-                to="/admin/allocation-runs"
-                linkLabel="View runs"
-              />
+              {/* Four tiles, not five: a fifth wraps onto a row of its own at
+                  1280 and reads as an orphan. The run count is the one that can
+                  go, because the Allocation card below says more about the run
+                  than its number does. */}
             </section>
 
             <div className={styles.row}>
