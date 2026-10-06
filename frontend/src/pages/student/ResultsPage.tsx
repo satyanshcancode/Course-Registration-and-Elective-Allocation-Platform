@@ -4,6 +4,7 @@ import type {
   StudentAllocationResults,
 } from '@course-reg/shared';
 import { CircleCheck, Hourglass, ListChecks } from 'lucide-react';
+import { Card } from '../../components/Card';
 import { CourseCode } from '../../components/CourseCode';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
@@ -25,13 +26,11 @@ export function ResultsPage() {
   const { state, retry } = useAsync(async (signal) => unwrap(await getMyAllocationResults(signal)));
 
   const data = state.status === 'success' ? state.data : undefined;
-  const windowName = data?.window?.name;
 
   return (
     <>
       <PageHeader
         title="Allocation results"
-        kicker={windowName ? `${windowName} · Results` : 'Results'}
         description="Which course you were allocated, and exactly why."
       >
         <RegistrationStatusBanner />
@@ -78,10 +77,7 @@ function Published({ data }: { data: StudentAllocationResults }) {
   return (
     <>
       <Headline allocated={data.allocated} held={data.held} ranAt={data.ranAt ?? ''} />
-      <section aria-labelledby="results-heading" className={styles.list}>
-        <h2 id="results-heading" className={styles.heading}>
-          Every course you ranked
-        </h2>
+      <Card title="Every course you ranked" titleIcon={ListChecks} headingLevel={2}>
         {data.results.length === 0 ? (
           <EmptyState title="You didn’t rank any courses" icon={ListChecks} headingLevel={3}>
             <p>Nothing was submitted for this window, so there is nothing to allocate.</p>
@@ -89,13 +85,13 @@ function Published({ data }: { data: StudentAllocationResults }) {
         ) : (
           <ol className={styles.results}>
             {data.results.map((result) => (
-              <li key={result.explanation.course.code}>
+              <li key={result.explanation.course.code} className={styles.item}>
                 <ResultCard result={result} />
               </li>
             ))}
           </ol>
         )}
-      </section>
+      </Card>
     </>
   );
 }
@@ -118,7 +114,7 @@ function Headline({
   return (
     <section className={styles.headline} data-allocated={seat ? 'true' : 'false'}>
       <p className={styles.mark}>
-        <Icon icon={seat ? CircleCheck : Hourglass} />
+        <Icon icon={seat ? CircleCheck : Hourglass} size={20} />
         <span>{seat ? 'You have a seat' : 'No seat this round'}</span>
       </p>
       {seat ? (
@@ -154,7 +150,7 @@ function ResultCard({ result }: { result: StudentAllocationResult }) {
   const { course, score } = explanation;
 
   return (
-    <article className={styles.card} data-outcome={result.outcome}>
+    <article className={styles.card}>
       <header className={styles.cardHeader}>
         <h3 className={styles.cardTitle}>
           <CourseCode code={course.code} size="sm" /> {course.name}

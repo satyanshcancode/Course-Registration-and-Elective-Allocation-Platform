@@ -1,14 +1,12 @@
 /*
  * A queue reads like a posted list: the place in line first, then the numbers
- * that explain it. Same card as the results page, one section per state.
+ * that explain it. One card per state, a hairline between courses. The shell
+ * supplies the page's width and side padding.
  */
 .body {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .skeleton {
@@ -16,19 +14,9 @@
   gap: var(--space-3);
 }
 
-.section {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.heading {
-  padding-bottom: var(--space-2);
-  border-bottom: var(--border-hairline);
-  font-size: var(--text-md);
-}
-
 .lead {
   max-width: 68ch;
+  margin-bottom: var(--space-4);
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
@@ -36,26 +24,23 @@
 
 .list {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.card {
+.item + .item {
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
+.row {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
 }
 
-.card[data-ended='true'] {
-  border-color: var(--color-rule-strong);
-}
-
-.cardHeader {
+.rowHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -63,12 +48,12 @@
   gap: var(--space-2);
 }
 
-.cardTitle {
+.rowTitle {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   line-height: var(--leading-snug);
 }
 
@@ -83,6 +68,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-5);
+  margin: 0;
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
@@ -90,12 +76,16 @@
 .facts dt {
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 0;
+  margin-block-start: var(--space-1);
+  font-weight: var(--weight-semibold);
 }
 
 @media (width < 40rem) {
-  .cardHeader {
+  .rowHeader {
     flex-direction: column;
     align-items: start;
   }

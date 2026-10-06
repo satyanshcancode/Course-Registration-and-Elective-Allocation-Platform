@@ -1,14 +1,12 @@
 /*
  * The result reads like a posted notice: the outcome first and large, then
- * the reasoning underneath in the registrar's own words.
+ * the reasoning underneath in the registrar's own words. The shell supplies the
+ * page's width and side padding.
  */
 .body {
   display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .skeleton {
@@ -16,32 +14,28 @@
   gap: var(--space-3);
 }
 
+/* The tint carries the mood; the icon and the words carry the meaning. */
 .headline {
   display: grid;
   gap: var(--space-2);
-  max-width: var(--layout-narrow);
-  padding: var(--space-5);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
 }
 
 .headline[data-allocated='true'] {
-  border-color: var(--color-success);
+  background-color: var(--color-success-soft);
 }
 
 .headline[data-allocated='false'] {
-  border-color: var(--color-warning);
+  background-color: var(--color-warning-soft);
 }
 
 .mark {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
 }
 
 .headline[data-allocated='true'] .mark {
@@ -62,40 +56,29 @@
 }
 
 .headlineNote {
+  max-width: 60ch;
   color: var(--color-ink-muted);
   line-height: var(--leading-body);
 }
 
-.list {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.heading {
-  padding-bottom: var(--space-2);
-  border-bottom: var(--border-hairline);
-  font-size: var(--text-md);
-}
-
+/* ---- Every course ranked -------------------------------------------------- */
 .results {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* A hairline between courses rather than a box round each: the card is the box. */
+.item + .item {
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
 .card {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-}
-
-.card[data-outcome='ALLOCATED'] {
-  border-color: var(--color-success);
 }
 
 .cardHeader {
@@ -111,7 +94,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   line-height: var(--leading-snug);
 }
 
@@ -125,13 +108,15 @@
 }
 
 .breakdown {
-  padding-top: var(--space-2);
-  border-top: var(--border-hairline);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
   font-size: var(--text-sm);
 }
 
 .breakdown summary {
   color: var(--color-accent);
+  font-weight: var(--weight-medium);
   cursor: pointer;
 }
 

@@ -5,7 +5,16 @@ import {
   type AddDropProblem,
   type AddDropView,
 } from '@course-reg/shared';
-import { ArrowLeftRight, Hourglass, Lock, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  GraduationCap,
+  Hourglass,
+  ListOrdered,
+  Lock,
+  Plus,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import { useMemo, useState, type MouseEvent } from 'react';
 import {
   addCourse,
@@ -16,7 +25,9 @@ import {
   swapCourse,
 } from '../../../api/addDropApi';
 import { unwrap } from '../../../api/unwrap';
+import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
+import { Card } from '../../../components/Card';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { Checkbox } from '../../../components/Checkbox';
 import { CourseCode } from '../../../components/CourseCode';
@@ -212,7 +223,6 @@ export function AddDropPage() {
     <>
       <PageHeader
         title="Add or drop a course"
-        kicker={view?.window ? `${view.window.name} · Add/drop` : 'Add/drop'}
         description="Change your enrolment while the add/drop period is open."
         actions={
           view?.period.open ? (
@@ -295,17 +305,18 @@ export function AddDropPage() {
               onDrop={openDropDialog}
             />
 
-            <section aria-labelledby="choices-heading" className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2 id="choices-heading" className={styles.heading}>
-                  {view.held ? 'Courses you could swap into' : 'Courses with a free seat'}
-                </h2>
+            <Card
+              title={view.held ? 'Courses you could swap into' : 'Courses with a free seat'}
+              titleIcon={view.held ? ArrowLeftRight : Plus}
+              headingLevel={2}
+              actions={
                 <SearchBar
                   label="Filter these courses"
                   placeholder="Course code or name"
                   onSearch={setSearch}
                 />
-              </div>
+              }
+            >
               <p className={styles.lead}>
                 Only courses you are eligible for are listed.{' '}
                 {view.held
@@ -323,7 +334,7 @@ export function AddDropPage() {
                 // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: every click comes from a real <button>, which handles the keyboard itself
                 <ul className={styles.list} onClick={onSurfaceClick}>
                   {filtered.available.map((course) => (
-                    <li key={course.code}>
+                    <li key={course.code} className={styles.item}>
                       <ChoiceCard
                         course={course}
                         seats={seats}
@@ -337,13 +348,10 @@ export function AddDropPage() {
                   ))}
                 </ul>
               )}
-            </section>
+            </Card>
 
             {filtered.full.length > 0 && (
-              <section aria-labelledby="full-heading" className={styles.section}>
-                <h2 id="full-heading" className={styles.heading}>
-                  Full courses
-                </h2>
+              <Card title="Full courses" titleIcon={Users} headingLevel={2}>
                 <p className={styles.lead}>
                   {view.held
                     ? 'A waitlist place is only offered to a student holding nothing, so drop your course first if you would rather wait for one of these.'
@@ -352,7 +360,7 @@ export function AddDropPage() {
                 {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: every click comes from a real <button>, which handles the keyboard itself */}
                 <ul className={styles.list} onClick={onSurfaceClick}>
                   {filtered.full.map((course) => (
-                    <li key={course.code}>
+                    <li key={course.code} className={styles.item}>
                       <ChoiceCard
                         course={course}
                         seats={seats}
@@ -365,21 +373,18 @@ export function AddDropPage() {
                     </li>
                   ))}
                 </ul>
-              </section>
+              </Card>
             )}
 
             {view.waiting.length > 0 && (
-              <section aria-labelledby="waiting-heading" className={styles.section}>
-                <h2 id="waiting-heading" className={styles.heading}>
-                  Waitlists you are on
-                </h2>
+              <Card title="Waitlists you are on" titleIcon={ListOrdered} headingLevel={2}>
                 {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- delegation only: every click comes from a real <button>, which handles the keyboard itself */}
                 <ul className={styles.list} onClick={onSurfaceClick}>
                   {view.waiting.map((entry) => (
-                    <li key={entry.course.code}>
-                      <article className={styles.card} data-tone="waiting">
-                        <header className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
+                    <li key={entry.course.code} className={styles.item}>
+                      <article className={styles.row}>
+                        <header className={styles.rowHeader}>
+                          <h3 className={styles.rowTitle}>
                             <CourseCode code={entry.course.code} size="sm" /> {entry.course.name}
                           </h3>
                           <StatusBadge
@@ -404,7 +409,7 @@ export function AddDropPage() {
                             </dd>
                           </div>
                         </dl>
-                        <div className={styles.cardActions}>
+                        <div className={styles.actions}>
                           <Button
                             variant="ghost"
                             iconStart={Trash2}
@@ -420,7 +425,7 @@ export function AddDropPage() {
                     </li>
                   ))}
                 </ul>
-              </section>
+              </Card>
             )}
           </>
         )}
@@ -522,18 +527,17 @@ function HeldSeat({
 
   const { held } = view;
   return (
-    <section aria-labelledby="held-heading" className={styles.section}>
-      <h2 id="held-heading" className={styles.heading}>
-        Your elective
-      </h2>
-      <article className={styles.card} data-tone="held">
-        <header className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>
-            <CourseCode code={held.course.code} size="sm" /> {held.course.name}
-          </h3>
-          <StatusBadge kind="enrollment" status="ACTIVE" />
-        </header>
-        <p className={styles.lead}>{describeHeldSeat(held)}</p>
+    <Card
+      title="Your elective"
+      titleIcon={GraduationCap}
+      titleAside={<StatusBadge kind="enrollment" status="ACTIVE" />}
+      headingLevel={2}
+    >
+      <div className={styles.held}>
+        <h3 className={styles.rowTitle}>
+          <CourseCode code={held.course.code} size="sm" /> {held.course.name}
+        </h3>
+        <p className={styles.hint}>{describeHeldSeat(held)}</p>
         <dl className={styles.facts}>
           <div>
             <dt>Credits</dt>
@@ -544,7 +548,7 @@ function HeldSeat({
             <dd>{describeChoice(held.preferenceRank)}</dd>
           </div>
         </dl>
-        <div className={styles.cardActions}>
+        <div className={styles.actions}>
           <Button variant="danger" iconStart={Trash2} onClick={onDrop} disabled={disabled}>
             Drop {held.course.code}
           </Button>
@@ -553,8 +557,8 @@ function HeldSeat({
             seat moves in one step.
           </p>
         </div>
-      </article>
-    </section>
+      </div>
+    </Card>
   );
 }
 
@@ -585,30 +589,30 @@ function ChoiceCard({
   const busy = inFlight;
 
   return (
-    <article className={styles.card} data-tone={available > 0 ? 'open' : 'full'}>
-      <header className={styles.cardHeader}>
-        <h3 className={styles.cardTitle}>
-          <CourseCode code={course.code} size="sm" /> {course.name}
-        </h3>
-        {course.preferenceRank !== null && (
-          <span className={styles.ranked}>
-            You ranked this {describeChoice(course.preferenceRank)}
-          </span>
+    <article className={styles.choice}>
+      <div className={styles.row}>
+        <header className={styles.rowHeader}>
+          <h3 className={styles.rowTitle}>
+            <CourseCode code={course.code} size="sm" /> {course.name}
+          </h3>
+          {course.preferenceRank !== null && (
+            <Badge tone="accent">You ranked this {describeChoice(course.preferenceRank)}</Badge>
+          )}
+        </header>
+
+        <SeatMeter allocated={allocated} capacity={capacity} label={`Seats in ${course.code}`} />
+
+        {course.waiting > 0 && (
+          <p className={styles.queueNote}>
+            {course.waiting} {course.waiting === 1 ? 'student is' : 'students are'} waiting for this
+            course.
+          </p>
         )}
-      </header>
 
-      <SeatMeter allocated={allocated} capacity={capacity} label={`Seats in ${course.code}`} />
+        {problem && <p className={styles.problem}>{describeProblem(problem)}</p>}
+      </div>
 
-      {course.waiting > 0 && (
-        <p className={styles.queueNote}>
-          {course.waiting} {course.waiting === 1 ? 'student is' : 'students are'} waiting for this
-          course.
-        </p>
-      )}
-
-      {problem && <p className={styles.problem}>{describeProblem(problem)}</p>}
-
-      <div className={styles.cardActions}>
+      <div className={styles.actions}>
         {available > 0 ? (
           held ? (
             <Button

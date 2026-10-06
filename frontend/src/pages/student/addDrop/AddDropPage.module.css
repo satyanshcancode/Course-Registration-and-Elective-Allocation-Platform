@@ -1,15 +1,12 @@
 /*
  * Add/drop reads as one column of decisions: the period first, then the seat
- * you hold, then what you could move to. Same card as the waitlist and results
- * pages; the left rule carries the tone and the words carry the meaning.
+ * you hold, then what you could move to. One card per decision, a hairline
+ * between courses. The shell supplies the page's width and side padding.
  */
 .body {
   display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .skeleton {
@@ -27,15 +24,16 @@
   white-space: nowrap;
 }
 
+/* Information, not an alarm: the same banner the cart uses for its notes. */
 .period {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-info-soft);
+  color: var(--color-info);
   font-size: var(--text-sm);
 }
 
@@ -46,51 +44,36 @@
   gap: var(--space-2);
   padding: var(--space-4);
   border: 1px solid var(--color-warning);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-sunken);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-warning-soft);
 }
 
 .raceTitle {
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
 }
 
 .raceBody,
 .retryNote {
   max-width: 60ch;
-  color: var(--color-ink-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
+}
+
+.raceBody {
+  color: var(--color-ink-muted);
 }
 
 .retryNote {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-warning);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-}
-
-.section {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.sectionHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.heading {
-  flex: 1 1 18ch;
-  padding-bottom: var(--space-2);
-  border-bottom: var(--border-hairline);
-  font-size: var(--text-md);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-warning-soft);
+  color: var(--color-ink);
 }
 
 .lead {
   max-width: 68ch;
+  margin-bottom: var(--space-4);
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
@@ -98,35 +81,33 @@
 
 .list {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.card {
+.item + .item {
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
+/* ---- A course ------------------------------------------------------------- */
+.row,
+.held {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
 }
 
-.card[data-tone='held'] {
-  border-color: var(--color-accent);
+/* What the course is on the left; what can be done about it on the right. */
+.choice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
 }
 
-.card[data-tone='open'] {
-  border-color: var(--color-success);
-}
-
-.card[data-tone='full'],
-.card[data-tone='waiting'] {
-  border-color: var(--color-warning);
-}
-
-.cardHeader {
+.rowHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -134,20 +115,13 @@
   gap: var(--space-2);
 }
 
-.cardTitle {
+.rowTitle {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   line-height: var(--leading-snug);
-}
-
-.ranked {
-  color: var(--color-ink-muted);
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
 }
 
 .queueNote,
@@ -165,7 +139,7 @@
   color: var(--color-danger);
 }
 
-.cardActions {
+.actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -190,6 +164,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-5);
+  margin: 0;
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
@@ -197,8 +172,12 @@
 .facts dt {
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 0;
+  margin-block-start: var(--space-1);
+  font-weight: var(--weight-semibold);
 }
 
 .checkbox {
@@ -206,14 +185,12 @@
 }
 
 @media (width < 40rem) {
-  .cardHeader,
-  .sectionHeader {
+  .rowHeader {
     flex-direction: column;
-    align-items: stretch;
+    align-items: start;
   }
 
-  /* Stacked, the heading must not grow: its flex basis is vertical here. */
-  .heading {
-    flex: none;
+  .choice {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

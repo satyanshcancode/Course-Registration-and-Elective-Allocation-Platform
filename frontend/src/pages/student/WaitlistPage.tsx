@@ -1,7 +1,8 @@
 import type { StudentWaitlist, StudentWaitlistEntry } from '@course-reg/shared';
-import { Hourglass } from 'lucide-react';
+import { Archive, Hourglass } from 'lucide-react';
 import { getMyWaitlist } from '../../api/waitlistApi';
 import { unwrap } from '../../api/unwrap';
+import { Card } from '../../components/Card';
 import { CourseCode } from '../../components/CourseCode';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
@@ -34,7 +35,6 @@ export function WaitlistPage() {
     <>
       <PageHeader
         title="Waitlist"
-        kicker={data?.window ? `${data.window.name} · Waitlist` : 'Waitlist'}
         description="Your place in line for courses that were full, and what happens when a seat frees up."
         actions={
           data && data.waiting.length > 0 ? (
@@ -88,34 +88,28 @@ function Queues({ data, seats }: { data: StudentWaitlist; seats: ReturnType<type
   return (
     <>
       {data.waiting.length > 0 && (
-        <section aria-labelledby="waiting-heading" className={styles.section}>
-          <h2 id="waiting-heading" className={styles.heading}>
-            Waiting for a seat
-          </h2>
+        <Card title="Waiting for a seat" titleIcon={Hourglass} headingLevel={2}>
           <p className={styles.lead}>{describeUpgrade(data.held)}</p>
           <ol className={styles.list}>
             {data.waiting.map((entry) => (
-              <li key={entry.course.code}>
+              <li key={entry.course.code} className={styles.item}>
                 <WaitingCard entry={entry} seats={seats} />
               </li>
             ))}
           </ol>
-        </section>
+        </Card>
       )}
 
       {data.ended.length > 0 && (
-        <section aria-labelledby="ended-heading" className={styles.section}>
-          <h2 id="ended-heading" className={styles.heading}>
-            No longer waiting
-          </h2>
+        <Card title="No longer waiting" titleIcon={Archive} headingLevel={2}>
           <ul className={styles.list}>
             {data.ended.map((entry) => (
-              <li key={entry.course.code}>
+              <li key={entry.course.code} className={styles.item}>
                 <EndedCard entry={entry} />
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
     </>
   );
@@ -133,9 +127,9 @@ function WaitingCard({
   const allocated = latest?.allocated ?? entry.allocated;
 
   return (
-    <article className={styles.card}>
-      <header className={styles.cardHeader}>
-        <h3 className={styles.cardTitle}>
+    <article className={styles.row}>
+      <header className={styles.rowHeader}>
+        <h3 className={styles.rowTitle}>
           <CourseCode code={entry.course.code} size="sm" /> {entry.course.name}
         </h3>
         <StatusBadge
@@ -171,9 +165,9 @@ function WaitingCard({
 
 function EndedCard({ entry }: { entry: StudentWaitlistEntry }) {
   return (
-    <article className={styles.card} data-ended="true">
-      <header className={styles.cardHeader}>
-        <h3 className={styles.cardTitle}>
+    <article className={styles.row}>
+      <header className={styles.rowHeader}>
+        <h3 className={styles.rowTitle}>
           <CourseCode code={entry.course.code} size="sm" /> {entry.course.name}
         </h3>
         <StatusBadge kind="waitlist" status={entry.status} />
