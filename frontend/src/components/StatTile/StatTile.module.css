@@ -56,6 +56,9 @@
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.05;
+  /* A figure that wraps stops being one figure. A tile whose value does not
+     fit wants a shorter value, not a second line. */
+  white-space: nowrap;
 }
 
 .label {

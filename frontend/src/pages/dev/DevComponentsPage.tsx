@@ -443,7 +443,7 @@ export function DevComponentsPage() {
             />
           </div>
         </Specimen>
-        <Specimen label="Course artwork, generated per department and course">
+        <Specimen label="Course photographs, picked by hashing the course code">
           <div className={styles.artwork}>
             <CoursePhoto code="CS401" />
             <CoursePhoto code="CS402" />

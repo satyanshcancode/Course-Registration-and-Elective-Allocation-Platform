@@ -18,6 +18,8 @@
 }
 
 .record {
+  /* The target sets the labels almost against the card's title. */
+  margin-top: calc(-1 * var(--space-2));
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: var(--space-4) var(--space-5);
