@@ -266,6 +266,11 @@ export function StudentDashboardPage() {
             title="Registration window"
             icon={CalendarDays}
             state={windowState}
+            titleAside={
+              windowSummary ? (
+                <StatusBadge kind="window" status={windowSummary.status} />
+              ) : undefined
+            }
             onRetry={() => {
               registration?.retry();
             }}
@@ -376,16 +381,13 @@ function WindowTimeline({ window, clock }: { window: RegistrationWindowSummary; 
   const current = windowStepIndex(window, clock);
   return (
     <div className={styles.window}>
-      <p className={styles.windowLine}>
-        <span className={styles.windowName}>{window.name}</span>
-        <StatusBadge kind="window" status={window.status} />
-      </p>
+      <p className={styles.windowName}>{window.name}</p>
       <dl className={styles.schedule}>
-        <div>
+        <div className={styles.scheduleItem}>
           <dt>Opens</dt>
           <dd>{formatDateTime(window.startsAt)}</dd>
         </div>
-        <div>
+        <div className={styles.scheduleItem}>
           <dt>Closes</dt>
           <dd>{formatDateTime(window.endsAt)}</dd>
         </div>
@@ -490,7 +492,7 @@ function EligibilityStatus({ overview }: { overview: EligibilityOverview }) {
   const { eligibleCount, totalCount } = overview.summary;
   return (
     <div className={styles.eligibility}>
-      <ProgressRing value={eligibleCount} max={totalCount} label="courses" />
+      <ProgressRing value={eligibleCount} max={totalCount} label="courses" size={120} />
       <div className={styles.eligibilityText}>
         <p className={styles.count}>
           You’re eligible for {eligibleCount} of {totalCount} courses
@@ -500,7 +502,7 @@ function EligibilityStatus({ overview }: { overview: EligibilityOverview }) {
           {overview.student.creditsCompleted} credits and {overview.student.completedCourses.length}{' '}
           passed courses.
         </p>
-        <LinkButton to="/student/eligibility" size="sm" iconStart={ScanSearch}>
+        <LinkButton to="/student/eligibility" size="sm" iconStart={ScanSearch} iconEnd={ArrowRight}>
           Run full pre-check
         </LinkButton>
       </div>
@@ -538,17 +540,29 @@ interface SectionProps<T> {
   title: string;
   icon: LucideIcon;
   state: AsyncState<T>;
+  /** A badge beside the title: what the card is about, not an action. */
+  titleAside?: ReactNode;
+  /** A link or button aligned with the title. */
   action?: ReactNode;
   onRetry: () => void;
   children: (data: T) => ReactNode;
 }
 
 /** One dashboard card with its own loading, error-with-retry and success states. */
-function Section<T>({ title, icon, state, action, onRetry, children }: SectionProps<T>) {
+function Section<T>({
+  title,
+  icon,
+  state,
+  titleAside,
+  action,
+  onRetry,
+  children,
+}: SectionProps<T>) {
   return (
     <Card
       title={title}
       titleIcon={icon}
+      titleAside={state.status === 'success' ? titleAside : undefined}
       headingLevel={2}
       actions={state.status === 'success' ? action : undefined}
     >
