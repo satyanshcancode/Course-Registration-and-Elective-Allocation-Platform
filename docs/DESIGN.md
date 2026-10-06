@@ -480,3 +480,33 @@ Checked against the banned list: none found on any page. No page scrolls
 sideways at either width or theme — wide tables scroll inside their own
 keyboard-focusable region. Status is never colour alone anywhere: every badge
 carries an icon and words, and every seat meter prints its numbers.
+
+### v1.6: measured against the target, light only
+
+Every page redrawn from `scripts/measure-target.py`'s numbers rather than from
+an impression of the image, and compared with `scripts/compare-target.py` over
+three rounds. Four screens have a quadrant to be measured against; the other
+twenty-five are held to the same system.
+
+| Screen      | Round 1 | Round 3 |
+| ----------- | ------- | ------- |
+| Dashboard   | 12.0%   | 11.1%   |
+| Catalogue   | 23.2%   | 22.1%   |
+| Eligibility | 12.1%   | 12.3%   |
+| My cart     | —       | 11.2%   |
+
+The score is the share of pixels differing by more than 32/255. It does not
+reach zero and should not: the app draws the demo database and the target drew
+a story, so a different greeting, a different countdown, three activity rows
+instead of two and twelve different photographs all count as differences. The
+catalogue's larger share is almost entirely its photographs.
+
+What the rounds actually fixed: the sidebar from 248 to 292px and the header
+from 64 to 81; card titles from serif to a bold grotesque; the stat figure
+from 28 to 32px and the navigation label from 17 to 20; the seat matrix to a
+bar; generated artwork to photographs; the course card's "⋮"; two lines per
+activity row; the cart's table down to one line a course; and the three
+colours that had to be darkened to clear AA.
+
+Dark mode was deleted outright in this round — tokens, media queries, the
+screenshot pass and the tests.

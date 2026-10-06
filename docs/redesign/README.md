@@ -16,9 +16,9 @@ scaled to 760px, which makes one target pixel 1.895 CSS pixels.
 
 ### Two scripts, so nothing is eyeballed
 
-| Script | What it does |
-| --- | --- |
-| [`scripts/measure-target.py`](../../scripts/measure-target.py) | Finds the four screens, samples the colours that cover each one, and measures the structure. Every number is reported as 1440-viewport pixels. `--json` for the machine-readable form. |
+| Script                                                         | What it does                                                                                                                                                                                                  |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`scripts/measure-target.py`](../../scripts/measure-target.py) | Finds the four screens, samples the colours that cover each one, and measures the structure. Every number is reported as 1440-viewport pixels. `--json` for the machine-readable form.                        |
 | [`scripts/compare-target.py`](../../scripts/compare-target.py) | Scales each screenshot to its screen's width, crops both to the height they share, and writes a side-by-side, a difference heatmap and a red/cyan overlay into [`compare/`](compare/), with a score per page. |
 
 Both need Pillow and numpy (`pip install pillow numpy`), and the comparison
