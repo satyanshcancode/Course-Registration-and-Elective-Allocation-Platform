@@ -46,3 +46,12 @@
   font-size: var(--text-2xs);
   line-height: 1.6;
 }
+
+/* A phone header has room for the wordmark, the bell and the account menu and
+   nothing else. The catalogue carries its own search box, which is where
+   someone on a phone is going anyway. */
+@media (width < 40rem) {
+  .form {
+    display: none;
+  }
+}

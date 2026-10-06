@@ -265,8 +265,10 @@
 
   /* The search needs the whole width it can get; the wordmark drops its
      office line (Wordmark's own `compact`) and the tools stay. */
+  /* The search hides itself at this width (GlobalSearch), so the wordmark
+     takes the room it leaves. */
   .header {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-2);
     padding-inline: var(--space-3);
   }

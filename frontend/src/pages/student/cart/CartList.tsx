@@ -75,7 +75,15 @@ export function CartList({
   const ranks = items.map((_, index) => ({ value: String(index + 1), label: String(index + 1) }));
 
   return (
-    <div className={styles.tableWrap}>
+    <div
+      className={styles.tableWrap}
+      role="region"
+      aria-label="Your ranked choices"
+      // Focusable so keyboard users can scroll a table wider than the screen
+      // (WCAG 2.1.1; axe rule scrollable-region-focusable).
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+    >
       <table className={styles.table}>
         <caption className="visually-hidden">
           Your ranked choices, first choice first. Change a course’s Priority to move it.
