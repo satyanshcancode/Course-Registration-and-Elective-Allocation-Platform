@@ -26,7 +26,11 @@ export function NotFoundPage({ centred = false }: NotFoundPageProps) {
 
   return (
     <div className={styles.page} data-centred={centred || undefined}>
-      <PageHeader title="Page not found" kicker="Error 404" sticky={false} />
+      <PageHeader
+        title="Page not found"
+        description="Error 404: that address does not match any page."
+        sticky={false}
+      />
       <div className={styles.body}>
         <EmptyState
           title="There’s no page at this address"

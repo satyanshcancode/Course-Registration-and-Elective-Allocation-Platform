@@ -1,5 +1,5 @@
 import { assessPassword, type ActivationCheck } from '@course-reg/shared';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Link2Off, UserCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router';
 import { activateAccount, checkActivationToken, resetPassword } from '../../api/accountApi';
@@ -23,14 +23,14 @@ export interface ActivatePageProps {
 
 const WORDS = {
   activate: {
-    kicker: 'Welcome',
+    icon: UserCheck,
     title: 'Set your password',
     lead: 'Choose a password and you will be signed in straight away.',
     submit: 'Set password and sign in',
     submitting: 'Setting your password…',
   },
   reset: {
-    kicker: 'Account recovery',
+    icon: KeyRound,
     title: 'Choose a new password',
     lead: 'Setting a new password signs you out on every other device.',
     submit: 'Save password and sign in',
@@ -114,7 +114,7 @@ export function ActivatePage({ mode }: ActivatePageProps) {
 
   if (check.status !== 'success' && check.status !== 'error') {
     return (
-      <AuthPanel kicker={words.kicker} title={words.title}>
+      <AuthPanel icon={words.icon} title={words.title}>
         <div className={styles.loading} aria-busy="true">
           <Skeleton width="60%" />
           <Skeleton width="100%" />
@@ -131,7 +131,7 @@ export function ActivatePage({ mode }: ActivatePageProps) {
   if (check.status === 'error' || !verdict?.valid) {
     return (
       <AuthPanel
-        kicker={words.kicker}
+        icon={Link2Off}
         title="That link is no longer usable"
         error={
           check.status === 'error'
@@ -160,7 +160,7 @@ export function ActivatePage({ mode }: ActivatePageProps) {
 
   return (
     <AuthPanel
-      kicker={words.kicker}
+      icon={words.icon}
       title={words.title}
       lead={words.lead}
       error={serverError}

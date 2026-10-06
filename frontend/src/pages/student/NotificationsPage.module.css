@@ -1,15 +1,18 @@
 /*
- * An inbox as a posted list, not a feed: a hairline rule between messages, an
- * unread one marked by a heavier left edge AND the word "Unread", never by
+ * An inbox inside one card: messages are ruled apart by hairlines, each with
+ * the same tinted icon tile as the dashboard's recent activity. An unread
+ * message has a badge that says so, and a filled tile, so it never rests on
  * colour alone.
  */
 .body {
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  padding-block: var(--space-2) var(--space-5);
+}
+
+.content {
+  display: grid;
+  gap: var(--space-4);
 }
 
 .filters {
@@ -47,45 +50,36 @@
 
 .list {
   display: grid;
-  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.list > li + li {
+  border-top: var(--border-hairline);
+}
+
 .message {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  border: var(--border-hairline);
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-}
-
-.message[data-unread='true'] {
-  border-color: var(--color-accent);
-}
-
-.state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+  background-color: var(--color-surface-sunken);
   color: var(--color-ink-muted);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.message[data-unread='true'] .state {
+.message[data-unread='true'] .tile {
+  background-color: var(--color-accent-soft);
   color: var(--color-accent);
-  font-weight: var(--weight-semibold);
-}
-
-.stateLabel {
-  padding-top: 1px;
 }
 
 .text {
@@ -94,15 +88,18 @@
   min-width: 0;
 }
 
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .title {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
-}
-
-.message[data-unread='true'] .title {
-  font-weight: var(--weight-semibold);
 }
 
 .bodyText {
@@ -132,12 +129,12 @@
 
 @media (width < 40rem) {
   .message {
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   /* Stacked, the action would otherwise centre itself across the row. */
   .message > button {
+    grid-column: 2;
     justify-self: start;
     margin-left: calc(-1 * var(--space-2));
   }

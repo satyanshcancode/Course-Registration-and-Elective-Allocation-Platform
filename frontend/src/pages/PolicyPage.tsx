@@ -1,3 +1,21 @@
+import {
+  Activity,
+  Archive,
+  Cookie,
+  Database,
+  Eye,
+  FileText,
+  Info,
+  ListChecks,
+  Mail,
+  Scale,
+  Target,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Card } from '../components/Card';
+import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import styles from './PolicyPage.module.css';
@@ -26,7 +44,6 @@ export function PolicyPage({ kind }: PolicyPageProps) {
     <div className={styles.page}>
       <PageHeader
         title={isPrivacy ? 'Privacy' : 'Terms of use'}
-        kicker="Allocademy"
         description={
           isPrivacy
             ? 'What this service stores about you, why it stores it, and who can see it.'
@@ -37,9 +54,12 @@ export function PolicyPage({ kind }: PolicyPageProps) {
 
       <div className={styles.body}>
         <p className={styles.template}>
-          <strong>This is a template.</strong> It describes what the software actually does. Before
-          anyone relies on it, the university must add its own data controller, how long it keeps
-          registration records, which law applies and how to raise a complaint.
+          <Icon icon={Info} className={styles.templateIcon} />
+          <span>
+            <strong>This is a template.</strong> It describes what the software actually does.
+            Before anyone relies on it, the university must add its own data controller, how long it
+            keeps registration records, which law applies and how to raise a complaint.
+          </span>
         </p>
 
         {isPrivacy ? <PrivacyContent /> : <TermsContent />}
@@ -51,8 +71,7 @@ export function PolicyPage({ kind }: PolicyPageProps) {
 function PrivacyContent() {
   return (
     <>
-      <section aria-labelledby="what">
-        <h2 id="what">What is stored</h2>
+      <PolicySection title="What is stored" icon={Database}>
         <p>
           Your account holds your name, university e-mail address and roll number, and a one-way
           hash of your password. The password itself is never stored and cannot be recovered from
@@ -69,19 +88,17 @@ function PrivacyContent() {
           submitted, the seat or waitlist place you were given, the reasoning behind it, and every
           later change you made during add/drop.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="why">
-        <h2 id="why">Why it is stored</h2>
+      <PolicySection title="Why it is stored" icon={Target}>
         <p>
           To decide, and to be able to explain, who gets a seat. An allocation run stores the exact
           input it used so the result can be re-checked later. That is what makes it possible to
           answer &ldquo;why did I not get in?&rdquo; with a real reason rather than an apology.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="who">
-        <h2 id="who">Who can see it</h2>
+      <PolicySection title="Who can see it" icon={Eye}>
         <p>
           You can see all of your own record and your own results. Other students cannot see any
           part of it. Results pages are built from your own rows only, and never name another
@@ -92,10 +109,9 @@ function PrivacyContent() {
           Their actions are written to an audit log: who did what, when, and what the value was
           before and after.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="kept">
-        <h2 id="kept">How long it is kept</h2>
+      <PolicySection title="How long it is kept" icon={Archive}>
         <p>
           Nothing is deleted. An account is deactivated rather than removed and a course is retired
           rather than deleted, because submissions, enrolments and past allocation results all refer
@@ -105,25 +121,23 @@ function PrivacyContent() {
           The university should state here how long it retains registration records, and what
           happens to them when a student graduates or leaves.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="email">
-        <h2 id="email">E-mail</h2>
+      <PolicySection title="E-mail" icon={Mail}>
         <p>
           The service sends you e-mail for two reasons only: to invite you to set up your account,
           and to let you reset a forgotten password. Those links work once and expire. There is no
           marketing e-mail.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="cookies">
-        <h2 id="cookies">Cookies</h2>
+      <PolicySection title="Cookies" icon={Cookie}>
         <p>
           One cookie, which keeps you signed in for eight hours. It cannot be read by JavaScript and
           is not sent to any other site. There is no analytics, advertising or third-party tracking
           of any kind.
         </p>
-      </section>
+      </PolicySection>
     </>
   );
 }
@@ -131,17 +145,15 @@ function PrivacyContent() {
 function TermsContent() {
   return (
     <>
-      <section aria-labelledby="account">
-        <h2 id="account">Your account</h2>
+      <PolicySection title="Your account" icon={UserRound}>
         <p>
           The registrar creates your account; you cannot register yourself. Your sign-in is yours
           alone. Do not share your password, and tell the registrar if you think someone else has
           used your account.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="fair">
-        <h2 id="fair">How a seat is decided</h2>
+      <PolicySection title="How a seat is decided" icon={Scale}>
         <p>
           Submitting early gives you no advantage. Every submitted cart is collected first, and
           seats are decided afterwards, once, for everyone at the same time.
@@ -155,33 +167,47 @@ function TermsContent() {
           You will be told the reasoning behind your own result: your score, how it was made up, and
           what the last seat went for.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="expect">
-        <h2 id="expect">What is expected of you</h2>
+      <PolicySection title="What is expected of you" icon={ListChecks}>
         <p>
           Rank only courses you intend to take. Automated or repeated submissions are rate limited,
           and attempting to work around that is a misuse of the service. If your academic record is
           wrong, ask the registrar to correct it rather than working around it.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="availability">
-        <h2 id="availability">Availability</h2>
+      <PolicySection title="Availability" icon={Activity}>
         <p>
           The service is provided as it is, for the registration period the university runs it for.
           Seat counts shown while a window is open are live but can change between the moment you
           read them and the moment you submit, which is why a submission is never a reservation.
         </p>
-      </section>
+      </PolicySection>
 
-      <section aria-labelledby="changes">
-        <h2 id="changes">Changes</h2>
+      <PolicySection title="Changes" icon={FileText}>
         <p>
           The university should state here how it will tell students about changes to these terms,
           and who to contact with a question or a complaint about a registration decision.
         </p>
-      </section>
+      </PolicySection>
     </>
+  );
+}
+
+/** One topic of a policy, in the same card the rest of the product uses. */
+function PolicySection({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: LucideIcon;
+  children: ReactNode;
+}) {
+  return (
+    <Card title={title} titleIcon={icon} headingLevel={2}>
+      <div className={styles.prose}>{children}</div>
+    </Card>
   );
 }

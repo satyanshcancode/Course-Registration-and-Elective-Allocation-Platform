@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react';
+import { KeyRound, Mail, MailCheck } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { Link } from 'react-router';
 import { requestPasswordReset } from '../../api/accountApi';
@@ -69,7 +69,7 @@ export function ForgotPasswordPage() {
   if (sent !== null) {
     return (
       <AuthPanel
-        kicker="Account recovery"
+        icon={MailCheck}
         title="Check your inbox"
         notice={sent}
         footer={
@@ -91,7 +91,7 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthPanel
-      kicker="Account recovery"
+      icon={KeyRound}
       title="Forgot your password?"
       lead="Enter your university e-mail address and we will send you a link to choose a new password."
       error={serverError}

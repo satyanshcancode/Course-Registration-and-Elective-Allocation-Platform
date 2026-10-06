@@ -4,7 +4,7 @@ import {
   type NotificationItem,
   type NotificationType,
 } from '@course-reg/shared';
-import { Bell, BellOff, Check, Circle } from 'lucide-react';
+import { Bell, BellDot, BellOff, Check, Circle, Inbox } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
@@ -13,7 +13,9 @@ import {
   markNotificationRead,
 } from '../../api/activityApi';
 import { unwrap } from '../../api/unwrap';
+import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Icon } from '../../components/Icon';
@@ -135,7 +137,6 @@ export function NotificationsPage() {
     <>
       <PageHeader
         title="Notifications"
-        kicker="Your record"
         description="Messages about your registration, newest first."
         actions={
           unread > 0 ? (
@@ -152,79 +153,88 @@ export function NotificationsPage() {
       />
 
       <div className={styles.body}>
-        <div className={styles.filters} role="group" aria-label="Show">
-          {NOTIFICATION_FILTERS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={styles.filter}
-              aria-pressed={filter === option}
-              onClick={() => {
-                setParams(
-                  (current) => {
-                    const next = new URLSearchParams(current);
-                    if (option === 'all') {
-                      next.delete('filter');
-                    } else {
-                      next.set('filter', option);
-                    }
-                    return next;
-                  },
-                  { replace: true },
-                );
-              }}
-            >
-              {option === 'unread' ? 'Unread' : 'All'}
-            </button>
-          ))}
-        </div>
+        <Card
+          title="Inbox"
+          titleIcon={Inbox}
+          headingLevel={2}
+          actions={
+            <div className={styles.filters} role="group" aria-label="Show">
+              {NOTIFICATION_FILTERS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={styles.filter}
+                  aria-pressed={filter === option}
+                  onClick={() => {
+                    setParams(
+                      (current) => {
+                        const next = new URLSearchParams(current);
+                        if (option === 'all') {
+                          next.delete('filter');
+                        } else {
+                          next.set('filter', option);
+                        }
+                        return next;
+                      },
+                      { replace: true },
+                    );
+                  }}
+                >
+                  {option === 'unread' ? 'Unread' : 'All'}
+                </button>
+              ))}
+            </div>
+          }
+        >
+          <div className={styles.content}>
+            {state.status === 'error' && (
+              <ErrorMessage
+                title="Your notifications couldn’t be loaded"
+                message={state.message}
+                onRetry={retry}
+              />
+            )}
 
-        {state.status === 'error' && (
-          <ErrorMessage
-            title="Your notifications couldn’t be loaded"
-            message={state.message}
-            onRetry={retry}
-          />
-        )}
+            {(state.status === 'loading' || state.status === 'idle') && (
+              <div className={styles.skeleton} aria-hidden="true">
+                <Skeleton height="4.5rem" />
+                <Skeleton height="4.5rem" />
+                <Skeleton height="4.5rem" />
+              </div>
+            )}
 
-        {(state.status === 'loading' || state.status === 'idle') && (
-          <div className={styles.skeleton} aria-hidden="true">
-            <Skeleton height="4.5rem" />
-            <Skeleton height="4.5rem" />
-            <Skeleton height="4.5rem" />
+            {page && items.length === 0 && (
+              <EmptyState
+                title={filter === 'unread' ? 'Nothing unread' : 'No notifications yet'}
+                icon={filter === 'unread' ? BellOff : Bell}
+              >
+                <p>
+                  {filter === 'unread'
+                    ? 'You have read everything. Switch to "All" to look back over older messages.'
+                    : 'You’ll be told here when results are published or when a waitlisted seat becomes yours.'}
+                </p>
+              </EmptyState>
+            )}
+
+            {items.length > 0 && (
+              <ul className={styles.list}>
+                {items.map((item) => (
+                  <li key={item.id}>
+                    <Message item={item} onRead={markOne} />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {cursor && (
+              <div className={styles.more}>
+                <Button variant="secondary" onClick={() => void loadMore()} disabled={busy}>
+                  Load more
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-
-        {page && items.length === 0 && (
-          <EmptyState
-            title={filter === 'unread' ? 'Nothing unread' : 'No notifications yet'}
-            icon={filter === 'unread' ? BellOff : Bell}
-          >
-            <p>
-              {filter === 'unread'
-                ? 'You have read everything. Switch to "All" to look back over older messages.'
-                : 'You’ll be told here when results are published or when a waitlisted seat becomes yours.'}
-            </p>
-          </EmptyState>
-        )}
-
-        {items.length > 0 && (
-          <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={item.id}>
-                <Message item={item} onRead={markOne} />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {cursor && (
-          <div className={styles.more}>
-            <Button variant="secondary" onClick={() => void loadMore()} disabled={busy}>
-              Load more
-            </Button>
-          </div>
-        )}
+        </Card>
       </div>
     </>
   );
@@ -241,13 +251,17 @@ function Message({
   const destination = DESTINATIONS[item.type];
   return (
     <article className={styles.message} data-unread={isUnread}>
-      <p className={styles.state}>
-        {/* Icon AND text: unread is never carried by colour alone. */}
-        <Icon icon={isUnread ? Circle : Check} size={16} />
-        <span className={styles.stateLabel}>{isUnread ? 'Unread' : 'Read'}</span>
-      </p>
+      <span className={styles.tile} aria-hidden="true">
+        <Icon icon={isUnread ? BellDot : Bell} />
+      </span>
       <div className={styles.text}>
-        <h2 className={styles.title}>{item.title}</h2>
+        <div className={styles.head}>
+          <h3 className={styles.title}>{item.title}</h3>
+          {/* Icon AND text: unread is never carried by colour alone. */}
+          <Badge tone={isUnread ? 'accent' : 'neutral'} icon={isUnread ? Circle : Check}>
+            {isUnread ? 'Unread' : 'Read'}
+          </Badge>
+        </div>
         <p className={styles.bodyText}>{item.body}</p>
         <p className={styles.meta}>
           <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>

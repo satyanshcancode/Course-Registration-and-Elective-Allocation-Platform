@@ -4,7 +4,7 @@ import {
   type HistoryPage as HistoryPageData,
   type StudentStatus,
 } from '@course-reg/shared';
-import { History } from 'lucide-react';
+import { CalendarClock, History, UserCheck } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { getMyHistory, getMyStatus } from '../../api/activityApi';
 import { unwrap } from '../../api/unwrap';
@@ -100,7 +100,6 @@ export function HistoryPage() {
     <>
       <PageHeader
         title="Registration history"
-        kicker="Your record"
         description="Everything that has happened to your registration, newest first."
       />
 
@@ -112,44 +111,49 @@ export function HistoryPage() {
           onRetry={status.retry}
         />
 
-        <section aria-labelledby="timeline-heading" className={styles.timeline}>
-          <div className={styles.timelineHeader}>
-            <h2 id="timeline-heading" className={styles.heading}>
-              Timeline
-            </h2>
-            {page && <Filters page={page} filters={filters} setFilters={setFilters} />}
+        <Card
+          title="Timeline"
+          titleIcon={CalendarClock}
+          headingLevel={2}
+          actions={
+            page &&
+            page.types.length > 0 && (
+              <Filters page={page} filters={filters} setFilters={setFilters} />
+            )
+          }
+        >
+          <div className={styles.timeline}>
+            {first.state.status === 'error' && (
+              <ErrorMessage
+                title="Your history couldn’t be loaded"
+                message={first.state.message}
+                onRetry={first.retry}
+              />
+            )}
+
+            {(first.state.status === 'loading' || first.state.status === 'idle') && (
+              <div className={styles.skeleton} aria-hidden="true">
+                <Skeleton height="4rem" />
+                <Skeleton height="4rem" />
+                <Skeleton height="4rem" />
+              </div>
+            )}
+
+            {page && events.length === 0 && (
+              <NothingYet filtered={filters.type !== null || filters.course !== ''} />
+            )}
+
+            {events.length > 0 && <Days events={events} />}
+
+            {cursor && (
+              <div className={styles.more}>
+                <Button variant="secondary" onClick={() => void loadMore()} disabled={loadingMore}>
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </Button>
+              </div>
+            )}
           </div>
-
-          {first.state.status === 'error' && (
-            <ErrorMessage
-              title="Your history couldn’t be loaded"
-              message={first.state.message}
-              onRetry={first.retry}
-            />
-          )}
-
-          {(first.state.status === 'loading' || first.state.status === 'idle') && (
-            <div className={styles.skeleton} aria-hidden="true">
-              <Skeleton height="4rem" />
-              <Skeleton height="4rem" />
-              <Skeleton height="4rem" />
-            </div>
-          )}
-
-          {page && events.length === 0 && (
-            <NothingYet filtered={filters.type !== null || filters.course !== ''} />
-          )}
-
-          {events.length > 0 && <Days events={events} />}
-
-          {cursor && (
-            <div className={styles.more}>
-              <Button variant="secondary" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </Button>
-            </div>
-          )}
-        </section>
+        </Card>
       </div>
     </>
   );
@@ -168,7 +172,7 @@ function Standing({
   onRetry: () => void;
 }) {
   return (
-    <Card title="Where you stand" kicker="Right now" headingLevel={2}>
+    <Card title="Where you stand" titleIcon={UserCheck} headingLevel={2}>
       {(state === 'loading' || state === 'idle') && <Skeleton lines={3} />}
       {state === 'error' && (
         <ErrorMessage title="Your status couldn’t be loaded" message={message} onRetry={onRetry} />
@@ -259,9 +263,6 @@ function Filters({
   filters: ReturnType<typeof useHistoryFilters>['filters'];
   setFilters: ReturnType<typeof useHistoryFilters>['setFilters'];
 }) {
-  if (page.types.length === 0) {
-    return null;
-  }
   return (
     <div className={styles.filters}>
       <FormField label="Event">
@@ -325,17 +326,15 @@ function Event({ event }: { event: HistoryEvent }) {
   return (
     <article className={styles.event}>
       <span className={styles.marker} aria-hidden="true">
-        <Icon icon={historyEventIcon(type)} size={16} />
+        <Icon icon={historyEventIcon(type)} />
       </span>
       <div className={styles.eventText}>
-        <p className={styles.eventHead}>
-          <span className={styles.eventLabel}>{historyEventLabel(type)}</span>
-          <time dateTime={event.at} className={styles.eventTime} title={formatDateTime(event.at)}>
-            {formatTime(event.at)}
-          </time>
-        </p>
+        <p className={styles.eventLabel}>{historyEventLabel(type)}</p>
         <p className={styles.eventBody}>{describeHistoryEvent(event)}</p>
       </div>
+      <time dateTime={event.at} className={styles.eventTime} title={formatDateTime(event.at)}>
+        {formatTime(event.at)}
+      </time>
     </article>
   );
 }

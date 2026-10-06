@@ -1,10 +1,13 @@
+import type { LucideIcon } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
+import { Icon } from '../../components/Icon';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../../hooks/useFocusOnMount';
 import styles from './AuthPanel.module.css';
 
 export interface AuthPanelProps {
-  kicker: string;
+  /** A mark above the title, set in the same tinted tile the app's lists use. */
+  icon: LucideIcon;
   title: string;
   lead?: ReactNode;
   /**
@@ -20,23 +23,15 @@ export interface AuthPanelProps {
 }
 
 /**
- * The frame shared by the activation, reset and forgot-password pages: one
- * narrow card, the same heading structure, and one live region each for a
+ * The frame shared by the sign-in, activation, reset and forgot-password pages:
+ * one narrow card, the same heading structure, and one live region each for a
  * notice and an error.
  *
- * Extracted rather than copied so all three pages announce and focus the same
+ * Extracted rather than copied so all of them announce and focus the same
  * way — the heading takes focus on mount, as `PageHeader` does inside the app,
  * so a keyboard user lands on the page's name after navigating to it.
  */
-export function AuthPanel({
-  kicker,
-  title,
-  lead,
-  error,
-  notice,
-  children,
-  footer,
-}: AuthPanelProps) {
+export function AuthPanel({ icon, title, lead, error, notice, children, footer }: AuthPanelProps) {
   useDocumentTitle(title);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useFocusOnMount(headingRef);
@@ -44,7 +39,9 @@ export function AuthPanel({
   return (
     <div className={styles.layout}>
       <section className={styles.panel} aria-labelledby="auth-title">
-        <p className={styles.kicker}>{kicker}</p>
+        <span className={styles.mark} aria-hidden="true">
+          <Icon icon={icon} size={20} />
+        </span>
         <h1 id="auth-title" ref={headingRef} tabIndex={-1} className={styles.title}>
           {title}
         </h1>

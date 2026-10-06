@@ -6,8 +6,6 @@ import { Button } from '../../components/Button';
 import { FormField } from '../../components/FormField';
 import { Input } from '../../components/Input';
 import { useAuth } from '../../hooks/useAuth';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { useFocusOnMount } from '../../hooks/useFocusOnMount';
 import type { LoginNotice } from '../../types/auth';
 import { postLoginPath, readLoginLocationState } from '../../utils/authRedirects';
 import {
@@ -19,6 +17,7 @@ import {
   type LoginField,
   type LoginFormErrors,
 } from '../../validation/loginValidation';
+import { AuthPanel } from './AuthPanel';
 import styles from './LoginPage.module.css';
 
 const NOTICES: Record<LoginNotice, string> = {
@@ -29,7 +28,6 @@ const NOTICES: Record<LoginNotice, string> = {
 const INITIAL_VALUES: LoginRequest = { email: '', password: '' };
 
 export function LoginPage() {
-  useDocumentTitle('Sign in');
   const { state, login } = useAuth();
   const { from, notice } = readLoginLocationState(useLocation().state);
 
@@ -39,10 +37,8 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  useFocusOnMount(headingRef);
 
   // Already signed in, or just signed in: go to the requested page or home.
   if (state.status === 'authenticated') {
@@ -106,89 +102,75 @@ export function LoginPage() {
   };
 
   return (
-    <div className={styles.layout}>
-      <section className={styles.panel} aria-labelledby="login-title">
-        <p className={styles.kicker}>Students and registrar staff</p>
-        <h1 id="login-title" ref={headingRef} tabIndex={-1} className={styles.title}>
-          Sign in
-        </h1>
-        <p className={styles.lead}>
-          Use your university e-mail address and password. Accounts are created by the registrar. If
-          you have an invitation e-mail, open its link to set your password.
-        </p>
-
-        {notice && (
-          <p className={styles.notice} role="status">
-            {NOTICES[notice]}
-          </p>
-        )}
-
-        <div className={styles.alert} role="alert">
-          {serverError && <p>{serverError}</p>}
-        </div>
-
-        <form
-          className={styles.form}
-          onSubmit={(event) => {
-            void handleSubmit(event);
-          }}
-          noValidate
-        >
-          <FormField label="E-mail address" id="email" error={errors.email} required>
-            {(control) => (
-              <Input
-                {...control}
-                ref={emailRef}
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="username"
-                autoCapitalize="none"
-                spellCheck={false}
-                maxLength={254}
-                value={values.email}
-                onChange={handleChange}
-              />
-            )}
-          </FormField>
-
-          <FormField label="Password" id="password" error={errors.password} required>
-            {(control) => (
-              <div className={styles.passwordRow}>
-                <Input
-                  {...control}
-                  ref={passwordRef}
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  maxLength={PASSWORD_MAX_LENGTH}
-                  value={values.password}
-                  onChange={handleChange}
-                />
-                <Button
-                  variant="secondary"
-                  iconStart={showPassword ? EyeOff : Eye}
-                  aria-controls="password"
-                  aria-pressed={showPassword}
-                  onClick={() => {
-                    setShowPassword((shown) => !shown);
-                  }}
-                >
-                  {showPassword ? 'Hide password' : 'Show password'}
-                </Button>
-              </div>
-            )}
-          </FormField>
-
-          <Button type="submit" variant="primary" fullWidth iconStart={LogIn} loading={submitting}>
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </Button>
-        </form>
-
-        <p className={styles.forgot}>
+    <AuthPanel
+      icon={LogIn}
+      title="Sign in"
+      lead="Use your university e-mail address and password. Accounts are created by the registrar. If you have an invitation e-mail, open its link to set your password."
+      notice={notice ? NOTICES[notice] : undefined}
+      error={serverError}
+      footer={
+        <p>
           <Link to="/forgot-password">Forgot your password?</Link>
         </p>
-      </section>
-    </div>
+      }
+    >
+      <form
+        className={styles.form}
+        onSubmit={(event) => {
+          void handleSubmit(event);
+        }}
+        noValidate
+      >
+        <FormField label="E-mail address" id="email" error={errors.email} required>
+          {(control) => (
+            <Input
+              {...control}
+              ref={emailRef}
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              maxLength={254}
+              value={values.email}
+              onChange={handleChange}
+            />
+          )}
+        </FormField>
+
+        <FormField label="Password" id="password" error={errors.password} required>
+          {(control) => (
+            <div className={styles.passwordRow}>
+              <Input
+                {...control}
+                ref={passwordRef}
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                maxLength={PASSWORD_MAX_LENGTH}
+                value={values.password}
+                onChange={handleChange}
+              />
+              <Button
+                variant="secondary"
+                iconStart={showPassword ? EyeOff : Eye}
+                aria-controls="password"
+                aria-pressed={showPassword}
+                onClick={() => {
+                  setShowPassword((shown) => !shown);
+                }}
+              >
+                {showPassword ? 'Hide password' : 'Show password'}
+              </Button>
+            </div>
+          )}
+        </FormField>
+
+        <Button type="submit" variant="primary" fullWidth iconStart={LogIn} loading={submitting}>
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </AuthPanel>
   );
 }

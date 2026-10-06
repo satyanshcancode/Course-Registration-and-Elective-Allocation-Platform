@@ -1,5 +1,5 @@
 import { assessPassword, type ApiFieldError } from '@course-reg/shared';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, UserRound } from 'lucide-react';
 import { useRef, useState, type SubmitEvent } from 'react';
 import { changePassword } from '../api/accountApi';
 import { Button } from '../components/Button';
@@ -113,14 +113,10 @@ export function AccountPage() {
 
   return (
     <>
-      <PageHeader
-        title="Account"
-        kicker={user.role === 'ADMIN' ? 'Registrar staff' : 'Your account'}
-        description="Who you are signed in as, and your password."
-      />
+      <PageHeader title="Account" description="Who you are signed in as, and your password." />
 
       <div className={styles.body}>
-        <Card title="Signed in as">
+        <Card title="Signed in as" titleIcon={UserRound}>
           <dl className={styles.record}>
             <div className={styles.entry}>
               <dt>E-mail</dt>
@@ -167,7 +163,7 @@ export function AccountPage() {
           )}
         </Card>
 
-        <Card title="Change password">
+        <Card title="Change password" titleIcon={KeyRound}>
           <div className={styles.alert} role="alert">
             {serverError && <p>{serverError}</p>}
           </div>
