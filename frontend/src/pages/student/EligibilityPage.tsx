@@ -13,6 +13,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { FormField } from '../../components/FormField';
 import { Icon } from '../../components/Icon';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { SearchBar } from '../../components/SearchBar';
@@ -78,10 +79,10 @@ export function EligibilityPage() {
         {data && (
           <>
             {data.window?.status === 'DRAFT' && (
-              <p className={styles.notice}>
+              <Notice>
                 Registration opens {formatDateTime(data.window.startsAt)}. Check now so there are no
                 surprises.
-              </p>
+              </Notice>
             )}
 
             <Card

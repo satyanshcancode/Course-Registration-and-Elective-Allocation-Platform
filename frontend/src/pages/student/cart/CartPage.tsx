@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
-  Info,
   Lock,
   Send,
   ShoppingCart,
@@ -17,6 +16,7 @@ import { ErrorMessage } from '../../../components/ErrorMessage';
 import { Icon } from '../../../components/Icon';
 import { LiveSeatsIndicator } from '../../../components/LiveSeatsIndicator';
 import { PageHeader } from '../../../components/PageHeader';
+import { Notice } from '../../../components/Notice';
 import { Skeleton } from '../../../components/Skeleton';
 import { Stepper } from '../../../components/Stepper';
 import { useToast } from '../../../components/Toast';
@@ -296,19 +296,17 @@ export function CartPage() {
           )}
 
           {!empty && step === 'Select' && (
-            <p className={styles.info}>
-              <Icon icon={Info} className={styles.infoIcon} />
+            <Notice>
               Set each course’s Priority, or drag a row, to change the order. Higher priorities are
               considered first during allocation.
-            </p>
+            </Notice>
           )}
 
           {!empty && step === 'Review' && (
-            <p className={styles.info}>
-              <Icon icon={Lock} className={styles.infoIcon} />
+            <Notice icon={Lock}>
               This is the order allocation will use. Submitting is final: your list can’t be changed
               afterwards.
-            </p>
+            </Notice>
           )}
 
           <div className={styles.footer}>
