@@ -6,7 +6,7 @@ import { Spinner } from '../LoadingSpinner';
 import styles from './Button.module.css';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
-export type ButtonSize = 'sm' | 'md';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 /** Appearance options shared by Button and LinkButton. */
 interface ButtonAppearance {

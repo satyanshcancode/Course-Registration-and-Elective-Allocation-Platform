@@ -1,4 +1,20 @@
-# Redesign — three directions
+# Redesign
+
+## The target (v1.5)
+
+[`target-ui.png`](target-ui.png) is **the source of truth for how the product
+looks**, and it overrides [`docs/DESIGN.md`](../DESIGN.md) wherever the two
+disagree. It shows four screens in one image — Dashboard (top left), Course
+catalogue (top right), Eligibility check (bottom left), My cart (bottom right)
+— and every other page is built from the same system so the whole app reads as
+one product.
+
+It is 1536x1024, so each screen occupies a 768x512 quadrant; cropping one out
+and upscaling it is the quickest way to read the detail.
+
+---
+
+## The three directions it grew out of
 
 Three genuinely different visual directions for **Allocademy**, each built as
 two real pages with the real demo data: the **sign-in page** and the **student

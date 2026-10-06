@@ -6,6 +6,7 @@
 .art {
   position: relative;
   height: 6rem;
+  /* stylelint-disable-next-line -- the hero variant only changes its height. */
   overflow: hidden;
   background-image: linear-gradient(
     135deg,
@@ -44,4 +45,9 @@
   .motif {
     color: hsl(var(--art-hue) 45% 72%);
   }
+}
+
+/* A course's own page opens with the same band, drawn taller. */
+.art[data-height='hero'] {
+  height: 10rem;
 }

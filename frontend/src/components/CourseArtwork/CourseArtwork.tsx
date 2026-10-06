@@ -7,6 +7,11 @@ export interface CourseArtworkProps {
   code: string;
   /** The department code, which picks the hue every course in it shares. */
   departmentCode: string;
+  /**
+   * How tall the band is. `card` is the catalogue's 6rem strip; `hero` is the
+   * taller banner a course's own page opens with.
+   */
+  height?: 'card' | 'hero';
 }
 
 /**
@@ -18,14 +23,14 @@ export interface CourseArtworkProps {
  * are the same picture. It is decoration — the code, name and department are
  * all written out underneath — so it is hidden from assistive technology.
  */
-export function CourseArtwork({ code, departmentCode }: CourseArtworkProps) {
+export function CourseArtwork({ code, departmentCode, height = 'card' }: CourseArtworkProps) {
   const hue = hueFor(departmentCode, code);
   // Only the hue ANGLE is data; the stylesheet owns saturation and lightness,
   // which is what keeps the artwork inside the theme in light and dark alike.
   const style = { '--art-hue': hue } as CSSProperties;
 
   return (
-    <div className={styles.art} style={style}>
+    <div className={styles.art} style={style} data-height={height}>
       <svg
         className={styles.motif}
         viewBox="0 0 120 48"

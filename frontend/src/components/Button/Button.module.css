@@ -87,3 +87,11 @@
 .button[aria-busy='true'] {
   cursor: progress;
 }
+
+/* The one button that ends a page: Continue to review, Submit preferences.
+   Bigger than the rest because it is the only thing left to do. */
+.button[data-size='lg'] {
+  min-height: 3rem;
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+}

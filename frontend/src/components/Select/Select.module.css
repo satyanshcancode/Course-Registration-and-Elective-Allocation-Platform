@@ -50,3 +50,11 @@
   background-color: var(--color-surface-sunken);
   color: var(--color-ink-muted);
 }
+
+/* A filter bar's controls sit on one line with a search box and a button, and
+   match their height and type size. */
+.select[data-size='sm'] {
+  min-height: 2.5rem;
+  padding-block: 0;
+  font-size: var(--text-sm);
+}

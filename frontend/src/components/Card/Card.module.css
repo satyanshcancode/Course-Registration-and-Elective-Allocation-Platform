@@ -17,8 +17,10 @@
   padding: var(--space-4) var(--space-4) 0;
 }
 
+/* Its own line above the title, even though .titles is a flex row. */
 .kicker {
-  margin-bottom: var(--space-1);
+  flex-basis: 100%;
+  margin-bottom: calc(-1 * var(--space-1));
   color: var(--color-ink-muted);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
@@ -36,6 +38,14 @@
 .titleIcon {
   flex: none;
   color: var(--color-accent);
+}
+
+/* Title, kicker and any badge beside the title share one row. */
+.titles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
 }
 
 .actions {
