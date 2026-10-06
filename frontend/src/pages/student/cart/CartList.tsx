@@ -3,6 +3,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useState, type DragEvent, type Ref } from 'react';
 import { CourseCode } from '../../../components/CourseCode';
 import { Icon } from '../../../components/Icon';
+import { SeatMeter } from '../../../components/SeatMeter';
 import { Select } from '../../../components/Select';
 import { describeReason } from '../../../utils/eligibilityText';
 import type { ProblemsByCode } from './cartProblems';
@@ -122,7 +123,17 @@ export function CartList({
                 </td>
                 <td>
                   <span className={styles.itemName}>{item.name}</span>
-                  <span className={styles.itemMeta}>{item.department.code}</span>
+                  {/* The seat count keeps polling while the cart is open, so
+                      the student can see a course fill up as they rank it. */}
+                  <span className={styles.itemMeta}>
+                    {item.department.code}
+                    <SeatMeter
+                      compact
+                      allocated={item.allocated}
+                      capacity={item.capacity}
+                      label={`Seats in ${item.name}`}
+                    />
+                  </span>
                   {ineligible && (
                     <span className={styles.itemProblem}>
                       <Icon icon={TriangleAlert} />

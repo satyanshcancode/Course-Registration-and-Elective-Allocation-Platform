@@ -231,10 +231,7 @@ export function CartPage() {
   const step: CartStep = reviewing && !empty ? 'Review' : 'Select';
 
   return (
-    <CartFrame
-      step={step}
-      live={<LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />}
-    >
+    <CartFrame step={step}>
       <section
         className={styles.layout}
         aria-labelledby="cart-heading"
@@ -247,6 +244,7 @@ export function CartPage() {
                 <Icon icon={CalendarDays} size={20} className={styles.headingIcon} />
                 {step === 'Review' ? 'Review your choices' : `Selected courses (${items.length})`}
               </h2>
+              <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
               {step === 'Select' && !empty && saved.editable && (
                 <button type="button" className={styles.clearAll} onClick={clearAll}>
                   <Icon icon={Trash2} />
@@ -328,6 +326,7 @@ export function CartPage() {
                 </Button>
                 <Button
                   variant="primary"
+                  size="lg"
                   iconEnd={ArrowRight}
                   onClick={goToReview}
                   loading={cart.saving}
@@ -417,26 +416,13 @@ export function CartPage() {
 }
 
 /** The page header and stepper, shared by every state of this page. */
-function CartFrame({
-  children,
-  step,
-  live,
-}: {
-  children: ReactNode;
-  step: CartStep;
-  live?: ReactNode;
-}) {
+function CartFrame({ children, step }: { children: ReactNode; step: CartStep }) {
   return (
     <>
       <PageHeader
         title="My cart"
         description="Review your choices, set your preferences and submit before the registration window closes."
-        actions={
-          <div className={styles.headerTools}>
-            {live}
-            <Stepper steps={CART_STEPS} current={step} label="Submitting" />
-          </div>
-        }
+        actions={<Stepper steps={CART_STEPS} current={step} label="Submitting" />}
       />
       <div className={styles.body}>{children}</div>
     </>

@@ -21,14 +21,12 @@ function renderEligibility() {
   });
 }
 
-/** The <details> group with the given summary text. */
-function group(name: 'Eligible' | 'Not eligible') {
-  const summary = screen.getByText(new RegExp(`^${name} · \\d+$`));
-  const details = summary.closest('details');
-  if (!details) {
-    throw new Error(`No ${name} group`);
-  }
-  return within(details);
+/** The panel of the tab with the given name, selected the way a student would. */
+async function openTab(name: 'Eligible' | 'Not eligible') {
+  // The count sits in its own span, so the name has no guaranteed space before it.
+  const label = new RegExp('^' + name + String.raw`\s*\(\d+\)$`);
+  await userEvent.click(await screen.findByRole('tab', { name: label }));
+  return within(screen.getByRole('tabpanel', { name: label }));
 }
 
 describe('EligibilityPage', () => {
@@ -43,12 +41,20 @@ describe('EligibilityPage', () => {
   it('shows the record the check is based on', async () => {
     renderEligibility();
 
-    const record = (await screen.findByRole('heading', { name: 'Your record' })).closest('article');
-    expect(record).toHaveTextContent('B.Tech Mechanical Engineering');
-    expect(record).toHaveTextContent('3');
-    expect(record).toHaveTextContent('44');
-    expect(record).toHaveTextContent('CS101');
-    expect(record).toHaveTextContent('Programming Fundamentals');
+    const heading = await screen.findByRole('heading', { name: 'Your academic record' });
+    const card = heading.closest('article');
+    if (!card) {
+      throw new Error('The record heading is not inside a card');
+    }
+    const record = within(card);
+    expect(record.getByText('Programme').nextElementSibling).toHaveTextContent(
+      'B.Tech Mechanical Engineering',
+    );
+    expect(record.getByText('Semester').nextElementSibling).toHaveTextContent('3');
+    expect(record.getByText('Credits completed').nextElementSibling).toHaveTextContent('44');
+    expect(record.getByText('Courses passed (1)')).toBeInTheDocument();
+    expect(record.getByText('CS101')).toBeInTheDocument();
+    expect(record.getByTitle('Programming Fundamentals')).toBeInTheDocument();
   });
 
   it('summarises how many courses the student can take', async () => {
@@ -60,11 +66,10 @@ describe('EligibilityPage', () => {
 
   it('groups the courses and gives every reason in plain English', async () => {
     renderEligibility();
-    await screen.findByText(/^Eligible · 1$/);
+    const eligible = await openTab('Eligible');
+    expect(eligible.getByText('Renewable Energy Systems')).toBeInTheDocument();
 
-    expect(group('Eligible').getByText('Renewable Energy Systems')).toBeInTheDocument();
-
-    const notEligible = group('Not eligible');
+    const notEligible = await openTab('Not eligible');
     expect(notEligible.getByText('Artificial Intelligence')).toBeInTheDocument();
     // Both of AI's reasons, each as its own sentence.
     expect(notEligible.getByText('Open to CSE only. You’re in BTECH-ME')).toBeInTheDocument();
