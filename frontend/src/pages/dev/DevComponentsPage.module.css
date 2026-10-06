@@ -148,3 +148,22 @@
   border: var(--border-hairline);
   border-radius: var(--radius-sm);
 }
+
+/* The four stat tiles, laid out as a dashboard would lay them out. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+}
+
+/* Four generated bands side by side, so two departments can be compared. */
+.artwork {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+
+.artwork > * {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}

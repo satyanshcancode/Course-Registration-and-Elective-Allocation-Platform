@@ -1,8 +1,19 @@
-import { ArrowRight, BookOpen, Plus, Save, Send, Trash2 } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  CircleCheck,
+  Clock,
+  Plus,
+  Save,
+  Send,
+  ShoppingCart,
+  Trash2,
+} from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { CourseArtwork } from '../../components/CourseArtwork';
 import { Checkbox } from '../../components/Checkbox';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CourseCode } from '../../components/CourseCode';
@@ -14,12 +25,15 @@ import { Input } from '../../components/Input';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Modal } from '../../components/Modal';
 import { PageHeader } from '../../components/PageHeader';
+import { ProgressRing } from '../../components/ProgressRing';
 import { Pagination } from '../../components/Pagination';
 import { RadioGroup } from '../../components/RadioGroup';
 import { SearchBar } from '../../components/SearchBar';
 import { SeatMeter } from '../../components/SeatMeter';
 import { Select } from '../../components/Select';
 import { Skeleton } from '../../components/Skeleton';
+import { StatTile } from '../../components/StatTile';
+import { Stepper } from '../../components/Stepper';
 import {
   STATUS_PRESENTATION,
   StatusBadge,
@@ -27,6 +41,7 @@ import {
   type StatusKinds,
 } from '../../components/StatusBadge';
 import { Tabs } from '../../components/Tabs';
+import { Toggle } from '../../components/Toggle';
 import { useToast } from '../../components/Toast';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatDateTime, formatRelative } from '../../utils/formatDate';
@@ -40,6 +55,7 @@ const SECTIONS = [
   ['forms', 'Forms'],
   ['status', 'Status'],
   ['seats', 'Codes and seats'],
+  ['progress', 'Figures, progress and steps'],
   ['containers', 'Cards and empty states'],
   ['feedback', 'Feedback'],
   ['navigation', 'Search, pages, tabs'],
@@ -180,6 +196,7 @@ export function DevComponentsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [method, setMethod] = useState<'FCFS' | 'PREFERENCE_PRIORITY'>('PREFERENCE_PRIORITY');
   const [page, setPage] = useState(3);
+  const [onlyEligible, setOnlyEligible] = useState(true);
   const [lastSearch, setLastSearch] = useState('');
   const modalTrigger = useRef<HTMLButtonElement>(null);
   // Captured once: rendering must stay pure.
@@ -366,6 +383,74 @@ export function DevComponentsPage() {
           <SeatMeter allocated={20} capacity={20} label="Full course" demand={114} />
           <SeatMeter allocated={37} capacity={50} label="Compact meter" compact />
         </div>
+      </Section>
+
+      <Section id="progress" title="Figures, progress and steps">
+        <div className={styles.tiles}>
+          <StatTile
+            icon={BookOpen}
+            tone="info"
+            value="13 / 20"
+            label="Eligible courses"
+            to="/dev/components"
+            linkLabel="View eligible"
+          />
+          <StatTile
+            icon={ShoppingCart}
+            tone="danger"
+            value="3"
+            label="In your cart"
+            to="/dev/components"
+            linkLabel="View cart"
+          />
+          <StatTile
+            icon={CircleCheck}
+            tone="success"
+            value="1"
+            label="Confirmed"
+            to="/dev/components"
+            linkLabel="View results"
+          />
+          <StatTile
+            icon={Clock}
+            tone="warning"
+            value="1"
+            label="On waitlist"
+            to="/dev/components"
+            linkLabel="View waitlist"
+          />
+        </div>
+        <Specimen label="Progress ring">
+          <div className="cluster">
+            <ProgressRing value={13} max={20} label="courses" />
+            <ProgressRing value={3} max={20} label="courses" size={72} />
+          </div>
+        </Specimen>
+        <Specimen label="Stepper">
+          <Stepper steps={['Select', 'Review', 'Submit']} current="Review" label="Submitting" />
+        </Specimen>
+        <Specimen label="Toggle (role=switch)">
+          <div className="cluster">
+            <Toggle
+              label="Only eligible courses"
+              checked={onlyEligible}
+              onChange={setOnlyEligible}
+            />
+            <Toggle
+              label="Only courses with seats left"
+              checked={false}
+              onChange={() => undefined}
+            />
+          </div>
+        </Specimen>
+        <Specimen label="Course artwork, generated per department and course">
+          <div className={styles.artwork}>
+            <CourseArtwork code="CS401" departmentCode="CSE" />
+            <CourseArtwork code="CS402" departmentCode="CSE" />
+            <CourseArtwork code="MA201" departmentCode="MATH" />
+            <CourseArtwork code="ME301" departmentCode="ME" />
+          </div>
+        </Specimen>
       </Section>
 
       <Section id="containers" title="Cards and empty states">
