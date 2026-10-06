@@ -206,45 +206,59 @@ interface does.
 
 ## Design
 
-**A warm academic catalogue, not a dashboard.** Finding out what you can take
-and whether there is room is a reading task before it is a control task, so the
-interface is built like a catalogue: clay around warm paper, forest green as the
-one colour you have to learn, and ruled entries rather than a grid of boxed
-cards. Terracotta means "you cannot have this" and nothing else; amber means
-"not yet".
+**[`docs/redesign/target-ui.png`](docs/redesign/target-ui.png) is the source of
+truth for the look**, and it overrides [DESIGN.md](docs/DESIGN.md) wherever the
+two disagree. It shows four screens — Dashboard, Course catalogue, Eligibility
+check, My cart — and every other page, student and administrator alike, is built
+from the same system so the whole product reads as one thing.
+
+**A warm academic catalogue with a dashboard's front door.** Finding out what
+you can take and whether there is room is a reading task before it is a control
+task, so the interface is built like a catalogue: warm off-white page, near-white
+cards on a hairline, deep green as the one colour you have to learn. Red means
+"you cannot have this" and nothing else; amber means "not yet"; blue is for
+notices.
 
 **Fraunces** carries the voice on its optical-size axis — a 40px page title and
 a 13px course code are drawn differently rather than scaled — with **Work Sans**
 for the interface and **IBM Plex Mono** kept for the things that align by the
-character. Both are self-hosted variable fonts; there is no Tailwind, no CSS
+character. All are self-hosted variable fonts; there is no Tailwind, no CSS
 framework and no inline styles, only hand-written CSS Modules over the tokens in
 [`variables.css`](frontend/src/styles/variables.css).
 
-**The seat count gets a drawing as well as a number**: a twenty-dot matrix,
-filled = taken, the same size on every course whatever its capacity, with the
-exact figures beside it. Nothing is ever carried by colour alone — every status
-is an icon plus words, and every meter prints its numbers.
+**The seat count gets a drawing as well as a number**: a bar, filled = taken,
+with the exact figures beside it and the word "Full" when there is nothing left.
+Nothing is ever carried by colour alone — every status is an icon plus words,
+and every meter prints its numbers.
+
+**Every course card opens with artwork generated from its own codes.** The
+department sets the hue, so a page of the catalogue reads as departments at a
+glance; the course picks the motif and shifts the hue a little, so one
+department is a family rather than the same picture twelve times. It is drawn,
+not photographed: no licence to honour, no credit to print, no file to host and
+nothing to hotlink.
 
 [`node frontend/src/styles/contrast.mjs`](frontend/src/styles/contrast.mjs)
-reads the tokens straight out of the stylesheet and checks all 48 pairs across
+reads the tokens straight out of the stylesheet and checks all 38 pairs across
 both themes against WCAG AA, 4.5:1 for text and 3:1 for borders. It exits
 non-zero on a failure, so the palette cannot quietly drift.
 
 **A colour either carries a labelled key or it does not appear.** There are no
 decorative left stripes: an earlier draft hashed each department to one of five
 tones, and it went, because nothing on the page told a reader what plum meant.
-What is left is states with words beside them. Hover tells you a thing is
-interactive and stops there, nothing lifts or glows, and the interface copy has
-no em dashes in it (the one in a table cell is a value meaning "none").
+The generated artwork is the one thing hashed from a department, and it is
+openly decoration — the code, the name and the department are all written
+underneath it. Hover tells you a thing is interactive and stops there, and
+nothing lifts or glows.
 
 Privacy and Terms are written in plain English and linked from every footer.
 Both say up front that they are a template: the data controller, the retention
 period, the applicable law and the complaints route are the university's to
 fill in.
 
-The full system, the reasoning behind each of those decisions, the dark theme
-and every review round: [docs/DESIGN.md](docs/DESIGN.md). The two directions it
-was chosen over: [docs/redesign/](docs/redesign/).
+The full system, the reasoning behind each decision, the dark theme and every
+review round: [docs/DESIGN.md](docs/DESIGN.md). The target image and the three
+directions this grew out of: [docs/redesign/](docs/redesign/).
 
 ![Course catalogue](docs/screenshots/student-courses-1280-light.png)
 
