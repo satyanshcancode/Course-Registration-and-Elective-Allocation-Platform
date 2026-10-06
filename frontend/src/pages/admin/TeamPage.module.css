@@ -1,6 +1,7 @@
-.page {
+.body {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 /* Two stacked lines in one cell: the fact, then what it means. */

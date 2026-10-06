@@ -1,6 +1,7 @@
 .body {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .headerActions {
@@ -9,16 +10,13 @@
   gap: var(--space-3);
 }
 
-/* Four filters across, collapsing to one column on a phone. */
+/* Four filters across, collapsing to one column on a phone. The card around
+   them supplies the border and padding. */
 .filters {
   display: grid;
   grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
   align-items: end;
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
 }
 
 @media (width < 56rem) {

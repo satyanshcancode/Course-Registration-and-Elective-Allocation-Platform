@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router';
 import { getAdminWaitlists, processWaitlists, withdrawEnrollment } from '../../api/waitlistApi';
 import { unwrap } from '../../api/unwrap';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { CourseCode } from '../../components/CourseCode';
 import { DataTable, type DataTableStatus } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
@@ -100,7 +101,6 @@ export function AdminWaitlistsPage() {
     <>
       <PageHeader
         title="Waitlists"
-        kicker="Administration · Allocation"
         description="Queues for full courses, and the promotions that happen as seats free up."
         actions={
           allocated ? (
@@ -120,25 +120,30 @@ export function AdminWaitlistsPage() {
           </p>
         )}
 
-        <FormField label="Course" hint="Pick a course to see who holds a seat and who is waiting.">
-          {(control) => (
-            <Select
-              {...control}
-              className={styles.picker}
-              placeholder="Choose a course…"
-              options={(view?.courses ?? []).map((course) => ({
-                value: course.code,
-                label: `${course.code} · ${course.name}`,
-              }))}
-              value={code ?? ''}
-              onChange={(event) => {
-                const next = event.target.value;
-                // The chosen course lives in the URL, so the view can be linked.
-                setParams(next ? { [COURSE_PARAM]: next } : {}, { replace: true });
-              }}
-            />
-          )}
-        </FormField>
+        <Card>
+          <FormField
+            label="Course"
+            hint="Pick a course to see who holds a seat and who is waiting."
+          >
+            {(control) => (
+              <Select
+                {...control}
+                className={styles.picker}
+                placeholder="Choose a course…"
+                options={(view?.courses ?? []).map((course) => ({
+                  value: course.code,
+                  label: `${course.code} · ${course.name}`,
+                }))}
+                value={code ?? ''}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  // The chosen course lives in the URL, so the view can be linked.
+                  setParams(next ? { [COURSE_PARAM]: next } : {}, { replace: true });
+                }}
+              />
+            )}
+          </FormField>
+        </Card>
 
         {view?.course ? (
           <CourseWaitlist view={view} onWithdraw={setWithdrawing} status={status} />
@@ -246,16 +251,18 @@ function CourseWaitlist({
 
   return (
     <>
-      <section aria-labelledby="course-heading" className={styles.course}>
-        <h2 id="course-heading" className={styles.courseTitle}>
-          <CourseCode code={course.code} /> {course.name}
-        </h2>
+      <Card
+        title={course.name}
+        titleIcon={Hourglass}
+        titleAside={<CourseCode code={course.code} />}
+        headingLevel={2}
+      >
         <SeatMeter
           allocated={course.allocated}
           capacity={course.capacity}
           label={`Seats in ${course.code}`}
         />
-      </section>
+      </Card>
 
       <DataTable
         caption={`Students holding a seat in ${course.code}`}

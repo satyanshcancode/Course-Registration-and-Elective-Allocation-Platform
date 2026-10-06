@@ -1,10 +1,11 @@
 import type { AllocationPreview, AllocationRunSummary } from '@course-reg/shared';
-import { CalendarClock, ListOrdered, Play } from 'lucide-react';
+import { CalendarClock, ListOrdered, Play, Scale } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { getAllocationRuns, previewAllocation, runAllocation } from '../../api/allocationApi';
 import { unwrap } from '../../api/unwrap';
 import { Button, LinkButton } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
@@ -75,10 +76,9 @@ export function AllocationRunsPage() {
     <>
       <PageHeader
         title="Allocation runs"
-        kicker="Administration · Allocation"
         description="Compare the two methods, run the one this window froze, and prove afterwards that the result reproduces."
         actions={
-          <LinkButton to="/admin/registration-window" variant="ghost" iconStart={CalendarClock}>
+          <LinkButton to="/admin/registration-window" variant="secondary" iconStart={CalendarClock}>
             Registration window
           </LinkButton>
         }
@@ -100,77 +100,81 @@ export function AllocationRunsPage() {
         )}
 
         {window && (
-          <section className={styles.stage} aria-labelledby="stage-heading">
-            <h2 id="stage-heading" className={styles.heading}>
-              {window.name}
-            </h2>
-            <p className={styles.stageStatus}>
-              <StatusBadge kind="window" status={window.status} />
-              <span>
+          <Card
+            title={window.name}
+            titleIcon={CalendarClock}
+            titleAside={<StatusBadge kind="window" status={window.status} />}
+            headingLevel={2}
+          >
+            <div className={styles.stage}>
+              <p className={styles.stageStatus}>
                 {detail?.counts.submissions ?? 0} submitted ·{' '}
                 {method === 'FCFS' ? 'First come, first served' : 'Preference + Priority'} · seed{' '}
                 {detail?.randomSeed ?? '—'}
-              </span>
-            </p>
-
-            {window.status === 'DRAFT' && (
-              <p className={styles.note}>
-                Allocation runs after registration has opened and closed.{' '}
-                <Link to="/admin/registration-window">Schedule and open the window</Link> first.
               </p>
-            )}
 
-            {window.status === 'OPEN' && (
-              <p className={styles.note}>
-                Registration is still open, so the preferences are not final. Allocation runs once
-                the window is closed.{' '}
-                <Link to="/admin/registration-window">close it on the window page</Link> when the
-                deadline passes.
-              </p>
-            )}
+              {window.status === 'DRAFT' && (
+                <p className={styles.note}>
+                  Allocation runs after registration has opened and closed.{' '}
+                  <Link to="/admin/registration-window">Schedule and open the window</Link> first.
+                </p>
+              )}
 
-            {window.status === 'ALLOCATED' && completed && (
-              <p className={styles.note}>
-                Allocation has already run for this window. It can only be done once;{' '}
-                <Link to={`/admin/allocation-runs/${completed.id}`}>open the run</Link> to see what
-                it decided.
-              </p>
-            )}
+              {window.status === 'OPEN' && (
+                <p className={styles.note}>
+                  Registration is still open, so the preferences are not final. Allocation runs once
+                  the window is closed.{' '}
+                  <Link to="/admin/registration-window">close it on the window page</Link> when the
+                  deadline passes.
+                </p>
+              )}
 
-            {window.status === 'CLOSED' && (
-              <div className={styles.actions}>
-                <Button variant="secondary" onClick={loadPreview} loading={previewing}>
-                  {preview ? 'Refresh preview' : 'Preview both methods'}
-                </Button>
-                <Button
-                  variant="primary"
-                  iconStart={Play}
-                  onClick={() => {
-                    setConfirmOpen(true);
-                  }}
-                >
-                  Run allocation
-                </Button>
-              </div>
-            )}
-            {previewError && <p className={styles.previewError}>{previewError}</p>}
-          </section>
+              {window.status === 'ALLOCATED' && completed && (
+                <p className={styles.note}>
+                  Allocation has already run for this window. It can only be done once;{' '}
+                  <Link to={`/admin/allocation-runs/${completed.id}`}>open the run</Link> to see
+                  what it decided.
+                </p>
+              )}
+
+              {window.status === 'CLOSED' && (
+                <div className={styles.actions}>
+                  <Button variant="secondary" onClick={loadPreview} loading={previewing}>
+                    {preview ? 'Refresh preview' : 'Preview both methods'}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    iconStart={Play}
+                    onClick={() => {
+                      setConfirmOpen(true);
+                    }}
+                  >
+                    Run allocation
+                  </Button>
+                </div>
+              )}
+              {previewError && <p className={styles.previewError}>{previewError}</p>}
+            </div>
+          </Card>
         )}
 
         {preview && (
-          <section className={styles.preview} aria-labelledby="preview-heading">
-            <h2 id="preview-heading" className={styles.heading}>
-              Preview · {preview.submissions} submissions
-            </h2>
-            <p className={styles.note}>
-              Both methods were run on a fresh snapshot of this window. Nothing was written.
-            </p>
-            <MethodComparison
-              methods={preview.methods}
-              caption={`First come, first served compared with Preference + Priority for ${preview.window.name}`}
-            />
-            <TradeOffs preview={preview} />
-          </section>
+          <Card
+            title={`Preview · ${preview.submissions} submissions`}
+            titleIcon={Scale}
+            headingLevel={2}
+          >
+            <div className={styles.preview}>
+              <p className={styles.note}>
+                Both methods were run on a fresh snapshot of this window. Nothing was written.
+              </p>
+              <MethodComparison
+                methods={preview.methods}
+                caption={`First come, first served compared with Preference + Priority for ${preview.window.name}`}
+              />
+              <TradeOffs preview={preview} />
+            </div>
+          </Card>
         )}
 
         {data && (

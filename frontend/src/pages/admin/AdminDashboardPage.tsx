@@ -4,7 +4,16 @@ import type {
   AdminWindowDetail,
   AllocationRunSummary,
 } from '@course-reg/shared';
-import { CalendarClock } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarClock,
+  ClipboardCheck,
+  Gauge,
+  ListOrdered,
+  ScrollText,
+  Users,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { getAllocationRuns } from '../../api/allocationApi';
 import { getAdminCourses, getRegistrationWindow } from '../../api/adminApi';
@@ -14,8 +23,10 @@ import { Card } from '../../components/Card';
 import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
 import { ErrorMessage } from '../../components/ErrorMessage';
+import { Icon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { Skeleton } from '../../components/Skeleton';
+import { StatTile } from '../../components/StatTile';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -23,8 +34,7 @@ import { formatRate } from '../../utils/allocationText';
 import { describeRequests } from '../../utils/courseText';
 import { formatDateTime } from '../../utils/formatDate';
 import { formatDemandRatio } from '../../utils/formatSeats';
-import styles from '../DashboardPage.module.css';
-import dashboard from './AdminDashboardPage.module.css';
+import styles from './AdminDashboardPage.module.css';
 
 const TOP_COURSES = 5;
 
@@ -70,12 +80,18 @@ export function AdminDashboardPage() {
   const topCourses = [...(data?.courses.items ?? [])]
     .sort((a, b) => b.demand - a.demand || a.code.localeCompare(b.code))
     .slice(0, TOP_COURSES);
+  const seats = (data?.courses.items ?? []).reduce(
+    (total, course) => ({
+      held: total.held + course.allocated,
+      capacity: total.capacity + course.capacity,
+    }),
+    { held: 0, capacity: 0 },
+  );
 
   return (
     <>
       <PageHeader
         title="Dashboard"
-        kicker="Administration · Registration"
         description="The registration window, demand and what still needs a decision."
         actions={
           <LinkButton to="/admin/registration-window" variant="primary" iconStart={CalendarClock}>
@@ -84,7 +100,7 @@ export function AdminDashboardPage() {
         }
       >
         {data?.detail.window && (
-          <p className={dashboard.status}>
+          <p className={styles.status}>
             <StatusBadge kind="window" status={data.detail.window.status} />
             <span>
               {data.detail.window.name} · opens {formatDateTime(data.detail.window.startsAt)} ·
@@ -94,29 +110,63 @@ export function AdminDashboardPage() {
         )}
       </PageHeader>
 
-      <div className={styles.grid}>
-        <div className={styles.primary}>
-          {state.status === 'error' && (
-            <ErrorMessage
-              title="The dashboard couldn’t be loaded"
-              message={state.message}
-              onRetry={retry}
-            />
-          )}
-          {state.status === 'loading' && <Skeleton lines={6} />}
+      <div className={styles.page}>
+        {state.status === 'error' && (
+          <ErrorMessage
+            title="The dashboard couldn’t be loaded"
+            message={state.message}
+            onRetry={retry}
+          />
+        )}
+        {state.status === 'loading' && <Skeleton lines={6} />}
 
-          {data && (
-            <>
-              <p className={dashboard.counts}>
-                <strong>{data.detail.counts.offeredCourses}</strong> courses offered ·{' '}
-                <strong>{data.detail.counts.eligibleStudents}</strong> of{' '}
-                {data.detail.counts.totalStudents} students eligible for at least one ·{' '}
-                <strong>{data.detail.counts.submissions}</strong> submissions so far
-              </p>
+        {data && (
+          <>
+            <section className={styles.stats} aria-label="At a glance">
+              <StatTile
+                icon={BookOpen}
+                tone="info"
+                value={String(data.detail.counts.offeredCourses)}
+                label="Courses offered"
+                to="/admin/courses"
+                linkLabel="View courses"
+              />
+              <StatTile
+                icon={Users}
+                tone="success"
+                value={`${data.detail.counts.eligibleStudents} / ${data.detail.counts.totalStudents}`}
+                label="Students eligible for a course"
+                to="/admin/students"
+                linkLabel="View students"
+              />
+              <StatTile
+                icon={ClipboardCheck}
+                tone="accent"
+                value={String(data.detail.counts.submissions)}
+                label="Submissions so far"
+                to="/admin/registration-window"
+                linkLabel="View window"
+              />
+              <StatTile
+                icon={Gauge}
+                tone="warning"
+                value={`${seats.held} / ${seats.capacity}`}
+                label="Seats held"
+                to="/admin/courses"
+                linkLabel="View seats"
+              />
+              <StatTile
+                icon={ListOrdered}
+                tone="danger"
+                value={String(data.runs.length)}
+                label="Allocation runs"
+                to="/admin/allocation-runs"
+                linkLabel="View runs"
+              />
+            </section>
 
-              <AllocationSummary runs={data.runs} />
-
-              <Card title="Most demanded courses" kicker="Top 5" headingLevel={2}>
+            <div className={styles.row}>
+              <Card title="Most demanded courses" titleIcon={ScrollText} headingLevel={2}>
                 <DataTable
                   caption="The five courses with the most submitted requests"
                   captionHidden
@@ -128,37 +178,38 @@ export function AdminDashboardPage() {
                   emptyMessage="No requests have been submitted yet."
                 />
               </Card>
-            </>
-          )}
-        </div>
 
-        {data?.detail.window && (
-          <Card title="Policy" kicker="This window" headingLevel={2}>
-            <dl className={styles.record}>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <StatusBadge kind="window" status={data.detail.window.status} />
-                </dd>
-              </div>
-              <div>
-                <dt>Allocation method</dt>
-                <dd>
-                  {data.detail.policy?.method === 'FCFS'
-                    ? 'First come, first served'
-                    : 'Preference + Priority'}
-                </dd>
-              </div>
-              <div>
-                <dt>Policy</dt>
-                <dd>{data.detail.editable ? 'Editable (draft)' : 'Frozen'}</dd>
-              </div>
-              <div>
-                <dt>Tie-break seed</dt>
-                <dd className={styles.mono}>{data.detail.randomSeed ?? '—'}</dd>
-              </div>
-            </dl>
-          </Card>
+              {data.detail.window && (
+                <Card
+                  title="Policy"
+                  titleIcon={CalendarClock}
+                  titleAside={<StatusBadge kind="window" status={data.detail.window.status} />}
+                  headingLevel={2}
+                >
+                  <dl className={styles.record}>
+                    <div>
+                      <dt>Allocation method</dt>
+                      <dd>
+                        {data.detail.policy?.method === 'FCFS'
+                          ? 'First come, first served'
+                          : 'Preference + Priority'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Policy</dt>
+                      <dd>{data.detail.editable ? 'Editable (draft)' : 'Frozen'}</dd>
+                    </div>
+                    <div>
+                      <dt>Tie-break seed</dt>
+                      <dd className={styles.mono}>{data.detail.randomSeed ?? '—'}</dd>
+                    </div>
+                  </dl>
+                </Card>
+              )}
+            </div>
+
+            <AllocationSummary runs={data.runs} />
+          </>
         )}
       </div>
     </>
@@ -173,8 +224,19 @@ function AllocationSummary({ runs }: { runs: readonly AllocationRunSummary[] }) 
     return null;
   }
   return (
-    <Card title="Allocation" kicker="Completed" headingLevel={2}>
-      <dl className={styles.record}>
+    <Card
+      title="Allocation"
+      titleIcon={ListOrdered}
+      titleAside={<StatusBadge kind="allocationRun" status={completed.status} />}
+      headingLevel={2}
+      actions={
+        <Link to={`/admin/allocation-runs/${completed.id}`} className={styles.cardLink}>
+          See the full run
+          <Icon icon={ArrowRight} />
+        </Link>
+      }
+    >
+      <dl className={styles.facts}>
         <div>
           <dt>Method</dt>
           <dd>
@@ -200,9 +262,6 @@ function AllocationSummary({ runs }: { runs: readonly AllocationRunSummary[] }) 
           <dd className={styles.mono}>{metrics.justifiedEnvy}</dd>
         </div>
       </dl>
-      <p className={dashboard.counts}>
-        <Link to={`/admin/allocation-runs/${completed.id}`}>See the full run</Link>
-      </p>
     </Card>
   );
 }

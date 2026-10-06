@@ -305,7 +305,6 @@ export function AdminCataloguePage() {
     <>
       <PageHeader
         title="Course catalogue"
-        kicker="Administration · Catalogue"
         description="Every course and the rules that decide who may take it. Seats belong to a window's offering, not to the course. Edit those under Courses."
         actions={
           <div className={styles.headerActions}>

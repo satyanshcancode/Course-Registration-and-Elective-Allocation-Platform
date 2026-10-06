@@ -184,13 +184,13 @@ export function TeamPage() {
   ];
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
-        kicker="Administration · Accounts"
         title="Team"
         description="Who can administer registration. Co-administrators do everything except manage these accounts."
         actions={
           <Button
+            variant="primary"
             iconStart={UserPlus}
             onClick={() => {
               setInviting(true);
@@ -201,26 +201,28 @@ export function TeamPage() {
         }
       />
 
-      {resource.state.status === 'error' && team === null && (
-        <ErrorMessage
-          title="Could not load the team"
-          message={resource.state.message}
-          onRetry={resource.retry}
-        />
-      )}
+      <div className={styles.body}>
+        {resource.state.status === 'error' && team === null && (
+          <ErrorMessage
+            title="Could not load the team"
+            message={resource.state.message}
+            onRetry={resource.retry}
+          />
+        )}
 
-      <DataTable
-        caption="Administrators and co-administrators"
-        rows={members}
-        columns={columns}
-        getRowId={(row) => row.id}
-        status={status}
-        filterable={false}
-        paginated={false}
-        itemName={{ one: 'account', other: 'accounts' }}
-        emptyTitle="No staff accounts"
-        emptyMessage="Invite a co-administrator to share the work of running registration."
-      />
+        <DataTable
+          caption="Administrators and co-administrators"
+          rows={members}
+          columns={columns}
+          getRowId={(row) => row.id}
+          status={status}
+          filterable={false}
+          paginated={false}
+          itemName={{ one: 'account', other: 'accounts' }}
+          emptyTitle="No staff accounts"
+          emptyMessage="Invite a co-administrator to share the work of running registration."
+        />
+      </div>
 
       <InviteDialog
         open={inviting}
@@ -271,7 +273,7 @@ export function TeamPage() {
           );
         }}
       />
-    </div>
+    </>
   );
 }
 
@@ -374,7 +376,7 @@ function InviteDialog({ open, onClose, onInvited }: InviteDialogProps) {
           <Button type="button" variant="secondary" onClick={close} disabled={sending}>
             Cancel
           </Button>
-          <Button type="submit" loading={sending}>
+          <Button type="submit" variant="primary" loading={sending}>
             Send invitation
           </Button>
         </div>

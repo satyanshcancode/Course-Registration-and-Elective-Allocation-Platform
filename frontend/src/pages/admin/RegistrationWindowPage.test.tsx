@@ -35,9 +35,9 @@ describe('RegistrationWindowPage', () => {
     expect(await screen.findByRole('heading', { name: 'Window and policy' })).toBeInTheDocument();
     expect(screen.getByLabelText('Window name')).toHaveValue('Fall 2026');
     const counts = screen.getByLabelText('This window at a glance');
-    expect(counts).toHaveTextContent('2 courses offered');
-    expect(counts).toHaveTextContent('118 of 300 students eligible for at least one');
-    expect(counts).toHaveTextContent('0 submissions so far');
+    expect(counts).toHaveTextContent(/Courses offered\s*2/);
+    expect(counts).toHaveTextContent(/Students eligible for at least one\s*118 of 300/);
+    expect(counts).toHaveTextContent(/Submissions so far\s*0/);
     expect(screen.getByRole('button', { name: 'Open registration' })).toBeInTheDocument();
   });
 

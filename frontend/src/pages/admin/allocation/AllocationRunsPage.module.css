@@ -1,15 +1,12 @@
 /*
- * Allocation is the registrar's most consequential screen, so it reads like a
- * printed report: sections separated by hairlines, numbers in tabular figures,
- * one accent colour and no decoration.
+ * The allocation screens: a card per concern, numbers in tabular figures, one
+ * accent colour. Cards come from the shared Card; this sheet only lays out
+ * what sits inside them.
  */
 .body {
   display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .skeleton {
@@ -17,9 +14,9 @@
   gap: var(--space-3);
 }
 
+/* A section that holds a table has no card of its own (the table already has
+   one), so its heading is set the way the student pages set theirs. */
 .heading {
-  padding-bottom: var(--space-2);
-  border-bottom: var(--border-hairline);
   font-size: var(--text-md);
 }
 
@@ -34,15 +31,6 @@
 .verify {
   display: grid;
   gap: var(--space-3);
-}
-
-.stage,
-.metrics,
-.verify {
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
 }
 
 .stageStatus {
@@ -82,7 +70,7 @@
 .previewError {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-danger);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--color-danger-soft);
   color: var(--color-danger);
   font-size: var(--text-sm);
@@ -108,10 +96,11 @@
 }
 
 .table thead th {
-  border-bottom: 1px solid var(--color-rule-strong);
+  border-block: var(--border-hairline);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  font-weight: var(--weight-medium);
 }
 
 .table tbody th {
@@ -184,13 +173,13 @@
 
 .facts dt {
   color: var(--color-ink-muted);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  font-size: var(--text-xs);
 }
 
 .facts dd {
+  margin: 0;
+  margin-block-start: var(--space-1);
+  font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -204,7 +193,7 @@
   margin-top: var(--space-2);
   padding: var(--space-3);
   overflow-x: auto;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--color-surface-sunken);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -236,8 +225,8 @@
 
 /* A slim horizontal bar; the number beside it is the real answer. */
 .bar {
-  block-size: 6px;
-  border-radius: var(--radius-sm);
+  block-size: var(--space-2);
+  border-radius: var(--radius-pill);
   background-color: var(--color-surface-sunken);
   overflow: hidden;
 }
@@ -257,8 +246,8 @@
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--color-rule-strong);
-  border-radius: var(--radius-sm);
+  border: var(--border-control);
+  border-radius: var(--radius-md);
 }
 
 .verdict[data-reproducible='true'] {

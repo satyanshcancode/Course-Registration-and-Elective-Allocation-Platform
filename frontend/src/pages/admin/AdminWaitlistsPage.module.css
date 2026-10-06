@@ -4,11 +4,8 @@
  */
 .body {
   display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4) var(--space-7);
-  margin-inline: auto;
-  width: 100%;
-  max-width: var(--layout-max-width);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .notice {
@@ -16,29 +13,10 @@
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-warning);
   border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  color: var(--color-ink-muted);
+  background-color: var(--color-warning-soft);
+  color: var(--color-ink);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
-}
-
-/* Full width, so the summary lines up with the two tables under it. */
-.course {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-}
-
-.courseTitle {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2);
-  font-size: var(--text-lg);
-  line-height: var(--leading-snug);
 }
 
 .statusCell {

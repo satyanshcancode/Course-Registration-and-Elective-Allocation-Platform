@@ -218,7 +218,7 @@ export function WindowPolicyForm({ detail, onSaved }: WindowPolicyFormProps) {
       )}
 
       <div className={styles.actions}>
-        <Button type="submit" iconStart={Save} loading={saving}>
+        <Button type="submit" variant="primary" iconStart={Save} loading={saving}>
           Save window
         </Button>
         <p className={styles.note}>Settings can only be changed while the window is a draft.</p>

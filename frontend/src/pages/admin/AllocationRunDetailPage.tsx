@@ -4,13 +4,14 @@ import type {
   AllocationVerification,
   CourseAllocationMetric,
 } from '@course-reg/shared';
-import { ArrowLeft, ShieldCheck, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Gauge, Info, ShieldCheck, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { getAllocationRun, verifyAllocationRun } from '../../api/allocationApi';
 import { isNotFound, unwrap } from '../../api/unwrap';
 import { Badge } from '../../components/Badge';
 import { Button, LinkButton } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { CourseCode } from '../../components/CourseCode';
 import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
@@ -38,14 +39,13 @@ export function AllocationRunDetailPage() {
     <>
       <PageHeader
         title="Allocation run"
-        kicker="Administration · Allocation"
         description={
           run
             ? `${run.method === 'FCFS' ? 'First come, first served' : 'Preference + Priority'} · ${run.algorithmVersion}`
             : undefined
         }
         actions={
-          <LinkButton to="/admin/allocation-runs" variant="ghost" iconStart={ArrowLeft}>
+          <LinkButton to="/admin/allocation-runs" variant="secondary" iconStart={ArrowLeft}>
             All runs
           </LinkButton>
         }
@@ -98,48 +98,49 @@ export function AllocationRunDetailPage() {
 
 function RunSummary({ run }: { run: AllocationRunDetail }) {
   return (
-    <section className={styles.stage} aria-labelledby="summary-heading">
-      <h2 id="summary-heading" className={styles.heading}>
-        Summary
-      </h2>
-      <p className={styles.stageStatus}>
-        <StatusBadge kind="allocationRun" status={run.status} />
-        <span>{run.window.name}</span>
-      </p>
-      <dl className={styles.facts}>
-        <div>
-          <dt>Started</dt>
-          <dd>{formatDateTime(run.startedAt)}</dd>
-        </div>
-        <div>
-          <dt>Finished</dt>
-          <dd>{run.finishedAt ? formatDateTime(run.finishedAt) : '—'}</dd>
-        </div>
-        <div>
-          <dt>Algorithm version</dt>
-          <dd className={styles.mono}>{run.algorithmVersion}</dd>
-        </div>
-        <div>
-          <dt>Tie-break seed</dt>
-          <dd className={styles.mono}>{run.randomSeed}</dd>
-        </div>
-        <div>
-          <dt>Input snapshot</dt>
-          <dd>
-            {run.inputSize.students} students · {run.inputSize.courses} courses
-          </dd>
-        </div>
-        <div>
-          <dt>Output hash</dt>
-          <dd className={styles.mono}>{run.outputHash?.slice(0, 16) ?? '—'}…</dd>
-        </div>
-      </dl>
+    <Card
+      title="Summary"
+      titleIcon={Info}
+      titleAside={<StatusBadge kind="allocationRun" status={run.status} />}
+      headingLevel={2}
+    >
+      <div className={styles.stage}>
+        <p className={styles.stageStatus}>{run.window.name}</p>
+        <dl className={styles.facts}>
+          <div>
+            <dt>Started</dt>
+            <dd>{formatDateTime(run.startedAt)}</dd>
+          </div>
+          <div>
+            <dt>Finished</dt>
+            <dd>{run.finishedAt ? formatDateTime(run.finishedAt) : '—'}</dd>
+          </div>
+          <div>
+            <dt>Algorithm version</dt>
+            <dd className={styles.mono}>{run.algorithmVersion}</dd>
+          </div>
+          <div>
+            <dt>Tie-break seed</dt>
+            <dd className={styles.mono}>{run.randomSeed}</dd>
+          </div>
+          <div>
+            <dt>Input snapshot</dt>
+            <dd>
+              {run.inputSize.students} students · {run.inputSize.courses} courses
+            </dd>
+          </div>
+          <div>
+            <dt>Output hash</dt>
+            <dd className={styles.mono}>{run.outputHash?.slice(0, 16) ?? '—'}…</dd>
+          </div>
+        </dl>
 
-      <details className={styles.config}>
-        <summary>Configuration snapshot</summary>
-        <pre>{JSON.stringify(run.config, null, 2)}</pre>
-      </details>
-    </section>
+        <details className={styles.config}>
+          <summary>Configuration snapshot</summary>
+          <pre>{JSON.stringify(run.config, null, 2)}</pre>
+        </details>
+      </div>
+    </Card>
   );
 }
 
@@ -169,46 +170,45 @@ function Rate({ label, value, note }: { label: string; value: number; note?: str
 
 function MetricsPanel({ metrics }: { metrics: AllocationMetrics }) {
   return (
-    <section className={styles.metrics} aria-labelledby="metrics-heading">
-      <h2 id="metrics-heading" className={styles.heading}>
-        Outcome
-      </h2>
-      <div className={styles.rates}>
-        <Rate
-          label="Got their first choice"
-          value={metrics.firstChoiceRate}
-          note={`${metrics.allocated} of ${metrics.students} students were allocated something.`}
-        />
-        <Rate label="Got one of their top three" value={metrics.topThreeRate} />
-        <Rate
-          label="Seats filled"
-          value={metrics.seatUtilisation}
-          note={`${metrics.seatsFilled} of ${metrics.seatsOffered} offered seats.`}
-        />
+    <Card title="Outcome" titleIcon={Gauge} headingLevel={2}>
+      <div className={styles.metrics}>
+        <div className={styles.rates}>
+          <Rate
+            label="Got their first choice"
+            value={metrics.firstChoiceRate}
+            note={`${metrics.allocated} of ${metrics.students} students were allocated something.`}
+          />
+          <Rate label="Got one of their top three" value={metrics.topThreeRate} />
+          <Rate
+            label="Seats filled"
+            value={metrics.seatUtilisation}
+            note={`${metrics.seatsFilled} of ${metrics.seatsOffered} offered seats.`}
+          />
+        </div>
+        <dl className={styles.facts}>
+          <div>
+            <dt>Average rank allocated</dt>
+            <dd>{formatAverageRank(metrics.averageAllocatedRank)}</dd>
+          </div>
+          <div>
+            <dt>Students with nothing</dt>
+            <dd>{metrics.unallocated}</dd>
+          </div>
+          <div>
+            <dt>Waitlist entries</dt>
+            <dd>{metrics.waitlistEntries}</dd>
+          </div>
+          <div>
+            <dt>Justified envy</dt>
+            <dd>{metrics.justifiedEnvy}</dd>
+          </div>
+          <div>
+            <dt>Time to compute</dt>
+            <dd>{metrics.runtimeMs} ms</dd>
+          </div>
+        </dl>
       </div>
-      <dl className={styles.facts}>
-        <div>
-          <dt>Average rank allocated</dt>
-          <dd>{formatAverageRank(metrics.averageAllocatedRank)}</dd>
-        </div>
-        <div>
-          <dt>Students with nothing</dt>
-          <dd>{metrics.unallocated}</dd>
-        </div>
-        <div>
-          <dt>Waitlist entries</dt>
-          <dd>{metrics.waitlistEntries}</dd>
-        </div>
-        <div>
-          <dt>Justified envy</dt>
-          <dd>{metrics.justifiedEnvy}</dd>
-        </div>
-        <div>
-          <dt>Time to compute</dt>
-          <dd>{metrics.runtimeMs} ms</dd>
-        </div>
-      </dl>
-    </section>
+    </Card>
   );
 }
 
@@ -241,7 +241,9 @@ const courseColumns: Column<CourseAllocationMetric>[] = [
           Oversubscribed
         </Badge>
       ) : (
-        <span className={styles.muted}>Within capacity</span>
+        <Badge tone="success" icon={CircleCheck}>
+          Within capacity
+        </Badge>
       ),
   },
 ];
@@ -285,37 +287,36 @@ function VerifyPanel({ runId }: { runId: string }) {
   };
 
   return (
-    <section className={styles.verify} aria-labelledby="verify-heading">
-      <h2 id="verify-heading" className={styles.heading}>
-        Reproducibility
-      </h2>
-      <p className={styles.note}>
-        The stored input snapshot is run again through the same strategy version and the result is
-        compared with the hash recorded at the time. Nothing is written except a line in the audit
-        log.
-      </p>
-      <Button variant="secondary" iconStart={ShieldCheck} onClick={verify} loading={checking}>
-        Verify reproducibility
-      </Button>
+    <Card title="Reproducibility" titleIcon={ShieldCheck} headingLevel={2}>
+      <div className={styles.verify}>
+        <p className={styles.note}>
+          The stored input snapshot is run again through the same strategy version and the result is
+          compared with the hash recorded at the time. Nothing is written except a line in the audit
+          log.
+        </p>
+        <Button variant="primary" iconStart={ShieldCheck} onClick={verify} loading={checking}>
+          Verify reproducibility
+        </Button>
 
-      {error && <p className={styles.previewError}>{error}</p>}
-      {result && (
-        <div className={styles.verdict} data-reproducible={String(result.reproducible)}>
-          <p className={styles.verdictLine}>
-            <Icon icon={ShieldCheck} />
-            <strong>{result.reproducible ? 'Reproducible' : 'Not reproducible'}</strong>
-            <span>checked {formatDateTime(result.checkedAt)}</span>
-          </p>
-          <p className={styles.mono}>{result.recomputedHash}</p>
-          {result.differences.length > 0 && (
-            <ul>
-              {result.differences.map((difference) => (
-                <li key={difference}>{difference}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </section>
+        {error && <p className={styles.previewError}>{error}</p>}
+        {result && (
+          <div className={styles.verdict} data-reproducible={String(result.reproducible)}>
+            <p className={styles.verdictLine}>
+              <Icon icon={ShieldCheck} />
+              <strong>{result.reproducible ? 'Reproducible' : 'Not reproducible'}</strong>
+              <span>checked {formatDateTime(result.checkedAt)}</span>
+            </p>
+            <p className={styles.mono}>{result.recomputedHash}</p>
+            {result.differences.length > 0 && (
+              <ul>
+                {result.differences.map((difference) => (
+                  <li key={difference}>{difference}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

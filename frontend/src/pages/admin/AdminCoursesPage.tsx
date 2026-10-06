@@ -7,7 +7,6 @@ import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { CourseCode } from '../../components/CourseCode';
 import { DataTable, type DataTableStatus } from '../../components/DataTable';
-import { Icon } from '../../components/Icon';
 import type { UpdateCapacityResult } from '@course-reg/shared';
 import type { Column } from '../../components/DataTable/tableLogic';
 import { PageHeader } from '../../components/PageHeader';
@@ -106,10 +105,9 @@ export function AdminCoursesPage() {
             Oversubscribed
           </Badge>
         ) : (
-          <span className={styles.within}>
-            <Icon icon={CircleCheck} />
+          <Badge tone="success" icon={CircleCheck} status="WITHIN_CAPACITY">
             Within capacity
-          </span>
+          </Badge>
         ),
     },
     {
@@ -136,8 +134,11 @@ export function AdminCoursesPage() {
     <>
       <PageHeader
         title="Courses"
-        kicker={list?.window ? `Administration · ${list.window.name}` : 'Administration'}
-        description="Every offering in the current window, with seats and demand. Change a capacity when a room or section changes."
+        description={
+          list?.window
+            ? `Every offering in ${list.window.name}, with seats and demand. Change a capacity when a room or section changes.`
+            : 'Every offering in the current window, with seats and demand. Change a capacity when a room or section changes.'
+        }
       >
         {list && rows.length > 0 && (
           <p className={styles.summary}>

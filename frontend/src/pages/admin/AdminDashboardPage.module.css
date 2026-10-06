@@ -1,3 +1,9 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-5);
+}
+
 .status {
   display: inline-flex;
   flex-wrap: wrap;
@@ -9,16 +15,81 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* One line of text, not a row of stat cards (see docs/DESIGN.md). */
-.counts {
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
+/* ---- Rows ---------------------------------------------------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
 }
 
-.counts strong {
-  color: var(--color-ink);
+/* The table wants the wider share; the policy record is a narrow column. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+@media (width < 64rem) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.cardLink:hover {
+  text-decoration: underline;
+}
+
+/* ---- Labelled figures ---------------------------------------------------- */
+.record {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.record div {
+  display: grid;
+  gap: var(--space-0);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-hairline);
+}
+
+.record div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* The allocation card has the width for its figures in a row. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+}
+
+.record dt,
+.facts dt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.record dd,
+.facts dd {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.mono {
   font-family: var(--font-mono);
-  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }

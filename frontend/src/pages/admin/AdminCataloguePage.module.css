@@ -1,6 +1,7 @@
 .body {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  padding-block: var(--space-5);
 }
 
 .headerActions {
@@ -42,7 +43,7 @@
   align-items: center;
   padding: var(--space-1) var(--space-2);
   border: var(--border-hairline);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: none;
   color: var(--color-ink);
   font: inherit;

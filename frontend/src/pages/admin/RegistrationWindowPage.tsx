@@ -4,7 +4,7 @@ import {
   type AdminWindowDetail,
   type AllocationConfig,
 } from '@course-reg/shared';
-import { CalendarClock, Lock, LockOpen } from 'lucide-react';
+import { ArrowLeftRight, CalendarClock, Gauge, Lock, LockOpen, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
   closeRegistrationWindow,
@@ -80,13 +80,13 @@ export function RegistrationWindowPage() {
     <>
       <PageHeader
         title="Registration window"
-        kicker="Administration · Registration"
         description="Schedule the window, choose the allocation policy, then open registration."
         actions={
           detail?.window && (
             <>
               {detail.window.status === 'DRAFT' && (
                 <Button
+                  variant="primary"
                   iconStart={LockOpen}
                   onClick={() => {
                     setActionError(null);
@@ -98,6 +98,7 @@ export function RegistrationWindowPage() {
               )}
               {detail.window.status === 'OPEN' && (
                 <Button
+                  variant="primary"
                   iconStart={Lock}
                   onClick={() => {
                     setActionError(null);
@@ -140,17 +141,34 @@ export function RegistrationWindowPage() {
 
         {detail?.window && (
           <>
-            <section className={styles.counts} aria-label="This window at a glance">
-              <p>
-                <strong>{detail.counts.offeredCourses}</strong> courses offered ·{' '}
-                <strong>{detail.counts.eligibleStudents}</strong> of {detail.counts.totalStudents}{' '}
-                students eligible for at least one · <strong>{detail.counts.submissions}</strong>{' '}
-                submissions so far
-              </p>
-            </section>
+            <Card title="This window" titleIcon={Gauge} headingLevel={2}>
+              <div role="group" aria-label="This window at a glance">
+                <dl className={styles.figures}>
+                  <div>
+                    <dt>Courses offered</dt>
+                    <dd className={styles.figure}>{detail.counts.offeredCourses}</dd>
+                  </div>
+                  <div>
+                    <dt>Students eligible for at least one</dt>
+                    <dd className={styles.figure}>
+                      {detail.counts.eligibleStudents} of {detail.counts.totalStudents}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Submissions so far</dt>
+                    <dd className={styles.figure}>{detail.counts.submissions}</dd>
+                  </div>
+                </dl>
+              </div>
+            </Card>
 
             {detail.editable ? (
-              <Card title="Window and policy" kicker="Draft" headingLevel={2}>
+              <Card
+                title="Window and policy"
+                titleIcon={CalendarClock}
+                titleAside={<StatusBadge kind="window" status={detail.window.status} />}
+                headingLevel={2}
+              >
                 <WindowPolicyForm
                   detail={detail}
                   onSaved={(updated, message) => {
@@ -165,7 +183,7 @@ export function RegistrationWindowPage() {
 
             {/* Add/drop follows allocation, so the period only exists here. */}
             {detail.window.status === 'ALLOCATED' && (
-              <Card title="Add/drop period" kicker="After allocation" headingLevel={2}>
+              <Card title="Add/drop period" titleIcon={ArrowLeftRight} headingLevel={2}>
                 <AddDropPeriodForm
                   detail={detail}
                   onSaved={(updated, message) => {
@@ -242,7 +260,7 @@ function FrozenPolicy({ detail }: { detail: AdminWindowDetail }) {
   return (
     <Card
       title="Allocation policy"
-      kicker="Frozen"
+      titleIcon={ShieldCheck}
       headingLevel={2}
       actions={
         <p className={styles.frozen}>

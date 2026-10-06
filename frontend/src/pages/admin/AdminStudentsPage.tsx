@@ -21,6 +21,7 @@ import {
 import { unwrap } from '../../api/unwrap';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { CsvImport } from '../../components/CsvImport';
 import { DataTable, type DataTableStatus } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable/tableLogic';
@@ -211,7 +212,6 @@ export function AdminStudentsPage() {
     <>
       <PageHeader
         title="Students"
-        kicker="Administration · Records"
         description="Every student account. Students never register themselves: you create the account and they set their own password from the invitation."
         actions={
           <div className={styles.headerActions}>
@@ -237,7 +237,7 @@ export function AdminStudentsPage() {
             </Button>
           </div>
         }
-      ></PageHeader>
+      />
 
       <div className={styles.body}>
         {reference.state.status === 'error' && (
@@ -271,76 +271,78 @@ export function AdminStudentsPage() {
           </CsvImport>
         )}
 
-        <div className={styles.filters}>
-          <FormField label="Search" hint="Name, roll number or e-mail">
-            {(control) => (
-              <Input
-                {...control}
-                type="search"
-                name="search"
-                autoComplete="off"
-                value={searchDraft}
-                onChange={(event) => {
-                  setSearchDraft(event.target.value);
-                }}
-              />
-            )}
-          </FormField>
+        <Card>
+          <div className={styles.filters}>
+            <FormField label="Search" hint="Name, roll number or e-mail">
+              {(control) => (
+                <Input
+                  {...control}
+                  type="search"
+                  name="search"
+                  autoComplete="off"
+                  value={searchDraft}
+                  onChange={(event) => {
+                    setSearchDraft(event.target.value);
+                  }}
+                />
+              )}
+            </FormField>
 
-          <FormField label="Programme">
-            {(control) => (
-              <Select
-                {...control}
-                name="program"
-                placeholder="All programmes"
-                options={(shown?.programs ?? []).map((program) => ({
-                  value: program.code,
-                  label: program.code,
-                }))}
-                value={filters.program ?? ''}
-                onChange={(event) => {
-                  setFilter('program', event.target.value);
-                }}
-              />
-            )}
-          </FormField>
+            <FormField label="Programme">
+              {(control) => (
+                <Select
+                  {...control}
+                  name="program"
+                  placeholder="All programmes"
+                  options={(shown?.programs ?? []).map((program) => ({
+                    value: program.code,
+                    label: program.code,
+                  }))}
+                  value={filters.program ?? ''}
+                  onChange={(event) => {
+                    setFilter('program', event.target.value);
+                  }}
+                />
+              )}
+            </FormField>
 
-          <FormField label="Semester">
-            {(control) => (
-              <Select
-                {...control}
-                name="semester"
-                placeholder="Any semester"
-                options={[1, 2, 3, 4, 5, 6, 7, 8].map((semester) => ({
-                  value: String(semester),
-                  label: `Semester ${semester}`,
-                }))}
-                value={filters.semester === undefined ? '' : String(filters.semester)}
-                onChange={(event) => {
-                  setFilter('semester', event.target.value);
-                }}
-              />
-            )}
-          </FormField>
+            <FormField label="Semester">
+              {(control) => (
+                <Select
+                  {...control}
+                  name="semester"
+                  placeholder="Any semester"
+                  options={[1, 2, 3, 4, 5, 6, 7, 8].map((semester) => ({
+                    value: String(semester),
+                    label: `Semester ${semester}`,
+                  }))}
+                  value={filters.semester === undefined ? '' : String(filters.semester)}
+                  onChange={(event) => {
+                    setFilter('semester', event.target.value);
+                  }}
+                />
+              )}
+            </FormField>
 
-          <FormField label="Status">
-            {(control) => (
-              <Select
-                {...control}
-                name="status"
-                placeholder="Any status"
-                options={ADMIN_STUDENT_STATUSES.map((value) => ({
-                  value,
-                  label: describeStudentStatus(value).label,
-                }))}
-                value={filters.status ?? ''}
-                onChange={(event) => {
-                  setFilter('status', event.target.value);
-                }}
-              />
-            )}
-          </FormField>
-        </div>
+            <FormField label="Status">
+              {(control) => (
+                <Select
+                  {...control}
+                  name="status"
+                  placeholder="Any status"
+                  options={ADMIN_STUDENT_STATUSES.map((value) => ({
+                    value,
+                    label: describeStudentStatus(value).label,
+                  }))}
+                  value={filters.status ?? ''}
+                  onChange={(event) => {
+                    setFilter('status', event.target.value);
+                  }}
+                />
+              )}
+            </FormField>
+          </div>
+        </Card>
 
         <DataTable
           caption="Student accounts"

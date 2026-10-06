@@ -3,7 +3,18 @@ import type {
   AdminStudentDetail,
   CreateStudentRequest,
 } from '@course-reg/shared';
-import { ArrowLeft, CircleCheck, CircleSlash, MailCheck, Pencil, Send, UserX } from 'lucide-react';
+import {
+  ArrowLeft,
+  CircleCheck,
+  CircleSlash,
+  History,
+  ListChecks,
+  MailCheck,
+  Pencil,
+  Send,
+  UserRound,
+  UserX,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
@@ -91,7 +102,7 @@ export function AdminStudentDetailPage() {
   if (state.status === 'error') {
     return isNotFound(state.error) ? (
       <>
-        <PageHeader title="Student not found" kicker="Administration · Records" />
+        <PageHeader title="Student not found" />
         <EmptyState title={`No student has the roll number ${rollNumber}`} icon={UserX}>
           <p>
             It may have been changed. <Link to="/admin/students">Back to the student list</Link>.
@@ -100,7 +111,7 @@ export function AdminStudentDetailPage() {
       </>
     ) : (
       <>
-        <PageHeader title="Student" kicker="Administration · Records" />
+        <PageHeader title="Student" />
         <ErrorMessage message={state.message} onRetry={retry} />
       </>
     );
@@ -166,12 +177,11 @@ export function AdminStudentDetailPage() {
     <>
       <PageHeader
         title={student.name}
-        kicker={`Administration · ${student.rollNumber}`}
         description={wording.explanation}
         actions={
           <div className={styles.headerActions}>
             <Button
-              variant="secondary"
+              variant="primary"
               iconStart={Pencil}
               disabled={reference.state.status !== 'success'}
               onClick={() => {
@@ -211,8 +221,10 @@ export function AdminStudentDetailPage() {
       </PageHeader>
 
       <div className={styles.body}>
-        <Card title="Record">
-          <div className={styles.statusRow}>
+        <Card
+          title="Record"
+          titleIcon={UserRound}
+          titleAside={
             <Badge
               tone={STATUS_TONES[student.status]}
               icon={STATUS_ICONS[student.status]}
@@ -220,14 +232,19 @@ export function AdminStudentDetailPage() {
             >
               {wording.label}
             </Badge>
-            {detail.invitationExpiresAt !== null && (
-              <span className={styles.expiry}>
-                {describeInvitationExpiry(detail.invitationExpiresAt, detail.loadedAt)}
-              </span>
-            )}
-          </div>
+          }
+        >
+          {detail.invitationExpiresAt !== null && (
+            <p className={styles.expiry}>
+              {describeInvitationExpiry(detail.invitationExpiresAt, detail.loadedAt)}
+            </p>
+          )}
 
           <dl className={styles.record}>
+            <div className={styles.entry}>
+              <dt>Roll number</dt>
+              <dd className={styles.mono}>{student.rollNumber}</dd>
+            </div>
             <div className={styles.entry}>
               <dt>E-mail</dt>
               <dd>{student.email}</dd>
@@ -270,7 +287,8 @@ export function AdminStudentDetailPage() {
           </dl>
         </Card>
 
-        <Card title="Registration status" kicker="As the student sees it">
+        <Card title="Registration status" titleIcon={ListChecks}>
+          <p className={styles.note}>As the student sees it.</p>
           <p className={styles.standing}>{describeStanding(detail.status)}</p>
           {detail.status.submission && (
             <dl className={styles.record}>
@@ -306,7 +324,8 @@ export function AdminStudentDetailPage() {
           )}
         </Card>
 
-        <Card title="History" kicker="As the student sees it">
+        <Card title="History" titleIcon={History}>
+          <p className={styles.note}>As the student sees it.</p>
           {detail.history.length === 0 ? (
             <p className={styles.muted}>Nothing has happened on this account yet.</p>
           ) : (
