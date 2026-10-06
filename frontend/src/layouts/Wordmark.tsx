@@ -9,17 +9,19 @@ interface WordmarkProps {
 }
 
 /**
- * Four seats, three taken and one still open — the same dot matrix the
- * catalogue draws beside every course, at its smallest possible size. The mark
- * and the product are about the one seat that is left.
+ * Four seats in a block, three taken and one still open. The mark and the
+ * product are both about the one seat that is left.
  */
 function SeatMark() {
   return (
-    <svg className={styles.mark} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-      <circle className={styles.taken} cx="6" cy="6" r="3" />
-      <circle className={styles.taken} cx="14" cy="6" r="3" />
-      <circle className={styles.taken} cx="6" cy="14" r="3" />
-      <circle className={styles.open} cx="14" cy="14" r="2.25" />
+    <svg className={styles.mark} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect className={styles.open} x="2.8" y="2.8" width="7.4" height="7.4" rx="2.4" />
+      <circle className={styles.taken} cx="6.5" cy="6.5" r="1.7" />
+      <rect className={styles.open} x="13.8" y="2.8" width="7.4" height="7.4" rx="2.4" />
+      <circle className={styles.taken} cx="17.5" cy="6.5" r="1.7" />
+      <rect className={styles.open} x="2.8" y="13.8" width="7.4" height="7.4" rx="2.4" />
+      <circle className={styles.taken} cx="6.5" cy="17.5" r="1.7" />
+      <rect className={styles.open} x="13.8" y="13.8" width="7.4" height="7.4" rx="2.4" />
     </svg>
   );
 }

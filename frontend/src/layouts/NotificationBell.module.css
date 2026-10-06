@@ -1,11 +1,17 @@
+.wrap {
+  position: relative;
+}
+
 .bell {
   position: relative;
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
   border-radius: var(--radius-md);
-  color: var(--color-ink-muted);
+  background: none;
+  color: var(--color-ink);
   text-decoration: none;
   transition:
     background-color var(--duration-fast) var(--ease-standard),
@@ -14,23 +20,122 @@
 
 .bell:hover {
   background-color: var(--color-surface-sunken);
-  color: var(--color-ink);
 }
 
 .count {
   position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
+  top: 0.35rem;
+  right: 0.35rem;
   display: grid;
   place-items: center;
-  min-width: 1rem;
-  height: 1rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
   padding: 0 var(--space-0);
-  border: 2px solid var(--color-surface);
+  border: 2px solid var(--color-surface-raised);
   border-radius: var(--radius-pill);
   background-color: var(--color-danger);
   color: var(--color-on-accent);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   line-height: 1;
+}
+
+/* ---- The popover --------------------------------------------------------- */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: var(--z-menu);
+  width: min(22rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-overlay);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.panelTitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-heading);
+}
+
+.list {
+  display: grid;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--border-hairline);
+}
+
+.itemTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Unread is a dot AND a heavier line AND a hidden word, never colour alone. */
+.item[data-unread='true'] .itemTitle {
+  font-weight: var(--weight-semibold);
+}
+
+.unreadDot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+}
+
+.itemBody {
+  grid-column: 1;
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-dense);
+}
+
+.itemTime {
+  grid-row: 1;
+  grid-column: 2;
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-4) 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.viewAll {
+  display: block;
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+  text-decoration: none;
+}
+
+.viewAll:hover {
+  text-decoration: underline;
 }

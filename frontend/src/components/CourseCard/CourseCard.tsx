@@ -1,15 +1,15 @@
 import type { CatalogueCourse } from '@course-reg/shared';
-import { Ban, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Link, type To } from 'react-router';
 import { describeDemand } from '../../utils/courseText';
 import type { CartAction as CartActionState } from '../../utils/cartActions';
-import { describeReason } from '../../utils/eligibilityText';
 import { CartAction } from '../CartAction';
-import { CourseArtwork } from '../CourseArtwork';
 import { EligibilityBadge, MyStatusBadge } from '../CourseBadges';
 import { CourseCode } from '../CourseCode';
+import { CoursePhoto } from '../CoursePhoto';
 import { Icon } from '../Icon';
 import { SeatMeter } from '../SeatMeter';
+import { CourseCardMenu } from './CourseCardMenu';
 import styles from './CourseCard.module.css';
 
 export interface CourseCardProps {
@@ -29,9 +29,10 @@ export interface CourseCardProps {
 }
 
 /**
- * One catalogue entry: a band of the department's generated artwork, then the
- * code, the student's own standing, the name and summary, live seats and
- * demand, and the two things there are to do with it.
+ * One catalogue entry: a photograph, then the code, the student's own
+ * standing, the name and summary, live seats and demand, and the two things
+ * there are to do with it. The "⋮" over the photograph repeats those two and
+ * adds the course code on the clipboard.
  *
  * Why the department's full name is not printed here: the row above has room
  * for the code and the student's status, and the department code sits beside
@@ -47,14 +48,18 @@ export function CourseCard({
 }: CourseCardProps) {
   const Heading = `h${headingLevel}` as const;
   const { personal } = course;
-  // The first reason only: it is what explains the disabled button beside it,
-  // and the rest of the checklist is on the course page.
-  const firstReason =
-    personal && !personal.eligibility.eligible ? personal.eligibility.reasons[0] : undefined;
 
   return (
     <article className={styles.card} data-course-code={course.code}>
-      <CourseArtwork code={course.code} departmentCode={course.department.code} />
+      <CoursePhoto code={course.code}>
+        <CourseCardMenu
+          code={course.code}
+          name={course.name}
+          to={to}
+          linkState={linkState}
+          cartAction={cartAction}
+        />
+      </CoursePhoto>
 
       <div className={styles.body}>
         <p className={styles.meta}>
@@ -72,9 +77,7 @@ export function CourseCard({
                 <MyStatusBadge status={personal.myStatus} />
               </>
             ))}
-          <span className={styles.credits}>
-            {course.department.code} · {course.credits} credits
-          </span>
+          <span className={styles.credits}>{course.credits} credits</span>
         </p>
 
         <Heading className={styles.title}>
@@ -91,17 +94,10 @@ export function CourseCard({
             label={`Seats in ${course.name}`}
           />
           <p className={styles.demand}>
-            <Icon icon={Users} />
+            <Icon icon={Users} size={16} />
             <span>{describeDemand(course.demand, course.capacity)}</span>
           </p>
         </div>
-
-        {firstReason && (
-          <p className={styles.reason}>
-            <Icon icon={Ban} />
-            {describeReason(firstReason)}
-          </p>
-        )}
 
         <div className={styles.actions}>
           <Link to={to} state={linkState} className={styles.details}>

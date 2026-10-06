@@ -13,7 +13,7 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { CourseArtwork } from '../../components/CourseArtwork';
+import { CoursePhoto } from '../../components/CoursePhoto';
 import { Checkbox } from '../../components/Checkbox';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CourseCode } from '../../components/CourseCode';
@@ -445,10 +445,10 @@ export function DevComponentsPage() {
         </Specimen>
         <Specimen label="Course artwork, generated per department and course">
           <div className={styles.artwork}>
-            <CourseArtwork code="CS401" departmentCode="CSE" />
-            <CourseArtwork code="CS402" departmentCode="CSE" />
-            <CourseArtwork code="MA201" departmentCode="MATH" />
-            <CourseArtwork code="ME301" departmentCode="ME" />
+            <CoursePhoto code="CS401" />
+            <CoursePhoto code="CS402" />
+            <CoursePhoto code="MA201" />
+            <CoursePhoto code="ME301" />
           </div>
         </Specimen>
       </Section>

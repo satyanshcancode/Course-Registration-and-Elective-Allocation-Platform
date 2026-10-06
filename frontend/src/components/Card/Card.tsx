@@ -17,6 +17,11 @@ export interface CardProps {
   headingLevel?: 2 | 3 | 4;
   /** Buttons or links aligned with the title. */
   actions?: ReactNode;
+  /**
+   * Let the body reach the card's own edges — for a table, whose rules run
+   * the full width in the target rather than stopping inside a padding.
+   */
+  bodyFlush?: boolean;
   footer?: ReactNode;
   children: ReactNode;
 }
@@ -29,19 +34,20 @@ export function Card({
   kicker,
   headingLevel = 2,
   actions,
+  bodyFlush = false,
   footer,
   children,
 }: CardProps) {
   const Heading = `h${headingLevel}` as const;
   return (
-    <article className={styles.card}>
+    <article className={styles.card} data-flush={bodyFlush ? 'true' : undefined}>
       {(title ?? actions) && (
         <header className={styles.header}>
           <div className={styles.titles}>
             {kicker && <p className={styles.kicker}>{kicker}</p>}
             {title && (
               <Heading className={styles.title}>
-                {titleIcon && <Icon icon={titleIcon} size={20} className={styles.titleIcon} />}
+                {titleIcon && <Icon icon={titleIcon} size={24} className={styles.titleIcon} />}
                 {title}
               </Heading>
             )}

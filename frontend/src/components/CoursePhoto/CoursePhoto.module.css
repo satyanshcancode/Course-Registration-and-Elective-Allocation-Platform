@@ -1,0 +1,27 @@
+/*
+ * The photograph band. Measured off the target: 92px on a catalogue card and
+ * a little over twice that on a course's own page, rounded at the top only
+ * because the card's own corners continue underneath it.
+ */
+.band {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background-color: var(--color-surface-sunken);
+}
+
+.band[data-height='card'] {
+  height: 5.75rem;
+}
+
+.band[data-height='hero'] {
+  height: 12rem;
+  border-radius: var(--radius-lg);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

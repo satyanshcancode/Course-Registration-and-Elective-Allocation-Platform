@@ -133,9 +133,10 @@ describe('adding to the cart from the catalogue', () => {
     const card = cardFor('Artificial Intelligence');
     expect(card.queryByRole('button', { name: /Add to cart/ })).not.toBeInTheDocument();
     // A disabled button holds the Add button's place, so a row of cards keeps
-    // its shape; the reason is printed above it.
+    // its shape; the chip beside the code says the same thing in a word, and
+    // the course page carries the reason.
     expect(card.getByRole('button', { name: /Not eligible/ })).toBeDisabled();
-    expect(card.getByText('Needs semester 7, you’re in semester 6')).toBeVisible();
+    expect(card.getByText('Not eligible', { selector: 'span' })).toBeVisible();
   });
 
   it('says the cart is full once five courses are ranked', async () => {

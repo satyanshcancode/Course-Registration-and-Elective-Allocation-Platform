@@ -150,13 +150,19 @@ async function saveCartFor(session, courseCodes) {
   }
 }
 
-/** Tall enough that no in-scope page is cut off at either width. */
+/**
+ * Tall enough that no in-scope page is cut off at either width.
+ *
+ * The app is light only, so both sizes are light. 1440 is the width the
+ * redesign was measured at and the one `scripts/compare-target.py` diffs
+ * against docs/redesign/target-ui.png; 390 is the phone.
+ */
 const SIZES = {
-  '1280-light': { w: 1280, h: 1400 },
-  '390-dark': { w: 390, h: 1500, dark: true },
+  '1440-light': { w: 1440, h: 1600 },
+  '390-light': { w: 390, h: 1500 },
 };
 
-/** The two shots every page gets: 1280 light and 390 dark. */
+/** The two shots every page gets: 1440 and 390, both light. */
 function pair(name, shot) {
   return Object.entries(SIZES).map(([suffix, size]) => ({
     ...shot,
@@ -168,7 +174,7 @@ function pair(name, shot) {
 
 /**
  * The final documentation pass: every page of the app, at the two widths
- * DESIGN.md reviews (1280 light and 390 dark).
+ * DESIGN.md reviews (1440 and 390, both light — the app has no dark theme).
  *
  * `stage` is the demo stage the shot needs, because no single database state
  * shows every page at its best: an editable cart only exists while the window
@@ -447,7 +453,7 @@ async function main() {
           mobile: shot.w < 768,
         });
         await devtools.send('Emulation.setEmulatedMedia', {
-          features: [{ name: 'prefers-color-scheme', value: shot.dark ? 'dark' : 'light' }],
+          features: [{ name: 'prefers-color-scheme', value: 'light' }],
         });
         if (session) {
           await devtools.send('Network.setCookie', {
@@ -471,7 +477,7 @@ async function main() {
         });
         const file = join(OUT_DIR, `${shot.name}.png`);
         writeFileSync(file, Buffer.from(data, 'base64'));
-        process.stdout.write(`  ${file}  (${shot.w}x${shot.h}, ${shot.dark ? 'dark' : 'light'})\n`);
+        process.stdout.write(`  ${file}  (${shot.w}x${shot.h})\n`);
       } finally {
         devtools.close();
         await fetch(`http://127.0.0.1:${PORT}/json/close/${target.id}`);

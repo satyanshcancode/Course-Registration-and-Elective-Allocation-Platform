@@ -21,7 +21,7 @@ import { CartAction } from '../../components/CartAction';
 import { Card } from '../../components/Card';
 import { LinkButton } from '../../components/Button';
 import { EligibilityBadge, MyStatusBadge } from '../../components/CourseBadges';
-import { CourseArtwork } from '../../components/CourseArtwork';
+import { CoursePhoto } from '../../components/CoursePhoto';
 import { CourseCode } from '../../components/CourseCode';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
@@ -165,7 +165,7 @@ function CourseDetailBody({
         {/* Not a Card: the artwork has to run to the edges, which Card's padded
             body cannot do. It borrows Card's tokens instead. */}
         <section className={styles.hero} aria-labelledby="about-heading">
-          <CourseArtwork code={course.code} departmentCode={course.department.code} height="hero" />
+          <CoursePhoto code={course.code} height="hero" />
           <div className={styles.heroBody}>
             <h2 id="about-heading" className={styles.heading}>
               <Icon icon={BookOpen} size={20} className={styles.headingIcon} />

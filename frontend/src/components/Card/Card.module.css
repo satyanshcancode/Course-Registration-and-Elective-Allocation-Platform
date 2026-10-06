@@ -14,7 +14,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-4) 0;
+  padding: var(--space-5) var(--space-5) 0;
 }
 
 /* Its own line above the title, even though .titles is a flex row. */
@@ -28,11 +28,16 @@
   text-transform: uppercase;
 }
 
+/* Sans, not serif: the target keeps the serif for page and section titles and
+   sets every card heading in a bold grotesque. */
 .title {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  font-family: var(--font-sans);
   font-size: var(--text-md);
+  font-weight: var(--weight-heading);
+  letter-spacing: -0.012em;
 }
 
 .titleIcon {
@@ -51,16 +56,23 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
 }
 
 .body {
   flex: 1;
-  padding: var(--space-4);
+  padding: var(--space-5);
+}
+
+/* A table reaches the card's own edges, so its rules run the full width the
+   way the target draws them; the header above it keeps its padding. */
+.card[data-flush='true'] .body {
+  padding: var(--space-4) 0 0;
 }
 
 .footer {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-5);
   border-top: var(--border-hairline);
   color: var(--color-ink-muted);
   font-size: var(--text-sm);

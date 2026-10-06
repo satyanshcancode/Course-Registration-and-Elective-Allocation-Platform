@@ -1,8 +1,17 @@
+/*
+ * The seat bar. Measured: an 8px pill track in a neutral grey with a bright
+ * green fill, and the exact numbers on the line below behind a matching dot.
+ *
+ * Two colour variables, not one: --meter-color draws the bar and the dot,
+ * which only have to clear 3:1, while --meter-ink sets the words, which have
+ * to clear 4.5:1.
+ */
 .meter {
-  --meter-color: var(--color-success);
+  --meter-color: var(--color-success-bright);
+  --meter-ink: var(--color-success);
 
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   justify-items: start;
   min-width: 10rem;
   width: 100%;
@@ -10,24 +19,27 @@
 
 .meter[data-level='filling'] {
   --meter-color: var(--color-warning);
+  --meter-ink: var(--color-warning);
 }
 
 .meter[data-level='full'] {
   --meter-color: var(--color-danger);
+  --meter-ink: var(--color-danger);
 }
 
-/* The bar: a hairline-thin rule that fills from the left as seats go. */
 .track {
   position: relative;
   width: 100%;
-  height: 6px;
+  height: 8px;
   border-radius: var(--radius-pill);
-  background-color: var(--color-surface-sunken);
+  background-color: var(--color-track);
   overflow: hidden;
 }
 
+/* A course with one seat gone still shows a dot rather than nothing. */
 .fill {
   display: block;
+  min-inline-size: 8px;
   height: 100%;
   border-radius: var(--radius-pill);
   background-color: var(--meter-color);
@@ -43,27 +55,26 @@
 .numbers {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-1);
+  align-items: center;
+  gap: 0 var(--space-2);
   width: 100%;
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 /* The same tone as the bar, so the line reads as the bar's caption. */
 .dot {
-  align-self: center;
-  width: 7px;
-  height: 7px;
+  flex: none;
+  width: 8px;
+  height: 8px;
   border-radius: var(--radius-pill);
   background-color: var(--meter-color);
 }
 
 .numbers data {
-  color: var(--color-ink);
-  font-weight: var(--weight-medium);
+  color: var(--color-ink-muted);
 }
 
 .separator {
@@ -76,8 +87,7 @@
 }
 
 .level {
-  margin-left: var(--space-1);
-  color: var(--meter-color);
+  color: var(--meter-ink);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--tracking-kicker);

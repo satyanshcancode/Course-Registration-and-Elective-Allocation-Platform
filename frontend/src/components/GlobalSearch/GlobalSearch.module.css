@@ -2,20 +2,21 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-self: center;
   width: min(30rem, 100%);
 }
 
 .icon {
   position: absolute;
-  left: var(--space-3);
+  left: var(--space-4);
   color: var(--color-ink-muted);
   pointer-events: none;
 }
 
 .input {
   width: 100%;
-  min-height: 2.5rem;
-  padding: 0 4.25rem 0 2.25rem;
+  min-height: var(--control-height);
+  padding: 0 4.75rem 0 3rem;
   border: var(--border-hairline);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
@@ -36,7 +37,7 @@
 
 .hint {
   position: absolute;
-  right: var(--space-2);
+  right: var(--space-3);
   padding: var(--space-0) var(--space-2);
   border: var(--border-hairline);
   border-radius: var(--radius-sm);
@@ -44,7 +45,7 @@
   color: var(--color-ink-muted);
   font-family: var(--font-sans);
   font-size: var(--text-2xs);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 /* A phone header has room for the wordmark, the bell and the account menu and

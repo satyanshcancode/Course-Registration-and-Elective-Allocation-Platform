@@ -1,9 +1,14 @@
+/*
+ * The figure card at the top of a dashboard. Measured: a 56px tinted tile on
+ * the left, the number beside it in bold sans, the label under the number and
+ * the link across the foot.
+ */
 .tile {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-1) var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-5);
   border: var(--border-hairline);
   border-radius: var(--radius-lg);
   background-color: var(--color-surface);
@@ -14,29 +19,29 @@
   display: grid;
   place-items: center;
   grid-row: span 2;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: var(--radius-md);
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: var(--radius-tile);
 }
 
 .icon[data-tone='info'] {
-  background-color: var(--color-info-soft);
-  color: var(--color-info);
+  background-color: var(--tile-info-bg);
+  color: var(--tile-info-ink);
 }
 
 .icon[data-tone='danger'] {
-  background-color: var(--color-danger-soft);
-  color: var(--color-danger);
+  background-color: var(--tile-danger-bg);
+  color: var(--tile-danger-ink);
 }
 
 .icon[data-tone='success'] {
-  background-color: var(--color-success-soft);
-  color: var(--color-success);
+  background-color: var(--tile-success-bg);
+  color: var(--tile-success-ink);
 }
 
 .icon[data-tone='warning'] {
-  background-color: var(--color-warning-soft);
-  color: var(--color-warning);
+  background-color: var(--tile-warning-bg);
+  color: var(--tile-warning-ink);
 }
 
 .icon[data-tone='accent'] {
@@ -44,14 +49,13 @@
   color: var(--color-accent);
 }
 
+/* Sans, not serif: the target sets its figures in the interface face. */
 .value {
   align-self: end;
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
   font-size: var(--text-xl);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
-  line-height: 1;
+  line-height: 1.05;
 }
 
 .label {
@@ -65,7 +69,7 @@
   align-items: center;
   gap: var(--space-1);
   grid-column: 1 / -1;
-  margin-top: var(--space-2);
+  margin-top: var(--space-4);
   color: var(--color-accent);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);

@@ -273,3 +273,187 @@ export function localDay(at: string): string {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
+
+/**
+ * The same event in two lines: what happened, and the qualifiers underneath.
+ *
+ * The dashboard's activity list sets the headline in bold and the detail in
+ * grey beneath it, the way the target draws it. Both are built from the same
+ * facts as `describeHistoryEvent`, in this one file, so a timeline sentence
+ * and an activity row can never disagree about what an event was.
+ */
+export interface HistorySummary {
+  headline: string;
+  /** Null when the event has nothing to add to its own headline. */
+  detail: string | null;
+}
+
+export function summariseHistoryEvent(event: HistoryEvent): HistorySummary {
+  const detail = event.detail;
+  const course = courseName(event);
+  switch (detail.type) {
+    case 'DRAFT_SAVED':
+      return {
+        headline:
+          detail.courseCodes.length === 0
+            ? 'Saved an empty draft'
+            : `Saved a draft of ${detail.courseCodes.length} ${plural(detail.courseCodes.length, 'course')}`,
+        detail: detail.courseCodes.length === 0 ? null : detail.courseCodes.join(', '),
+      };
+
+    case 'SUBMITTED': {
+      const receipt = detail.reference ? ` (${detail.reference})` : '';
+      return {
+        headline:
+          detail.courseCodes.length === 0
+            ? 'Submitted your preferences'
+            : `Submitted ${detail.courseCodes.length} ${plural(detail.courseCodes.length, 'preference')}`,
+        detail:
+          detail.courseCodes.length === 0
+            ? detail.reference
+            : `${detail.courseCodes.join(', ')}${receipt}`,
+      };
+    }
+
+    case 'ALLOCATED': {
+      const parts = [
+        detail.rank === null ? null : `${ordinal(detail.rank)} choice`,
+        detail.finalRank === null ? null : `ranked ${ordinal(detail.finalRank)} among its applicants`,
+      ].filter((part): part is string => part !== null);
+      return { headline: `Allocated ${course}`, detail: sentence(parts) };
+    }
+
+    case 'WAITLISTED':
+      return {
+        // The event carries each queue's rank and position but not the course
+        // codes, so the headline counts the queues and the detail places them.
+        headline:
+          detail.waitlisted.length === 0
+            ? 'Allocation could not give you a seat'
+            : `Put on ${detail.waitlisted.length} ${plural(detail.waitlisted.length, 'waitlist')}`,
+        detail: placesLine(detail.waitlisted),
+      };
+
+    case 'NOT_ALLOCATED':
+      return { headline: 'Not allocated a seat', detail: 'No course you ranked had room left.' };
+
+    case 'PROMOTED':
+      return {
+        headline: `Moved up to ${course}`,
+        detail: sentence(
+          [
+            detail.releasedCourse === null ? null : `released ${detail.releasedCourse}`,
+            detail.fromPosition === null ? null : `was ${ordinal(detail.fromPosition)} in line`,
+          ].filter((part): part is string => part !== null),
+        ),
+      };
+
+    case 'ADDED':
+      return {
+        headline: `Added ${course}`,
+        detail: detail.seatFreedBeforeJoining
+          ? 'A seat freed up while you were joining the waitlist.'
+          : 'During add/drop.',
+      };
+
+    case 'DROPPED': {
+      const reason = detail.reason;
+      switch (reason) {
+        case 'UPGRADED':
+          return {
+            headline: `Released ${course}`,
+            detail: `Took ${detail.upgradedTo ?? 'a course you ranked higher'} instead.`,
+          };
+        case 'ADMIN_WITHDRAWAL':
+          return {
+            headline: `Withdrawn from ${course}`,
+            detail: detail.note ? `Reason: ${detail.note}` : 'By an administrator.',
+          };
+        case 'SWAPPED':
+          return { headline: `Released ${course}`, detail: 'As part of a swap.' };
+        case 'STUDENT_DROP':
+          return {
+            headline: `Dropped ${course}`,
+            detail:
+              detail.leftWaitlists.length === 0
+                ? null
+                : `Also left the waitlist for ${list(detail.leftWaitlists)}.`,
+          };
+        default:
+          return unhandled(reason);
+      }
+    }
+
+    case 'SWAPPED':
+      return { headline: `Swapped ${detail.from} for ${course}`, detail: null };
+
+    case 'WAITLIST_JOINED':
+      return {
+        headline: `Joined the waitlist for ${course}`,
+        detail: detail.position === null ? null : `${ordinal(detail.position)} in line`,
+      };
+
+    case 'WAITLIST_LEFT':
+      return {
+        headline: `Left the waitlist for ${course}`,
+        detail: detail.position === null ? null : `Was ${ordinal(detail.position)} in line.`,
+      };
+
+    case 'WAITLIST_REMOVED':
+      return {
+        headline: `Taken off the waitlist for ${course}`,
+        detail: capitalise(`${describeRemoval(detail.reason)}.`),
+      };
+
+    default:
+      return unhandled(detail);
+  }
+}
+
+function plural(count: number, word: string): string {
+  return count === 1 ? word : `${word}s`;
+}
+
+/** "2nd choice, ranked 7th among 15 applicants." — or nothing to say. */
+function sentence(parts: readonly string[]): string | null {
+  return parts.length === 0 ? null : capitalise(`${parts.join(', ')}.`);
+}
+
+/** "4th in line", for a set of queues the student just joined. */
+function placesLine(entries: readonly { position: number | null }[]): string | null {
+  const places = entries
+    .map((entry) => (entry.position === null ? null : `${ordinal(entry.position)} in line`))
+    .filter((place): place is string => place !== null);
+  return places.length === 0 ? null : list(places);
+}
+
+function capitalise(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/**
+ * The tint behind an event's icon. Decorative, like the icon itself: every
+ * row prints what happened in words beside it.
+ */
+export function historyEventTone(type: HistoryEventType): 'success' | 'warning' | 'danger' | 'accent' {
+  switch (type) {
+    case 'ALLOCATED':
+    case 'PROMOTED':
+    case 'ADDED':
+    case 'SWAPPED':
+      return 'success';
+    case 'WAITLISTED':
+    case 'WAITLIST_JOINED':
+      return 'warning';
+    case 'NOT_ALLOCATED':
+    case 'DROPPED':
+    case 'WAITLIST_LEFT':
+    case 'WAITLIST_REMOVED':
+      return 'danger';
+    case 'DRAFT_SAVED':
+    case 'SUBMITTED':
+      return 'accent';
+    default:
+      return unhandled(type);
+  }
+}

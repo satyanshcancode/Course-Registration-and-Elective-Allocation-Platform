@@ -74,7 +74,7 @@ export function AppShell({
             {items.map((item) => (
               <li key={item.to}>
                 <NavLink to={item.to} className={styles.navLink}>
-                  <Icon icon={item.icon} size={20} />
+                  <Icon icon={item.icon} size={24} />
                   <span className={styles.navLabel}>{item.label}</span>
                   <NavCount badge={itemBadge?.(item) ?? null} />
                 </NavLink>

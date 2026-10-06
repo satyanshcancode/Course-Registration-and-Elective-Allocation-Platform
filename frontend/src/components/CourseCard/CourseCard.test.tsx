@@ -25,7 +25,7 @@ describe('CourseCard', () => {
       '/student/courses/CS401',
     );
     expect(card).toHaveTextContent('CS401');
-    expect(card).toHaveTextContent('CSE · 4 credits');
+    expect(card).toHaveTextContent('4 credits');
     expect(card).toHaveTextContent('37 of 50 seats · 13 left');
     expect(screen.getByRole('meter', { name: 'Seats in Artificial Intelligence' })).toHaveAttribute(
       'aria-valuetext',
@@ -39,13 +39,14 @@ describe('CourseCard', () => {
     await expectNoA11yViolations(container);
   });
 
-  it('gives the first reason a student is not eligible', () => {
+  it('says plainly that a student is not eligible', () => {
     renderCard(catalogueCourses[1]);
     const card = screen.getByRole('article');
     // Nothing has happened with this course yet, so the chip answers the
-    // question the student came with.
+    // question the student came with. WHY they are not eligible is the
+    // course page's checklist, not a line on a card.
     expect(card).toHaveTextContent('Not eligible');
-    expect(card).toHaveTextContent('Needs semester 7, you’re in semester 6');
+    expect(within(card).getByRole('button', { name: /Not eligible/ })).toBeDisabled();
   });
 
   it('shows a waitlist place plainly', () => {

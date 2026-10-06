@@ -1,72 +1,105 @@
 /*
- * Design tokens. See docs/DESIGN.md for the reasoning behind every value.
+ * Design tokens. See docs/DESIGN.md for the measured source of every value.
  * Components use these custom properties, never raw colours or sizes.
  *
- * The palette and shape are sampled from docs/redesign/target-ui.png, which
- * is the source of truth for the look: warm off-white page, near-white cards
- * on a hairline, one deep green, and four status hues that never appear
- * without a word or an icon beside them.
+ * Every number here was measured off docs/redesign/target-ui.png with
+ * `python scripts/measure-target.py`, which reads the four screens out of the
+ * sheet and reports each measurement as 1440-viewport pixels. The target is
+ * the source of truth for the look; where a sampled colour failed WCAG AA as
+ * text, it was darkened along its own hue until it passed, and DESIGN.md
+ * records both numbers.
+ *
+ * The app is light only. There is no dark theme and no prefers-color-scheme
+ * block: the target is a light interface and the product follows it whatever
+ * the operating system prefers.
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
-  /* ---- Colour (light) ----------------------------------------------------
-   * Page and sidebar share one warm off-white so the cards are the only
-   * thing that reads as "a surface". Deep green is the primary and the only
-   * colour a reader is asked to recognise; red means "you cannot have this",
-   * amber "not yet", blue "for information".
+  /* ---- Colour --------------------------------------------------------------
+   * Page and sidebar share one warm beige; the header strip is a shade
+   * lighter; cards are near-white on a hairline. Deep green is the primary
+   * and the only colour a reader is asked to recognise. Red means "you
+   * cannot have this", amber "not yet", blue "for information".
    */
-  --color-paper: #f1eee5;
-  --color-surface: #fcfaf5;
-  --color-surface-sunken: #ebe7dc;
-  --color-ink: #1d1b16;
-  --color-ink-muted: #5a5349;
-  --color-rule: #e2ddd0;
-  --color-rule-strong: #857d6e;
+  --color-paper: #f0ece4;
+  --color-surface: #fdfbf7;
+  --color-surface-raised: #f9f6f0;
+  --color-surface-sunken: #e8e4da;
+  --color-ink: #1a1d1f;
+  --color-ink-muted: #6c6b64;
+  --color-rule: #e8e4da;
+  --color-rule-strong: #8d8475;
 
-  --color-accent: #1b5c41;
-  --color-accent-hover: #15492f;
-  --color-accent-soft: #dfeae1;
-  --color-on-accent: #fcfaf5;
+  --color-accent: #0b4a3a;
+  --color-accent-hover: #084335;
+  /* The active nav wash and the cart's side panel: two greens that carry no
+     status, only "this is the one you are on" and "this is the window". */
+  --color-accent-soft: #e0e4da;
+  --color-accent-wash: #e5efe5;
+  --color-accent-ink: #2a4d3a;
+  --color-on-accent: #fdfbf7;
+  --color-link: #2f6b52;
 
-  --color-success: #1d6a46;
-  --color-success-soft: #dcefe2;
+  /* Two greens on purpose: --color-success is dark enough to read as text,
+     --color-success-bright is the target's #0DA05C, nudged two steps darker
+     so it clears 3:1 on the page, and is only ever a dot, a bar or an icon,
+     where WCAG asks for 3:1 rather than 4.5:1. */
+  --color-success: #0b7d3e;
+  --color-success-bright: #0c9b58;
+  --color-success-soft: #e2f4e6;
   --color-warning: #8a5a06;
-  --color-warning-soft: #fbeccd;
-  --color-danger: #a8342c;
-  --color-danger-soft: #fbe2de;
-  --color-info: #2b5ba3;
-  --color-info-soft: #e7eefb;
+  --color-warning-soft: #fae7c7;
+  --color-danger: #b6413e;
+  --color-danger-strong: #c0392b;
+  --color-danger-soft: #ffe4df;
+  --color-info: #3b5ba5;
+  --color-info-soft: #e6ebfb;
+
+  /* Figure tiles: the four rounded squares behind a stat or an activity icon.
+     The ink is held to 3:1 on its own wash — it is an icon, never a word. */
+  --tile-info-bg: #e7f0fb;
+  --tile-info-ink: #2679ba;
+  --tile-danger-bg: #fae9e1;
+  --tile-danger-ink: #b93239;
+  --tile-success-bg: #e6f3e5;
+  --tile-success-ink: #0f8f4a;
+  --tile-warning-bg: #faecd3;
+  --tile-warning-ink: #a9702f;
+
+  /* The seat bar's unfilled track; neutral so the fill carries the status. */
+  --color-track: #e0dedc;
 
   --color-focus: var(--color-accent);
-  --color-backdrop: rgb(29 27 22 / 0.45);
+  --color-backdrop: rgb(26 29 31 / 0.45);
   --color-shadow: 46 42 33;
 
-  /* ---- Typography --------------------------------------------------------- */
-  /* Fraunces carries the voice: a soft serif with an optical-size axis, so
-     a 42px page title and a 13px course code are drawn differently rather
-     than scaled. Work Sans does the interface work; IBM Plex Mono is kept
-     for the things that must align by the character. */
+  /* ---- Typography ----------------------------------------------------------
+   * Fraunces sets page and section titles only — the target's card titles are
+   * a bold grotesque, not a serif. Work Sans does everything else; IBM Plex
+   * Mono is kept for the things that must align by the character.
+   */
   --font-serif: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-sans: 'Work Sans Variable', 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
-  /* 1.2 (minor third) scale from 1rem; the largest steps are fluid. */
-  --text-2xs: 0.694rem;
-  --text-xs: 0.75rem;
-  --text-sm: 0.833rem;
-  --text-base: 1rem;
-  --text-md: 1.2rem;
-  --text-lg: 1.44rem;
-  --text-xl: clamp(1.44rem, 1.25rem + 0.8vw, 1.728rem);
-  --text-2xl: clamp(1.6rem, 1.3rem + 1.3vw, 2.074rem);
-  --text-3xl: clamp(1.9rem, 1.45rem + 1.9vw, 2.488rem);
+  /* Measured off the target at a 1440px viewport, then rounded to the 1px:
+     13 / 15 / 17 body / 20 lead / 24 / 30 figure / 40 title. The two largest
+     steps stay fluid so a 1024px laptop is not shouted at. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-xl: clamp(1.5rem, 1.15rem + 1.1vw, 1.875rem);
+  --text-2xl: clamp(1.625rem, 1.15rem + 1.5vw, 2rem);
+  --text-3xl: clamp(2rem, 1.3rem + 2.2vw, 2.5rem);
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  /* The target sets every title in a bold serif, not a book weight. */
   --weight-heading: 700;
 
   --leading-tight: 1.15;
@@ -89,14 +122,22 @@
   --space-7: 3rem;
   --space-8: 4rem;
 
-  /* ---- Shape -------------------------------------------------------------- */
-  /* Softer than the previous set: the target's cards are ~12px, its controls
-     ~8px, and its chips ~6px. --radius-pill is only for a toggle or an avatar,
-     where the shape IS the affordance. */
+  /* The gap between cards on every page grid, measured at 20px. */
+  --space-grid: 1.25rem;
+
+  /* ---- Shape ---------------------------------------------------------------
+   * Measured by fitting each corner: cards 10px, controls and chips 8px,
+   * figure tiles 14px. --radius-pill is only for a toggle, an avatar or a
+   * seat bar, where the shape IS the affordance.
+   */
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 10px;
+  --radius-tile: 14px;
   --radius-pill: 999px;
+  /* --color-rule draws a card's edge, which carries no meaning; a control's
+     own boundary has to clear 3:1, so it uses --color-rule-strong. The target
+     draws both lighter than that; this is the one place accessibility wins. */
   --border-hairline: 1px solid var(--color-rule);
   --border-control: 1px solid var(--color-rule-strong);
 
@@ -113,13 +154,25 @@
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
 
-  /* ---- Layout ------------------------------------------------------------- */
-  --layout-max-width: 80rem;
+  /* ---- Layout --------------------------------------------------------------
+   * Measured: sidebar 292px, header 81px, content gutter 30px.
+   */
+  --layout-max-width: 90rem;
   --layout-narrow: 44rem;
-  --app-header-height: 4rem;
-  --sidebar-width: 15.5rem;
-  --rail-width: 4rem;
+  --app-header-height: 5rem;
+  --app-gutter: 2rem;
+  --sidebar-width: 18rem;
+  --rail-width: 4.5rem;
   --bottom-nav-height: 4rem;
+
+  /* The rounded square behind a figure icon, and the smaller one beside an
+     activity line. */
+  --tile-size: 3.5rem;
+  --tile-size-sm: 2.25rem;
+
+  --control-height-sm: 2.25rem;
+  --control-height: 2.75rem;
+  --control-height-lg: 3.5rem;
 
   /*
    * Breakpoint reference values. Custom properties can't be used inside
@@ -143,37 +196,6 @@
   --duration-spin: 800ms;
   --duration-pulse: 1.4s;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-}
-
-/* Dark theme: the same palette after dark. Only colour tokens change. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-paper: #15130f;
-    --color-surface: #1e1b16;
-    --color-surface-sunken: #110f0c;
-    --color-ink: #f2ece1;
-    --color-ink-muted: #b3a999;
-    --color-rule: #332e26;
-    --color-rule-strong: #8a8070;
-
-    --color-accent: #7cc39f;
-    --color-accent-hover: #99d4b4;
-    --color-accent-soft: #1a2f24;
-    --color-on-accent: #0d1f17;
-
-    --color-success: #7cc39f;
-    --color-success-soft: #1a2f24;
-    --color-warning: #e0b468;
-    --color-warning-soft: #33280f;
-    --color-danger: #ef9a8b;
-    --color-danger-soft: #3a211b;
-    --color-info: #9ab8e6;
-    --color-info-soft: #1c2432;
-
-    --color-backdrop: rgb(0 0 0 / 0.62);
-    --color-shadow: 0 0 0;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  }
 }
 
 /* Reduced motion: collapse every duration token, so no rule needs !important. */

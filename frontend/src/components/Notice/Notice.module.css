@@ -1,9 +1,13 @@
+/*
+ * The tinted line of explanation. Measured off the target's cart banner: no
+ * border, a filled round icon, a 10px radius and the sentence in the tone's
+ * own ink.
+ */
 .notice {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid transparent;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border-radius: var(--radius-lg);
   font-size: var(--text-sm);
   line-height: var(--leading-dense);
@@ -11,28 +15,45 @@
 
 .icon {
   flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-surface);
 }
 
 .notice[data-tone='info'] {
-  border-color: color-mix(in srgb, var(--color-info) 25%, transparent);
   background-color: var(--color-info-soft);
   color: var(--color-info);
 }
 
+.notice[data-tone='info'] .icon {
+  background-color: var(--color-info);
+}
+
 .notice[data-tone='warning'] {
-  border-color: color-mix(in srgb, var(--color-warning) 25%, transparent);
   background-color: var(--color-warning-soft);
   color: var(--color-warning);
 }
 
+.notice[data-tone='warning'] .icon {
+  background-color: var(--color-warning);
+}
+
 .notice[data-tone='danger'] {
-  border-color: color-mix(in srgb, var(--color-danger) 25%, transparent);
   background-color: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
+.notice[data-tone='danger'] .icon {
+  background-color: var(--color-danger);
+}
+
 .notice[data-tone='success'] {
-  border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
   background-color: var(--color-success-soft);
   color: var(--color-success);
+}
+
+.notice[data-tone='success'] .icon {
+  background-color: var(--color-success);
 }

@@ -51,8 +51,8 @@
 }
 
 .caption {
-  padding: var(--space-3) var(--space-3) var(--space-2);
-  font-family: var(--font-serif);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  font-family: var(--font-sans);
   font-size: var(--text-md);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
@@ -67,18 +67,19 @@
   /* 8px rather than 12px either side: with eight columns that is 64px back,
      which is what keeps the status column on screen at 1280 now the seat
      matrix and a wider typeface have taken their share. */
-  padding: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
   border-bottom: var(--border-hairline);
   background-color: var(--color-surface);
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-regular);
   white-space: nowrap;
 }
 
 .cell {
   max-width: 22rem;
-  padding: var(--space-2);
+  height: 3rem;
+  padding: var(--space-2) var(--space-3);
   border-bottom: var(--border-hairline);
   vertical-align: middle;
   transition: background-color var(--duration-fast) var(--ease-standard);
