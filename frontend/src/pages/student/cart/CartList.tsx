@@ -1,9 +1,9 @@
 import type { CartItem } from '@course-reg/shared';
-import { ChevronDown, ChevronUp, GripVertical, TriangleAlert, X } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { useState, type DragEvent, type Ref } from 'react';
 import { CourseCode } from '../../../components/CourseCode';
 import { Icon } from '../../../components/Icon';
-import { SeatMeter } from '../../../components/SeatMeter';
+import { Select } from '../../../components/Select';
 import { describeReason } from '../../../utils/eligibilityText';
 import type { ProblemsByCode } from './cartProblems';
 import styles from './CartPage.module.css';
@@ -14,42 +14,40 @@ export interface CartListProps {
   editable: boolean;
   /** Server refusals, keyed by course code. */
   problems: ProblemsByCode;
-  onMove: (code: string, delta: -1 | 1) => void;
-  onRemove: (code: string) => void;
-  /** A drag finished: move the item at `from` to `to`. */
+  /** Put the course at `from` at position `to` (both zero-based). */
   onReorder: (from: number, to: number) => void;
-  listRef: Ref<HTMLOListElement>;
+  onRemove: (code: string) => void;
+  listRef: Ref<HTMLTableSectionElement>;
 }
 
 /**
- * The ranked list, as an ordered list — the ranking is the content, not a
- * decoration, so `<ol>` is the right element and the numbers survive with
- * CSS off.
+ * The ranked list as a table, with the rank in its own column so it survives
+ * with CSS off and is read as part of each row.
  *
- * Move up / Move down are the real controls: they work with a keyboard, a
- * screen reader and a touch screen. Dragging is added on top with the native
- * HTML5 drag events and never becomes the only way to reorder.
+ * The Priority select is the real control: it works with a keyboard, a screen
+ * reader and a touch screen, and it moves a course straight to a rank instead
+ * of a step at a time. Dragging is added on top with the native HTML5 drag
+ * events and never becomes the only way to reorder.
  */
 export function CartList({
   items,
   editable,
   problems,
-  onMove,
-  onRemove,
   onReorder,
+  onRemove,
   listRef,
 }: CartListProps) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  const handleDragStart = (index: number) => (event: DragEvent<HTMLLIElement>) => {
+  const handleDragStart = (index: number) => (event: DragEvent<HTMLTableRowElement>) => {
     setDraggingIndex(index);
     event.dataTransfer.effectAllowed = 'move';
     // Firefox only starts a drag once some data is set.
     event.dataTransfer.setData('text/plain', String(index));
   };
 
-  const handleDragOver = (index: number) => (event: DragEvent<HTMLLIElement>) => {
+  const handleDragOver = (index: number) => (event: DragEvent<HTMLTableRowElement>) => {
     if (draggingIndex === null) {
       return;
     }
@@ -59,7 +57,7 @@ export function CartList({
     setOverIndex(index);
   };
 
-  const handleDrop = (index: number) => (event: DragEvent<HTMLLIElement>) => {
+  const handleDrop = (index: number) => (event: DragEvent<HTMLTableRowElement>) => {
     event.preventDefault();
     if (draggingIndex !== null && draggingIndex !== index) {
       onReorder(draggingIndex, index);
@@ -73,117 +71,110 @@ export function CartList({
     setOverIndex(null);
   };
 
+  const ranks = items.map((_, index) => ({ value: String(index + 1), label: String(index + 1) }));
+
   return (
-    <ol className={styles.list} ref={listRef}>
-      {items.map((item, index) => {
-        const rank = index + 1;
-        const itemProblems = problems.get(item.code) ?? [];
-        // Narrowed here so the reasons can be read below.
-        const ineligible = item.eligibility.eligible ? null : item.eligibility;
-        return (
-          <li
-            key={item.code}
-            className={styles.item}
-            data-code={item.code}
-            data-dragging={draggingIndex === index ? 'true' : undefined}
-            data-over={overIndex === index && draggingIndex !== index ? 'true' : undefined}
-            data-problem={itemProblems.length > 0 || ineligible ? 'true' : undefined}
-            draggable={editable}
-            onDragStart={handleDragStart(index)}
-            onDragOver={handleDragOver(index)}
-            onDrop={handleDrop(index)}
-            onDragEnd={endDrag}
-          >
-            <p className={styles.rank} aria-hidden="true">
-              {rank}
-            </p>
-
-            <div className={styles.itemBody}>
-              <p className={styles.itemMeta}>
-                <CourseCode code={item.code} size="sm" />
-                <span>{item.credits} credits</span>
-                <span>{item.department.code}</span>
-              </p>
-              <h3 className={styles.itemName}>
-                <span className="visually-hidden">Choice {rank}: </span>
-                {item.name}
-              </h3>
-              <SeatMeter
-                compact
-                allocated={item.allocated}
-                capacity={item.capacity}
-                label={`Seats in ${item.name}`}
-              />
-
-              {ineligible && (
-                <p className={styles.itemProblem}>
-                  <Icon icon={TriangleAlert} />
-                  <span>
-                    {ineligible.reasons[0]
-                      ? describeReason(ineligible.reasons[0])
-                      : 'You are no longer eligible for this course.'}
-                  </span>
-                </p>
-              )}
-              {itemProblems.map((problem) => (
-                <p key={problem.type} className={styles.itemProblem}>
-                  <Icon icon={TriangleAlert} />
-                  <span>{describeItemProblem(problem.type, item.name)}</span>
-                </p>
-              ))}
-            </div>
-
-            {editable && (
-              <div className={styles.itemActions}>
-                {/* Decorative: dragging is an extra, never the only way. */}
-                <span className={styles.grip} aria-hidden="true">
-                  <Icon icon={GripVertical} />
-                </span>
-                <button
-                  type="button"
-                  className={styles.iconButton}
-                  data-action="move-up"
-                  disabled={index === 0}
-                  onClick={() => {
-                    onMove(item.code, -1);
-                  }}
-                >
-                  <Icon icon={ChevronUp} />
-                  <span className="visually-hidden">
-                    Move {item.name} up to rank {rank - 1}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.iconButton}
-                  data-action="move-down"
-                  disabled={index === items.length - 1}
-                  onClick={() => {
-                    onMove(item.code, 1);
-                  }}
-                >
-                  <Icon icon={ChevronDown} />
-                  <span className="visually-hidden">
-                    Move {item.name} down to rank {rank + 1}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.iconButton}
-                  data-action="remove"
-                  onClick={() => {
-                    onRemove(item.code);
-                  }}
-                >
-                  <Icon icon={X} />
-                  <span className="visually-hidden">Remove {item.name} from your cart</span>
-                </button>
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ol>
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <caption className="visually-hidden">
+          Your ranked choices, first choice first. Change a course’s Priority to move it.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" className={styles.rankHead}>
+              #
+            </th>
+            <th scope="col">Code</th>
+            <th scope="col">Course</th>
+            <th scope="col" className={styles.numeric}>
+              Credits
+            </th>
+            <th scope="col">Priority</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody ref={listRef}>
+          {items.map((item, index) => {
+            const rank = index + 1;
+            const itemProblems = problems.get(item.code) ?? [];
+            // Narrowed here so the reasons can be read below.
+            const ineligible = item.eligibility.eligible ? null : item.eligibility;
+            const flagged = itemProblems.length > 0 || ineligible !== null;
+            return (
+              <tr
+                key={item.code}
+                className={styles.row}
+                data-code={item.code}
+                data-dragging={draggingIndex === index ? 'true' : undefined}
+                data-over={overIndex === index && draggingIndex !== index ? 'true' : undefined}
+                data-problem={flagged ? 'true' : undefined}
+                draggable={editable}
+                onDragStart={handleDragStart(index)}
+                onDragOver={handleDragOver(index)}
+                onDrop={handleDrop(index)}
+                onDragEnd={endDrag}
+              >
+                <th scope="row" className={styles.rank}>
+                  {rank}
+                </th>
+                <td>
+                  <CourseCode code={item.code} size="sm" />
+                </td>
+                <td>
+                  <span className={styles.itemName}>{item.name}</span>
+                  <span className={styles.itemMeta}>{item.department.code}</span>
+                  {ineligible && (
+                    <span className={styles.itemProblem}>
+                      <Icon icon={TriangleAlert} />
+                      {ineligible.reasons[0]
+                        ? describeReason(ineligible.reasons[0])
+                        : 'You are no longer eligible for this course.'}
+                    </span>
+                  )}
+                  {itemProblems.map((problem) => (
+                    <span key={problem.type} className={styles.itemProblem}>
+                      <Icon icon={TriangleAlert} />
+                      {describeItemProblem(problem.type, item.name)}
+                    </span>
+                  ))}
+                </td>
+                <td className={styles.numeric}>{item.credits}</td>
+                <td>
+                  {editable ? (
+                    <Select
+                      className={styles.priority}
+                      aria-label={`Priority of ${item.name}`}
+                      value={String(rank)}
+                      options={ranks}
+                      onChange={(event) => {
+                        onReorder(index, Number(event.target.value) - 1);
+                      }}
+                    />
+                  ) : (
+                    rank
+                  )}
+                </td>
+                <td>
+                  {editable && (
+                    <button
+                      type="button"
+                      className={styles.remove}
+                      data-action="remove"
+                      onClick={() => {
+                        onRemove(item.code);
+                      }}
+                    >
+                      Remove
+                      <span className="visually-hidden"> {item.name} from your cart</span>
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

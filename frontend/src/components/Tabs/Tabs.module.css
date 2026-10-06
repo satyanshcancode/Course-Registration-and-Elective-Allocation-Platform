@@ -44,7 +44,7 @@
 }
 
 .tab[aria-selected='true'] {
-  color: var(--color-ink);
+  color: var(--color-accent);
   font-weight: var(--weight-semibold);
 }
 
@@ -57,9 +57,7 @@
 }
 
 .meta {
-  color: var(--color-ink-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
+  color: inherit;
   font-variant-numeric: tabular-nums;
 }
 

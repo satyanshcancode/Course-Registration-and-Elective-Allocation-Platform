@@ -32,8 +32,9 @@
   max-height: min(70vh, 44rem);
   overflow: auto;
   border: var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
   overscroll-behavior-inline: contain;
 }
 
@@ -57,7 +58,8 @@
   letter-spacing: var(--tracking-heading);
 }
 
-/* Header row: small uppercase labels on a sunken band, sticky while scrolling. */
+/* Header row: small grey labels in sentence case, sticky while scrolling.
+   The background is opaque on purpose — rows scroll underneath it. */
 .headerCell {
   position: sticky;
   top: 0;
@@ -66,12 +68,11 @@
      which is what keeps the status column on screen at 1280 now the seat
      matrix and a wider typeface have taken their share. */
   padding: var(--space-2);
-  border-bottom: 1px solid var(--color-rule-strong);
-  background-color: var(--color-surface-sunken);
+  border-bottom: var(--border-hairline);
+  background-color: var(--color-surface);
   color: var(--color-ink-muted);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
   white-space: nowrap;
 }
 
@@ -83,11 +84,8 @@
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-/* Timetable striping: every other row on a faint sunken tint. */
-.row:nth-child(even) .cell {
-  background-color: color-mix(in srgb, var(--color-surface-sunken) 55%, transparent);
-}
-
+/* No striping: the target rules rows apart with a hairline and nothing else,
+   which is quieter under a page already carrying chips and progress bars. */
 .row:last-child .cell {
   border-bottom: 0;
 }

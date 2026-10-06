@@ -5,8 +5,8 @@
   gap: var(--space-3);
   align-items: start;
   padding: var(--space-5);
-  border: 1px dashed var(--color-rule-strong);
-  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-rule);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
 }
 

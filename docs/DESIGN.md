@@ -1,11 +1,17 @@
-# Design direction — Quad
+# Design direction
 
-**Concept: a warm academic catalogue, not a dashboard.** Allocademy is where a
-student finds out what they can take and whether there is room. That is a
-reading task before it is a control task, so the interface is built like a
-catalogue: clay around warm paper, a soft serif with real character for
-anything that names a thing, and a list of ruled entries rather than a grid of
-boxed cards.
+> **[`docs/redesign/target-ui.png`](redesign/target-ui.png) is the source of
+> truth for the look, and it overrides this document wherever the two
+> disagree.** It shows four screens — Dashboard, Course catalogue, Eligibility
+> check, My cart — and every other page uses the same system so the product
+> reads as one thing. Where the image is silent, this document decides.
+
+**Concept: a warm academic catalogue with a dashboard's front door.**
+Allocademy is where a student finds out what they can take and whether there is
+room. That is a reading task before it is a control task, so the interface is
+built like a catalogue — warm paper, a soft serif for anything that names a
+thing — and the one screen that is a control surface, the dashboard, answers
+four questions before it asks anything.
 
 Students use it under time pressure and in a term when the outcome matters, so
 **clarity always beats decoration** — and the one number they came for, how
@@ -43,26 +49,28 @@ occupy the same width down a list.
 
 ## Colour
 
-Clay surrounds warm paper. One colour is asked to carry meaning, and the other
-two are reserved for a single idea each.
+A warm off-white page, near-white cards, one deep green that carries meaning,
+and three status hues reserved for a single idea each. The values are sampled
+from the target.
 
-| Token                    | Light                | Means                                                |
-| ------------------------ | -------------------- | ---------------------------------------------------- |
-| `--color-paper`          | `#e8e1d6` clay       | The surround: everything outside the content         |
-| `--color-surface`        | `#fdfbf7` warm paper | Where the work is                                    |
-| `--color-surface-sunken` | `#f2ece1`            | Wells, table headers, disabled fields                |
-| `--color-ink`            | `#241f1a`            | Text                                                 |
-| `--color-ink-muted`      | `#585046`            | Secondary text                                       |
-| `--color-rule`           | `#d6cdbe`            | Hairlines                                            |
-| `--color-rule-strong`    | `#887d6d`            | Control borders                                      |
-| `--color-accent`         | `#2f5d4a` forest     | The primary, and the only colour a reader must learn |
-| `--color-danger`         | `#a04a26` terracotta | "You cannot have this": full, blocked, destructive   |
-| `--color-warning`        | `#8a5a06` amber      | "Not yet": a requirement not met, a window not open  |
-| `--color-info`           | `#41566b` slate      | Neutral notices                                      |
+| Token                    | Light                    | Means                                                |
+| ------------------------ | ------------------------ | ---------------------------------------------------- |
+| `--color-paper`          | `#f1eee5` warm off-white | The page and the sidebar                             |
+| `--color-surface`        | `#fcfaf5` near-white     | Cards, the header, where the work is                 |
+| `--color-surface-sunken` | `#ebe7dc`                | Wells, inputs, progress tracks, disabled fields      |
+| `--color-ink`            | `#1d1b16`                | Text                                                 |
+| `--color-ink-muted`      | `#5a5349`                | Secondary text                                       |
+| `--color-rule`           | `#e2ddd0`                | Hairlines                                            |
+| `--color-rule-strong`    | `#857d6e`                | Control borders                                      |
+| `--color-accent`         | `#1b5c41` deep green     | The primary, and the only colour a reader must learn |
+| `--color-success`        | `#1d6a46`                | "You can have this": eligible, allocated, open       |
+| `--color-danger`         | `#a8342c` red            | "You cannot have this": full, blocked, destructive   |
+| `--color-warning`        | `#8a5a06` amber          | "Not yet": waitlisted, a window not open             |
+| `--color-info`           | `#2b5ba3` blue           | Neutral notices                                      |
 
-**The dark theme ("Lamplight") redefines colour tokens and nothing else** — no
-sizes, no shapes, no type. It stays warm: `#191611` paper rather than a neutral
-grey, so the product does not become a different thing after dark.
+**The dark theme redefines colour tokens and nothing else** — no sizes, no
+shapes, no type. It stays warm: `#15130f` paper rather than a neutral grey, so
+the product does not become a different thing after dark.
 
 ### No colour without a key
 
@@ -90,30 +98,31 @@ came out at 2.41:1 and `--color-rule-strong` was darkened until it cleared.
 ## Seats, at a glance
 
 The catalogue's whole job is the seat count, so it gets a drawing as well as a
-number: a **twenty-dot matrix**, filled = taken, ten per row, two rows.
+number: a **bar**, filled = taken, with a dot of the same tone captioning the
+figures beside it. (It was a twenty-dot matrix until v1.5; the target draws a
+bar, and the target wins.)
 
-- **Twenty dots whatever the capacity.** One dot per seat would make an 80-seat
-  course four times the height of a 20-seat one, and every row has to be the
-  same height down the page. The grid is a fixed `repeat(10, …)`, never
-  `auto-fill`, so the block is the same 97×17px on every course and the dots
-  line up down a column.
-- **Nearly-full and full never look the same.** 59 of 60 rounds to twenty dots,
-  which would draw it exactly like a full course — so `filledDots` clamps to 19
-  while a seat remains, and to 1 while any seat is taken. That is the one
-  distinction the drawing exists to make, and it is unit-tested.
-- **The numbers always sit beside it** ("1 of 60 allocated · 59 left"), and a
-  full course says the word "Full". The matrix is reinforcement; it is never
-  the only signal.
+- **Nearly-full and full never look the same.** 59 of 60 is 98.3%, which would
+  draw as a full bar — so `filledPercent` clamps to 98 while a seat remains,
+  and to 2 while any seat is taken. That is the one distinction the drawing
+  exists to make, and it is unit-tested.
+- **The numbers always sit beside it** ("1 of 60 seats · 59 left"), and a full
+  course says the word "Full". The bar is reinforcement; it is never the only
+  signal. The tone goes green, amber, red as the course fills, and each of
+  those has a word beside it.
 
 Demand is a ratio (`5.6×`) with the request count, formatted in exactly one
 place (`utils/courseText.ts`).
 
 ## Shape, depth and layout
 
-- **Radii are small and consistent**: 4px (`sm`), 7px (`md`), 10px (`lg`).
-  Enough to feel made rather than machined, not enough to look like a toy.
-- **Shadows only on things that genuinely float** — modals and toasts. Cards
-  have a hairline, never a shadow.
+- **Radii are consistent**: 6px (`sm`, chips and tags), 8px (`md`, controls),
+  12px (`lg`, cards), and `--radius-pill` only where the shape IS the
+  affordance: a switch, an avatar, a step number.
+- **Cards sit on the page rather than above it**: a hairline plus
+  `--shadow-card`, which is two shadows at 3-4% and no spread. `--shadow-float`
+  and `--shadow-overlay` stay for the things that genuinely leave the page:
+  menus, dialogs, toasts.
 - **Flexbox** for rows that share a line (nav items, button groups, card
   metadata); **Grid** for the page shells, the catalogue, dashboards and admin
   panels.
@@ -122,6 +131,46 @@ place (`utils/courseText.ts`).
 - Breakpoints at **1280 / 820 / 390**, as media queries on `width < 64rem` and
   `width < 40rem`. Wide tables scroll inside their own keyboard-focusable
   region; the page itself never scrolls sideways.
+
+## The shared system
+
+Every page is built from these. A page that needs something new reports it
+rather than inventing a global style, because two pages inventing the same
+thing twice is how a design system dies.
+
+| Piece                       | What it is for                                                           |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `PageHeader`                | The serif title, its description, right-aligned actions; focuses the h1  |
+| `Card`                      | A hairline-bordered article with an optional icon, title and actions     |
+| `Button` / `LinkButton`     | primary (the one green button), secondary (hairline), danger, ghost      |
+| `Badge` / `StatusBadge`     | A soft-filled chip, always icon + word, never colour alone               |
+| `CourseCode`                | A course code as a bordered tag                                          |
+| `SeatMeter`                 | The seat bar and its figures                                             |
+| `StatTile`                  | One headline number: tinted icon tile, figure, label, link               |
+| `ProgressRing`              | A proportion as a ring with the percentage written in it                 |
+| `Stepper`                   | Where someone is in a short sequence (Select, Review, Submit)            |
+| `Toggle`                    | A `role="switch"` button for a setting that applies at once              |
+| `Tabs`                      | ARIA tabs with a roving tabindex; the selected one takes the accent      |
+| `DataTable`                 | Typed columns, sorting, filtering, paging, with its own async states     |
+| `EmptyState`                | A dashed note, left-aligned, with the one action that continues the flow |
+| `ErrorMessage` / `Skeleton` | The other two async states                                               |
+| `CourseArtwork`             | The generated band at the top of a course card                           |
+| `GlobalSearch`              | The header's catalogue search, with Ctrl+K / Cmd+K                       |
+
+### Course artwork is generated, never photographed
+
+Each catalogue card opens with a band of abstract artwork drawn from the
+course's own codes (`utils/courseArtwork.ts`): the **department** sets the hue,
+so a page reads as departments at a glance, and the **course** picks the motif
+and shifts the hue by up to 20 degrees, so a page of one department is a family
+rather than the same picture twelve times. Only the hue ANGLE comes from the
+data; saturation and lightness are the stylesheet's, which is what keeps forty
+generated pictures inside the theme in both light and dark.
+
+Generated rather than stock: there is no licence to honour, no credit to
+print, no file to host and nothing to hotlink. It is decoration — the code,
+name and department are all written out underneath — so it is hidden from
+assistive technology.
 
 ## Icons
 

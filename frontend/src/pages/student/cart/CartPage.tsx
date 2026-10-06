@@ -1,5 +1,14 @@
 import { MAX_PREFERENCES, type CartItem, type CartProblem } from '@course-reg/shared';
-import { Lock, Send, ShoppingCart } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Info,
+  Lock,
+  Send,
+  ShoppingCart,
+  Trash2,
+} from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, LinkButton } from '../../../components/Button';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
@@ -8,8 +17,8 @@ import { ErrorMessage } from '../../../components/ErrorMessage';
 import { Icon } from '../../../components/Icon';
 import { LiveSeatsIndicator } from '../../../components/LiveSeatsIndicator';
 import { PageHeader } from '../../../components/PageHeader';
-import { RegistrationStatusBanner } from '../../../components/RegistrationStatusBanner';
 import { Skeleton } from '../../../components/Skeleton';
+import { Stepper } from '../../../components/Stepper';
 import { useToast } from '../../../components/Toast';
 import { useBeforeUnload } from '../../../hooks/useBeforeUnload';
 import { useCartOrThrow } from '../../../hooks/useCart';
@@ -21,6 +30,11 @@ import { CartList } from './CartList';
 import styles from './CartPage.module.css';
 import { generalProblems, needsReload, problemsByCode } from './cartProblems';
 import { CartReceipt } from './CartReceipt';
+import { CartWindowCard } from './CartWindowCard';
+
+/** The three steps of submitting, in order. */
+const CART_STEPS = ['Select', 'Review', 'Submit'] as const;
+type CartStep = (typeof CART_STEPS)[number];
 
 /** Joined codes: the identity of one ordering, cheap to compare. */
 const keyOf = (codes: readonly string[]) => codes.join('|');
@@ -37,10 +51,11 @@ export function CartPage() {
   const [draft, setDraft] = useState<{ base: string; codes: string[] } | null>(null);
   const [problems, setProblems] = useState<readonly CartProblem[]>([]);
   const [announcement, setAnnouncement] = useState('');
+  const [reviewing, setReviewing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitKey, setSubmitKey] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const listRef = useRef<HTMLOListElement>(null);
+  const listRef = useRef<HTMLTableSectionElement>(null);
   const focusCode = useRef<string | null>(null);
 
   const saved = cart.cart;
@@ -52,20 +67,20 @@ export function CartPage() {
   useBeforeUnload(dirty);
 
   // Keep the keyboard where the student left it: after a move, focus the same
-  // item's first usable button (the one they pressed may now be disabled).
+  // course's Priority select, which is where they just were.
   useEffect(() => {
     const code = focusCode.current;
     focusCode.current = null;
     if (!code) {
       return;
     }
-    const item = listRef.current?.querySelector<HTMLElement>(`[data-code="${CSS.escape(code)}"]`);
-    item?.querySelector<HTMLButtonElement>('button:not([disabled])')?.focus();
+    const row = listRef.current?.querySelector<HTMLElement>(`[data-code="${CSS.escape(code)}"]`);
+    row?.querySelector<HTMLSelectElement>('select')?.focus();
   }, [currentKey]);
 
   if (cart.state.status === 'error') {
     return (
-      <CartFrame>
+      <CartFrame step="Select">
         <ErrorMessage
           title="Your cart couldn’t be loaded"
           message={cart.state.message}
@@ -77,7 +92,7 @@ export function CartPage() {
 
   if (!saved) {
     return (
-      <CartFrame>
+      <CartFrame step="Select">
         <div className={styles.skeleton} aria-hidden="true">
           <Skeleton height="4rem" />
           <Skeleton height="4rem" />
@@ -89,7 +104,7 @@ export function CartPage() {
 
   if (saved.status === 'SUBMITTED') {
     return (
-      <CartFrame windowName={saved.window?.name}>
+      <CartFrame step="Submit">
         <CartReceipt cart={saved} />
       </CartFrame>
     );
@@ -108,8 +123,9 @@ export function CartPage() {
     setDraft({ base: savedKey, codes });
   };
 
-  const moveTo = (code: string, from: number, to: number) => {
-    if (from < 0 || to < 0 || to >= current.length) {
+  const reorder = (from: number, to: number) => {
+    const code = current[from];
+    if (code === undefined || from < 0 || to < 0 || to >= current.length || from === to) {
       return;
     }
     setOrder(moveItem(current, from, to));
@@ -117,21 +133,14 @@ export function CartPage() {
     setAnnouncement(describeMove(nameOf(code), to + 1, current.length));
   };
 
-  const move = (code: string, delta: -1 | 1) => {
-    const from = current.indexOf(code);
-    moveTo(code, from, from + delta);
-  };
-
-  const reorder = (from: number, to: number) => {
-    const code = current[from];
-    if (code !== undefined) {
-      moveTo(code, from, to);
-    }
-  };
-
   const removeLocally = (code: string) => {
     setOrder(current.filter((item) => item !== code));
     setAnnouncement(`${nameOf(code)} removed. ${current.length - 1} left in your cart.`);
+  };
+
+  const clearAll = () => {
+    setOrder([]);
+    setAnnouncement('Every course removed from your cart.');
   };
 
   const applyRefusal = (result: { message: string; problems: CartProblem[] }) => {
@@ -140,19 +149,35 @@ export function CartPage() {
       cart.reload();
       setDraft(null);
     }
+    setReviewing(false);
     toast.show({ tone: 'warning', title: 'Not saved', message: result.message });
   };
 
-  const saveDraft = () => {
+  const saveDraft = (then?: () => void) => {
     void cart.save(current).then((result) => {
       if (result.ok) {
         setProblems([]);
         setDraft(null);
-        toast.show({ tone: 'success', title: 'Draft saved' });
+        if (then) {
+          then();
+        } else {
+          toast.show({ tone: 'success', title: 'Draft saved' });
+        }
       } else {
         applyRefusal(result);
       }
     });
+  };
+
+  /** Moving on saves first: Review must show what the server actually holds. */
+  const goToReview = () => {
+    if (dirty) {
+      saveDraft(() => {
+        setReviewing(true);
+      });
+      return;
+    }
+    setReviewing(true);
   };
 
   const openConfirm = () => {
@@ -202,10 +227,12 @@ export function CartPage() {
   const byProblemCode = problemsByCode(problems);
   const overall = generalProblems(problems);
   const empty = items.length === 0;
+  // An empty cart has nothing to review, so it stays on the first step.
+  const step: CartStep = reviewing && !empty ? 'Review' : 'Select';
 
   return (
     <CartFrame
-      windowName={saved.window?.name}
+      step={step}
       live={<LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />}
     >
       <section
@@ -214,43 +241,53 @@ export function CartPage() {
         aria-busy={cart.saving || undefined}
       >
         <div className={styles.main}>
-          <div className={styles.listHeader}>
-            <h2 id="cart-heading" className={styles.heading}>
-              Your ranked choices
-            </h2>
-            <p className={styles.count}>
-              {items.length} of {MAX_PREFERENCES} · {totalCredits} credits
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 id="cart-heading" className={styles.heading}>
+                <Icon icon={CalendarDays} size={20} className={styles.headingIcon} />
+                {step === 'Review' ? 'Review your choices' : `Selected courses (${items.length})`}
+              </h2>
+              {step === 'Select' && !empty && saved.editable && (
+                <button type="button" className={styles.clearAll} onClick={clearAll}>
+                  <Icon icon={Trash2} />
+                  Clear all
+                </button>
+              )}
+              {step === 'Review' && (
+                <p className={styles.count}>
+                  {items.length} of {MAX_PREFERENCES} · {totalCredits} credits
+                </p>
+              )}
+            </div>
+
+            {/* Announcements only; the list itself is not a live region. */}
+            <p className={styles.announcer} aria-live="polite">
+              {announcement}
             </p>
+
+            {empty ? (
+              <EmptyState
+                title="Your cart is empty"
+                icon={ShoppingCart}
+                headingLevel={3}
+                action={<LinkButton to="/student/courses">Browse the catalogue</LinkButton>}
+              >
+                <p>
+                  Add up to {MAX_PREFERENCES} courses from the catalogue, put them in the order you
+                  want them, and submit once.
+                </p>
+              </EmptyState>
+            ) : (
+              <CartList
+                items={items}
+                editable={saved.editable && step === 'Select'}
+                problems={byProblemCode}
+                onReorder={reorder}
+                onRemove={removeLocally}
+                listRef={listRef}
+              />
+            )}
           </div>
-
-          {/* Announcements only; the list itself is not a live region. */}
-          <p className={styles.announcer} aria-live="polite">
-            {announcement}
-          </p>
-
-          {empty ? (
-            <EmptyState
-              title="Your cart is empty"
-              icon={ShoppingCart}
-              headingLevel={3}
-              action={<LinkButton to="/student/courses">Browse the catalogue</LinkButton>}
-            >
-              <p>
-                Add up to {MAX_PREFERENCES} courses from the catalogue, put them in the order you
-                want them, and submit once.
-              </p>
-            </EmptyState>
-          ) : (
-            <CartList
-              items={items}
-              editable={saved.editable}
-              problems={byProblemCode}
-              onMove={move}
-              onRemove={removeLocally}
-              onReorder={reorder}
-              listRef={listRef}
-            />
-          )}
 
           {overall.length > 0 && (
             <ul className={styles.overall}>
@@ -259,9 +296,78 @@ export function CartPage() {
               ))}
             </ul>
           )}
+
+          {!empty && step === 'Select' && (
+            <p className={styles.info}>
+              <Icon icon={Info} className={styles.infoIcon} />
+              Set each course’s Priority, or drag a row, to change the order. Higher priorities are
+              considered first during allocation.
+            </p>
+          )}
+
+          {!empty && step === 'Review' && (
+            <p className={styles.info}>
+              <Icon icon={Lock} className={styles.infoIcon} />
+              This is the order allocation will use. Submitting is final: your list can’t be changed
+              afterwards.
+            </p>
+          )}
+
+          <div className={styles.footer}>
+            {step === 'Select' ? (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    saveDraft();
+                  }}
+                  loading={cart.saving}
+                  disabled={!dirty}
+                >
+                  Save draft
+                </Button>
+                <Button
+                  variant="primary"
+                  iconEnd={ArrowRight}
+                  onClick={goToReview}
+                  loading={cart.saving}
+                  disabled={empty || !saved.submittable}
+                >
+                  Continue to review
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  iconStart={ArrowLeft}
+                  onClick={() => {
+                    setReviewing(false);
+                  }}
+                >
+                  Back to selection
+                </Button>
+                <Button
+                  variant="primary"
+                  iconStart={Send}
+                  onClick={openConfirm}
+                  disabled={empty || dirty || !saved.submittable}
+                >
+                  Submit preferences
+                </Button>
+              </>
+            )}
+          </div>
+
+          {!saved.submittable && saved.submitBlockedReason && (
+            <p className={styles.hint}>
+              <Icon icon={Lock} /> {saved.submitBlockedReason}
+            </p>
+          )}
         </div>
 
         <aside className={styles.side} aria-label="Submitting">
+          <CartWindowCard />
           <div className={styles.panel}>
             <h2 className={styles.panelHeading}>Before you submit</h2>
             <dl className={styles.totals}>
@@ -276,41 +382,9 @@ export function CartPage() {
                 <dd>{totalCredits}</dd>
               </div>
             </dl>
-
             <p className={styles.note} data-dirty={dirty ? 'true' : undefined}>
               {dirty ? 'You have unsaved changes.' : 'Everything is saved.'}
             </p>
-
-            <div className={styles.actions}>
-              <Button
-                variant="secondary"
-                onClick={saveDraft}
-                loading={cart.saving}
-                disabled={!dirty}
-              >
-                Save draft
-              </Button>
-              <Button
-                variant="primary"
-                iconStart={Send}
-                onClick={openConfirm}
-                disabled={empty || dirty || !saved.submittable}
-              >
-                Submit preferences
-              </Button>
-            </div>
-
-            {dirty && <p className={styles.hint}>Save your draft before submitting.</p>}
-            {!saved.submittable && saved.submitBlockedReason && (
-              <p className={styles.hint}>
-                <Icon icon={Lock} /> {saved.submitBlockedReason}
-              </p>
-            )}
-            {saved.submittable && !dirty && !empty && (
-              <p className={styles.hint}>
-                <Icon icon={Lock} /> Submitting is final: your list can’t be changed afterwards.
-              </p>
-            )}
           </div>
         </aside>
       </section>
@@ -342,26 +416,28 @@ export function CartPage() {
   );
 }
 
-/** The page header and banner, shared by every state of this page. */
+/** The page header and stepper, shared by every state of this page. */
 function CartFrame({
   children,
-  windowName,
+  step,
   live,
 }: {
   children: ReactNode;
-  windowName?: string;
+  step: CartStep;
   live?: ReactNode;
 }) {
   return (
     <>
       <PageHeader
         title="My cart"
-        kicker={windowName ? `${windowName} · Registration` : 'Registration'}
-        description={`Rank up to ${MAX_PREFERENCES} courses, save a draft, and submit once.`}
-      >
-        <RegistrationStatusBanner />
-        {live}
-      </PageHeader>
+        description="Review your choices, set your preferences and submit before the registration window closes."
+        actions={
+          <div className={styles.headerTools}>
+            {live}
+            <Stepper steps={CART_STEPS} current={step} label="Submitting" />
+          </div>
+        }
+      />
       <div className={styles.body}>{children}</div>
     </>
   );

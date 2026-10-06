@@ -8,9 +8,22 @@
 .notice {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-info);
+  border-radius: var(--radius-md);
   background-color: var(--color-info-soft);
   color: var(--color-ink);
   font-size: var(--text-sm);
+}
+
+/* ---- Your academic record ------------------------------------------------ */
+.recheck {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+}
+
+.checkedAt {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
 }
 
 .record {
@@ -23,44 +36,37 @@
 .record dt {
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .record dd {
   margin: 0;
   margin-block-start: var(--space-1);
+  font-weight: var(--weight-semibold);
 }
 
 .wide {
   grid-column: 1 / -1;
 }
 
-.mono {
-  font-family: var(--font-mono);
+.figure {
   font-variant-numeric: tabular-nums;
 }
 
 .passed {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.passed li {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-1);
+/* The course name is the chip's title; underlining it would suggest a link. */
+.passed abbr {
+  text-decoration: none;
 }
 
-.passedName {
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-}
-
+/* ---- The two lists ------------------------------------------------------- */
 .results {
   display: grid;
   gap: var(--space-4);
@@ -92,69 +98,12 @@
   }
 }
 
-.group {
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-}
-
-.groupSummary {
-  display: flex;
+.verdictOk {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.groupSummary:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-accent);
-  outline-offset: calc(var(--focus-ring-width) * -1);
-}
-
-.groupTitle {
-  font-variant-numeric: tabular-nums;
-}
-
-.groupEmpty {
-  margin: 0;
-  padding: 0 var(--space-4) var(--space-4);
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-}
-
-.courses {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-block-start: 1px solid var(--color-rule);
-}
-
-.course {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-}
-
-.course + .course {
-  border-block-start: 1px solid var(--color-rule);
-}
-
-.courseHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-2);
-}
-
-.courseName {
-  font-weight: 500;
-}
-
-.courseMeta {
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
+  gap: var(--space-1);
+  color: var(--color-success);
+  font-weight: var(--weight-medium);
 }
 
 .reasons {
@@ -171,14 +120,19 @@
   align-items: start;
   gap: var(--space-2);
   color: var(--color-danger);
-  font-size: var(--text-sm);
 }
 
 .reasonIcon {
-  width: 1rem;
-  height: 1rem;
   margin-block-start: 0.15em;
-  stroke-width: 1.5px;
+}
+
+.view {
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.view:hover {
+  text-decoration: underline;
 }
 
 .skeleton {

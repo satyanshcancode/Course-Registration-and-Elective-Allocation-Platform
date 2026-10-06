@@ -38,22 +38,26 @@ function renderCart() {
   );
 }
 
-/** The ranked items, in the order they appear. */
+/**
+ * The ranked courses, in the order they appear. Every row carries a Priority
+ * select named after its course, so the selects are the order.
+ */
 function rankedNames(): string[] {
   return screen
-    .getAllByRole('listitem')
-    .map((item) => item.querySelector('h3')?.textContent ?? '')
-    .filter(Boolean)
-    .map((text) => text.replace(/^Choice \d+: /, ''));
+    .getAllByRole('combobox')
+    .map((select) => select.getAttribute('aria-label') ?? '')
+    .filter((label) => label.startsWith('Priority of '))
+    .map((label) => label.replace('Priority of ', ''));
 }
 
-function itemFor(name: string) {
-  const heading = screen.getByRole('heading', { level: 3, name: new RegExp(name) });
-  const item = heading.closest('li');
-  if (!item) {
-    throw new Error(`No cart item for ${name}`);
-  }
-  return within(item);
+function priorityOf(name: string) {
+  return screen.getByRole('combobox', { name: `Priority of ${name}` });
+}
+
+/** Select, then Review: Submit only exists on the second step. */
+async function goToReview(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /Continue to review/ }));
+  await screen.findByRole('heading', { name: 'Review your choices' });
 }
 
 beforeEach(() => {
@@ -83,24 +87,24 @@ describe('CartPage', () => {
   it('lists the ranked courses with their totals, and is accessible', async () => {
     const { container } = renderCart();
 
-    expect(await screen.findByRole('heading', { name: 'Your ranked choices' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Selected courses \(3\)/ })).toBeVisible();
     expect(rankedNames()).toEqual([
       'Artificial Intelligence',
       'Cloud Security',
       'Distributed Systems',
     ]);
+    const user = userEvent.setup();
+    await goToReview(user);
     expect(screen.getByText('3 of 5 · 11 credits')).toBeInTheDocument();
     await expectNoA11yViolations(container);
   });
 
-  it('moves an item up, keeps focus on it and announces the new position', async () => {
+  it('moves a course by its priority, keeps focus on it and announces the new rank', async () => {
     const user = userEvent.setup();
     renderCart();
-    await screen.findByRole('heading', { name: 'Your ranked choices' });
+    await screen.findByRole('heading', { name: /Selected courses/ });
 
-    await user.click(
-      itemFor('Cloud Security').getByRole('button', { name: /Move Cloud Security up/ }),
-    );
+    await user.selectOptions(priorityOf('Cloud Security'), '1');
 
     expect(rankedNames()).toEqual([
       'Cloud Security',
@@ -108,23 +112,19 @@ describe('CartPage', () => {
       'Distributed Systems',
     ]);
     expect(screen.getByText('Cloud Security moved to choice 1 of 3.')).toBeInTheDocument();
-    // "Move up" is now disabled at rank 1, so focus lands on the next control.
+    // The keyboard stays on the control that was just used.
     await waitFor(() => {
-      expect(document.activeElement).toBe(
-        itemFor('Cloud Security').getByRole('button', { name: /Move Cloud Security down/ }),
-      );
+      expect(document.activeElement).toBe(priorityOf('Cloud Security'));
     });
   });
 
   it('reorders from the keyboard alone', async () => {
     const user = userEvent.setup();
     renderCart();
-    await screen.findByRole('heading', { name: 'Your ranked choices' });
+    await screen.findByRole('heading', { name: /Selected courses/ });
 
-    itemFor('Distributed Systems')
-      .getByRole('button', { name: /Move Distributed Systems up/ })
-      .focus();
-    await user.keyboard('{Enter}');
+    priorityOf('Distributed Systems').focus();
+    await user.selectOptions(priorityOf('Distributed Systems'), '2');
 
     expect(rankedNames()).toEqual([
       'Artificial Intelligence',
@@ -133,20 +133,16 @@ describe('CartPage', () => {
     ]);
   });
 
-  it('removes an item and reports the unsaved change until the draft is saved', async () => {
+  it('removes a course and reports the unsaved change until the draft is saved', async () => {
     const user = userEvent.setup();
     renderCart();
-    await screen.findByRole('heading', { name: 'Your ranked choices' });
+    await screen.findByRole('heading', { name: /Selected courses/ });
     expect(screen.getByText('Everything is saved.')).toBeInTheDocument();
 
-    await user.click(
-      itemFor('Cloud Security').getByRole('button', { name: /Remove Cloud Security/ }),
-    );
+    await user.click(screen.getByRole('button', { name: /Remove Cloud Security/ }));
 
     expect(rankedNames()).toEqual(['Artificial Intelligence', 'Distributed Systems']);
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
-    // Submitting is refused until the draft matches what the server holds.
-    expect(screen.getByRole('button', { name: 'Submit preferences' })).toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
 
@@ -154,6 +150,32 @@ describe('CartPage', () => {
       expect(screen.getByText('Everything is saved.')).toBeInTheDocument();
     });
     expect(api.saveCart).toHaveBeenCalledWith(['CS401', 'CS403']);
+  });
+
+  it('empties the cart in one go', async () => {
+    const user = userEvent.setup();
+    renderCart();
+    await screen.findByRole('heading', { name: /Selected courses/ });
+
+    await user.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(await screen.findByRole('heading', { name: 'Your cart is empty' })).toBeVisible();
+    expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
+  });
+
+  it('saves the draft on the way to Review, so Review shows what the server holds', async () => {
+    const user = userEvent.setup();
+    renderCart();
+    await screen.findByRole('heading', { name: /Selected courses/ });
+
+    await user.selectOptions(priorityOf('Cloud Security'), '1');
+    await goToReview(user);
+
+    expect(api.saveCart).toHaveBeenCalledWith(['CS402', 'CS401', 'CS403']);
+    // The ranked list is read-only here: the way back is the Back button.
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Back to selection/ }));
+    expect(await screen.findByRole('heading', { name: /Selected courses/ })).toBeVisible();
   });
 
   it('submits with one idempotency key and reuses it for the retry after a network failure', async () => {
@@ -169,7 +191,8 @@ describe('CartPage', () => {
       .mockResolvedValueOnce(ok(receiptFor(submittedCart())));
     api.getCart.mockResolvedValue(ok(cart));
     renderCart();
-    await screen.findByRole('heading', { name: 'Your ranked choices' });
+    await screen.findByRole('heading', { name: /Selected courses/ });
+    await goToReview(user);
 
     await user.click(screen.getByRole('button', { name: 'Submit preferences' }));
     const dialog = within(await screen.findByRole('dialog'));
@@ -202,8 +225,9 @@ describe('CartPage', () => {
       httpStatus: 409,
     });
     renderCart();
-    await screen.findByRole('heading', { name: 'Your ranked choices' });
+    await screen.findByRole('heading', { name: /Selected courses/ });
     expect(api.getCart).toHaveBeenCalledTimes(1);
+    await goToReview(user);
 
     await user.click(screen.getByRole('button', { name: 'Submit preferences' }));
     const dialog = within(await screen.findByRole('dialog'));
@@ -236,7 +260,7 @@ describe('CartPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Your cart is empty' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Browse the catalogue' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Submit preferences' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Continue to review/ })).toBeDisabled();
   });
 
   it('says why submitting is blocked before the window opens', async () => {
@@ -251,6 +275,6 @@ describe('CartPage', () => {
     renderCart();
 
     expect(await screen.findByText('Registration opens on 21 September.')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Submit preferences' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Continue to review/ })).toBeDisabled();
   });
 });
