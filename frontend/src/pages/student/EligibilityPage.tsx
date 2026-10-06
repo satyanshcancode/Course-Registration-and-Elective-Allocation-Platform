@@ -15,13 +15,15 @@ import { FormField } from '../../components/FormField';
 import { Icon } from '../../components/Icon';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
-import { RegistrationStatusBanner } from '../../components/RegistrationStatusBanner';
 import { SearchBar } from '../../components/SearchBar';
 import { Select } from '../../components/Select';
 import { Skeleton } from '../../components/Skeleton';
 import { Tabs } from '../../components/Tabs';
+import { WindowCard } from '../../components/WindowCard';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useRegistrationWindow } from '../../hooks/useRegistrationWindow';
+import { useServerClock } from '../../hooks/useServerClock';
 import { describeEligibilityCount, describeReason } from '../../utils/eligibilityText';
 import { formatDateTime } from '../../utils/formatDate';
 import { detailPath } from './StudentCoursesPage';
@@ -46,6 +48,11 @@ export function EligibilityPage() {
   const { state, retry } = useAsync(async (signal) => unwrap(await getEligibility(signal)));
   const [search, setSearch] = useState('');
   const [department, setDepartment] = useState('');
+  // The same window the sidebar reads: loaded once for the whole student area.
+  const registration = useRegistrationWindow();
+  const windowState = registration?.state;
+  const windowData = windowState?.status === 'success' ? windowState.data : undefined;
+  const clock = useServerClock(windowData?.clockOffsetMs ?? 0, windowData !== undefined);
 
   const data = state.status === 'success' ? state.data : undefined;
   const departments = useMemo(() => departmentOptions(data), [data]);
@@ -62,9 +69,12 @@ export function EligibilityPage() {
       <PageHeader
         title="Eligibility check"
         description="Check which courses you are eligible for based on your academic record. Run this before registration opens."
-      >
-        <RegistrationStatusBanner />
-      </PageHeader>
+        actions={
+          windowData?.window ? (
+            <WindowCard window={windowData.window} clock={clock} variant="name" />
+          ) : undefined
+        }
+      />
 
       <div className={styles.body}>
         {state.status === 'error' && (
@@ -123,7 +133,7 @@ export function EligibilityPage() {
                         {data.student.completedCourses.map((course) => (
                           <li key={course.code}>
                             <abbr title={course.name}>
-                              <CourseCode code={course.code} size="sm" />
+                              <CourseCode code={course.code} />
                             </abbr>
                           </li>
                         ))}
@@ -140,16 +150,19 @@ export function EligibilityPage() {
                   {describeEligibilityCount(data.summary.eligibleCount, data.summary.totalCount)}
                 </h2>
                 <div className={styles.filters}>
-                  <SearchBar
-                    label="Search courses"
-                    placeholder="Search by code or name..."
-                    delayMs={SEARCH_DELAY_MS}
-                    onSearch={setSearch}
-                  />
+                  <div className={styles.search}>
+                    <SearchBar
+                      label="Search courses"
+                      placeholder="Search by code or name..."
+                      delayMs={SEARCH_DELAY_MS}
+                      onSearch={setSearch}
+                    />
+                  </div>
                   <FormField label="Department" labelHidden>
                     {(field) => (
                       <Select
                         {...field}
+                        className={styles.department}
                         options={departments}
                         placeholder="All departments"
                         value={department}
@@ -172,35 +185,37 @@ export function EligibilityPage() {
                     : 'Courses appear here once the registrar publishes this term’s offerings.'}
                 </EmptyState>
               ) : (
-                <Tabs
-                  label="Eligibility"
-                  tabs={[
-                    {
-                      id: 'eligible',
-                      label: 'Eligible',
-                      meta: `(${eligible.length})`,
-                      panel: (
-                        <CourseGroup
-                          title="Eligible courses"
-                          courses={eligible}
-                          emptyText="No offered course matches your record yet."
-                        />
-                      ),
-                    },
-                    {
-                      id: 'not-eligible',
-                      label: 'Not eligible',
-                      meta: `(${notEligible.length})`,
-                      panel: (
-                        <CourseGroup
-                          title="Courses you are not eligible for"
-                          courses={notEligible}
-                          emptyText="Nothing is out of reach: you can take every course shown."
-                        />
-                      ),
-                    },
-                  ]}
-                />
+                <Card bodyFlush>
+                  <Tabs
+                    label="Eligibility"
+                    tabs={[
+                      {
+                        id: 'eligible',
+                        label: 'Eligible',
+                        meta: `(${eligible.length})`,
+                        panel: (
+                          <CourseGroup
+                            title="Eligible courses"
+                            courses={eligible}
+                            emptyText="No offered course matches your record yet."
+                          />
+                        ),
+                      },
+                      {
+                        id: 'not-eligible',
+                        label: 'Not eligible',
+                        meta: `(${notEligible.length})`,
+                        panel: (
+                          <CourseGroup
+                            title="Courses you are not eligible for"
+                            courses={notEligible}
+                            emptyText="Nothing is out of reach: you can take every course shown."
+                          />
+                        ),
+                      },
+                    ]}
+                  />
+                </Card>
               )}
             </section>
           </>

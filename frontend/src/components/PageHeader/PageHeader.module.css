@@ -29,7 +29,7 @@
   display: grid;
   gap: var(--space-2);
   min-width: min(100%, 20rem);
-  flex: 1 1 24rem;
+  flex: 1 1 32rem;
 }
 
 .kicker {
@@ -50,9 +50,8 @@
 }
 
 .description {
-  max-width: 70ch;
   color: var(--color-ink-muted);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
 }
 
 .actions {

@@ -49,6 +49,8 @@ def load_measure():
     spec = importlib.util.spec_from_file_location("measure_target", os.path.join(here, "measure-target.py"))
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
+    # Registered before it runs: @dataclass looks its own module up by name.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 

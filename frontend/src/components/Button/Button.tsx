@@ -5,7 +5,12 @@ import { Icon } from '../Icon';
 import { Spinner } from '../LoadingSpinner';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+/**
+ * `dangerOutline` is for a destructive action that is NOT what the page is
+ * for — "Clear all" beside a cart — so it is outlined in red rather than
+ * filled with it, and does not compete with the primary button below.
+ */
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'dangerOutline' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 /** Appearance options shared by Button and LinkButton. */

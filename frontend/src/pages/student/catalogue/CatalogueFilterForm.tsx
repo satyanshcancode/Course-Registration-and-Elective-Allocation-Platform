@@ -1,6 +1,7 @@
 import { COURSE_SORT_KEYS, type CatalogueFilterOptions } from '@course-reg/shared';
 import { ListFilter, RotateCcw, Search } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ChangeEvent, type SubmitEvent } from 'react';
+import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Select } from '../../../components/Select';
 import { Toggle } from '../../../components/Toggle';
@@ -99,7 +100,7 @@ export function CatalogueFilterForm({
   const selects = (
     <>
       <Select
-        size="sm"
+        className={styles.control}
         name="department"
         aria-label="Department"
         value={filters.department}
@@ -113,7 +114,7 @@ export function CatalogueFilterForm({
         }}
       />
       <Select
-        size="sm"
+        className={styles.control}
         name="credits"
         aria-label="Credits"
         value={filters.credits === null ? '' : String(filters.credits)}
@@ -127,7 +128,7 @@ export function CatalogueFilterForm({
         }}
       />
       <Select
-        size="sm"
+        className={styles.control}
         name="sort"
         aria-label="Sort by"
         value={filters.sort}
@@ -164,19 +165,18 @@ export function CatalogueFilterForm({
           />
         </span>
         {!isPhone && selects}
-        <button
-          type="button"
-          className={styles.summary}
+        <Button
+          variant="primary"
+          iconStart={ListFilter}
           aria-expanded={showRefinements}
           aria-controls={panelId}
           onClick={() => {
             setOpen(!showRefinements);
           }}
         >
-          <Icon icon={ListFilter} />
           Filters
           {refinementCount > 0 && <span className={styles.count}>{refinementCount}</span>}
-        </button>
+        </Button>
       </div>
 
       <div className={styles.moreBody} id={panelId} hidden={!showRefinements}>
@@ -197,10 +197,15 @@ export function CatalogueFilterForm({
             onChange({ onlyAvailable: checked });
           }}
         />
-        <button type="button" className={styles.clear} onClick={handleClear}>
-          <Icon icon={RotateCcw} />
+        <Button
+          variant="ghost"
+          size="sm"
+          iconStart={RotateCcw}
+          className={styles.clear}
+          onClick={handleClear}
+        >
           Clear filters
-        </button>
+        </Button>
       </div>
     </form>
   );

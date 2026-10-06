@@ -18,6 +18,12 @@ export interface CartListProps {
   /** Put the course at `from` at position `to` (both zero-based). */
   onReorder: (from: number, to: number) => void;
   onRemove: (code: string) => void;
+  /**
+   * Print how full each course is beside its name. Off while the student is
+   * still choosing — the target keeps that table to one line a course — and on
+   * for the review step, which is where the seat counts are worth reading.
+   */
+  showSeats?: boolean;
   listRef: Ref<HTMLTableSectionElement>;
 }
 
@@ -36,6 +42,7 @@ export function CartList({
   problems,
   onReorder,
   onRemove,
+  showSeats = false,
   listRef,
 }: CartListProps) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -132,16 +139,18 @@ export function CartList({
                 <td>
                   <span className={styles.itemName}>{item.name}</span>
                   {/* The seat count keeps polling while the cart is open, so
-                      the student can see a course fill up as they rank it. */}
-                  <span className={styles.itemMeta}>
-                    {item.department.code}
-                    <SeatMeter
-                      compact
-                      allocated={item.allocated}
-                      capacity={item.capacity}
-                      label={`Seats in ${item.name}`}
-                    />
-                  </span>
+                      a course that fills up is visible before submitting. */}
+                  {showSeats && (
+                    <span className={styles.itemMeta}>
+                      {item.department.code}
+                      <SeatMeter
+                        compact
+                        allocated={item.allocated}
+                        capacity={item.capacity}
+                        label={`Seats in ${item.name}`}
+                      />
+                    </span>
+                  )}
                   {ineligible && (
                     <span className={styles.itemProblem}>
                       <Icon icon={TriangleAlert} />
@@ -162,6 +171,7 @@ export function CartList({
                   {editable ? (
                     <Select
                       className={styles.priority}
+                      size="sm"
                       aria-label={`Priority of ${item.name}`}
                       value={String(rank)}
                       options={ranks}

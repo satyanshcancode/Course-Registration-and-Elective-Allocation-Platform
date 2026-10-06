@@ -193,8 +193,14 @@ const SHOTS = [
 
   // ---- Student ------------------------------------------------------------
   ...pair('student-dashboard', { as: 'allocated', path: '/student/dashboard' }),
-  ...pair('student-courses', { as: 'allocated', path: '/student/courses' }),
-  ...pair('student-course-detail', { as: 'allocated', path: '/student/courses/CS401' }),
+  // The catalogue and a course page are read while the window is OPEN: that
+  // is when "Add to cart" is a real offer rather than a locked receipt.
+  ...pair('student-courses', { as: 'aarav', path: '/student/courses', stage: 'open' }),
+  ...pair('student-course-detail', {
+    as: 'aarav',
+    path: '/student/courses/CS401',
+    stage: 'open',
+  }),
   ...pair('student-eligibility', { as: 'aarav', path: '/student/eligibility' }),
   // The cart is only editable while the window is open; afterwards it is a receipt.
   ...pair('student-cart', {
@@ -325,9 +331,14 @@ async function main() {
   const args = process.argv.slice(2);
   const stage = args.find((arg) => arg.startsWith('--stage='))?.slice('--stage='.length);
   const filter = args.find((arg) => !arg.startsWith('--'));
+  // The documentation shots are tall so nothing is cut off. A comparison round
+  // against docs/redesign/target-ui.png wants the viewport the target was
+  // actually drawn at, because anything pinned to the bottom of the sidebar
+  // moves with the window's height: `--height=1165`.
+  const height = Number(args.find((arg) => arg.startsWith('--height='))?.slice('--height='.length));
   const shots = SHOTS.filter(
     (shot) => (!stage || shot.stage === stage) && (!filter || shot.name.includes(filter)),
-  );
+  ).map((shot) => (height > 0 ? { ...shot, h: height } : shot));
   if (shots.length === 0) {
     throw new Error(`No shot matches ${JSON.stringify({ stage, filter })}`);
   }

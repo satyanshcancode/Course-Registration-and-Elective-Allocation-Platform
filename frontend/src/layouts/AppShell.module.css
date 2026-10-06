@@ -83,7 +83,7 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 /* Full-bleed to the sidebar's left edge, rounded only where it ends, with the
@@ -92,13 +92,13 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-5);
   min-height: 3.25rem;
-  padding: 0 var(--space-4) 0 var(--space-6);
+  padding: 0 var(--space-4) 0 var(--space-4);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   color: var(--color-ink-muted);
-  font-size: var(--text-base);
-  font-weight: var(--weight-regular);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
   text-decoration: none;
   transition:
     background-color var(--duration-fast) var(--ease-standard),

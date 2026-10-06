@@ -5,6 +5,13 @@
 > disagree.** It shows four screens — Dashboard, Course catalogue, Eligibility
 > check, My cart — and every other page uses the same system so the product
 > reads as one thing. Where the image is silent, this document decides.
+>
+> Nothing in it was eyeballed. [`scripts/measure-target.py`](../scripts/measure-target.py)
+> finds the four screens on the sheet, samples the colours and measures the
+> structure, reporting every number as **1440-viewport pixels**;
+> [`scripts/compare-target.py`](../scripts/compare-target.py) puts a
+> screenshot beside its quadrant and draws the pixel difference. The tables
+> below are that script's output, rounded to the pixel.
 
 **Concept: a warm academic catalogue with a dashboard's front door.**
 Allocademy is where a student finds out what they can take and whether there is
@@ -25,11 +32,11 @@ directions were built as working pages before this one was chosen —
 
 ## Typography
 
-| Role                    | Face                               | Where                                                              |
-| ----------------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| Display                 | **Fraunces Variable** (opsz 9–144) | Page titles, course names, card and section headings, the wordmark |
-| Interface               | **Work Sans Variable**             | Body text, labels, buttons, navigation, tables                     |
-| Figures that must align | **IBM Plex Mono**                  | Course codes, references, hashes, timestamps                       |
+| Role                    | Face                               | Where                                                             |
+| ----------------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| Display                 | **Fraunces Variable** (opsz 9–144) | Page titles, standalone section headings, the wordmark            |
+| Interface               | **Work Sans Variable**             | Card headings, figures, body, labels, buttons, navigation, tables |
+| Figures that must align | **IBM Plex Mono**                  | Course codes, references, hashes, timestamps                      |
 
 **Fraunces earns its place on the optical-size axis.** A 40px page title and a
 13px course code are _drawn_ differently rather than scaled — the small sizes
@@ -37,9 +44,13 @@ get sturdier serifs and more open counters, the large ones get the contrast and
 the slightly odd, warm letterforms that give the product a voice. `font-optical-sizing: auto`
 is set on every heading, so this is automatic rather than hand-tuned.
 
-The scale is a 1.2 (minor third) ratio from 1rem, fluid at the top three steps.
-`h1` is `--text-3xl` (up to 40px): the page title is the largest thing on the
-page by a wide margin, and everything else is quiet.
+The scale is not a ratio any more: every step is a size measured off the
+target and rounded to the pixel (13 / 15 / 17 / 20 / 24 / 30 / 40), with the
+top three fluid so a 1024px laptop is not shouted at. `h1` is `--text-3xl` (up
+to 40px): the page title is the largest thing on the page by a wide margin,
+and everything else is quiet. The table under
+[Measured from the target](#measured-from-the-target) says which role takes
+which step.
 
 **Figures are lining and tabular everywhere.** Both Fraunces and Work Sans ship
 oldstyle figures by default, which are lovely in a sentence and useless in a
@@ -49,28 +60,39 @@ occupy the same width down a list.
 
 ## Colour
 
+**The app is light only.** There is no dark theme, no `prefers-color-scheme`
+block and no dark token: the target is a light interface, `:root` declares
+`color-scheme: light` so the browser does not darken a form control behind our
+back, and the product looks the same whatever the operating system prefers.
+
 A warm off-white page, near-white cards, one deep green that carries meaning,
 and three status hues reserved for a single idea each. The values are sampled
 from the target.
 
-| Token                    | Light                    | Means                                                |
-| ------------------------ | ------------------------ | ---------------------------------------------------- |
-| `--color-paper`          | `#f1eee5` warm off-white | The page and the sidebar                             |
-| `--color-surface`        | `#fcfaf5` near-white     | Cards, the header, where the work is                 |
-| `--color-surface-sunken` | `#ebe7dc`                | Wells, inputs, progress tracks, disabled fields      |
-| `--color-ink`            | `#1d1b16`                | Text                                                 |
-| `--color-ink-muted`      | `#5a5349`                | Secondary text                                       |
-| `--color-rule`           | `#e2ddd0`                | Hairlines                                            |
-| `--color-rule-strong`    | `#857d6e`                | Control borders                                      |
-| `--color-accent`         | `#1b5c41` deep green     | The primary, and the only colour a reader must learn |
-| `--color-success`        | `#1d6a46`                | "You can have this": eligible, allocated, open       |
-| `--color-danger`         | `#a8342c` red            | "You cannot have this": full, blocked, destructive   |
-| `--color-warning`        | `#8a5a06` amber          | "Not yet": waitlisted, a window not open             |
-| `--color-info`           | `#2b5ba3` blue           | Neutral notices                                      |
+| Token                    | Value                | Means                                                |
+| ------------------------ | -------------------- | ---------------------------------------------------- |
+| `--color-paper`          | `#f0ece4` warm beige | The page **and** the sidebar — they are one surface  |
+| `--color-surface`        | `#fdfbf7` near-white | Cards, where the work is                             |
+| `--color-surface-raised` | `#f9f6f0`            | The header strip, a shade above the page             |
+| `--color-surface-sunken` | `#e8e4da`            | Wells, disabled fields, a quiet badge                |
+| `--color-ink`            | `#1a1d1f`            | Text                                                 |
+| `--color-ink-muted`      | `#6c6b64`            | Secondary text                                       |
+| `--color-rule`           | `#e8e4da`            | Hairlines                                            |
+| `--color-rule-strong`    | `#8d8475`            | Control borders                                      |
+| `--color-accent`         | `#0b4a3a` deep green | The primary, and the only colour a reader must learn |
+| `--color-accent-soft`    | `#e0e4da`            | The active navigation item                           |
+| `--color-accent-wash`    | `#e5efe5`            | The cart's registration-window panel                 |
+| `--color-link`           | `#2f6b52`            | A link inside running text                           |
+| `--color-success`        | `#0b7d3e`            | "You can have this": eligible, allocated, open       |
+| `--color-success-bright` | `#0c9b58`            | The same idea as a **drawing**: a bar, a dot, a node |
+| `--color-danger`         | `#b6413e` red        | "You cannot have this": full, blocked, destructive   |
+| `--color-warning`        | `#8a5a06` amber      | "Not yet": waitlisted, a window not open             |
+| `--color-info`           | `#3b5ba5` blue       | Neutral notices                                      |
+| `--color-track`          | `#e0dedc`            | The unfilled part of a seat bar                      |
 
-**The dark theme redefines colour tokens and nothing else** — no sizes, no
-shapes, no type. It stays warm: `#15130f` paper rather than a neutral grey, so
-the product does not become a different thing after dark.
+Four more pairs tint the rounded squares behind a figure's icon — `--tile-info-*`,
+`--tile-danger-*`, `--tile-success-*`, `--tile-warning-*`. They are the
+dashboard's blue, red, green and orange, and they only ever hold an icon.
 
 ### No colour without a key
 
@@ -89,11 +111,23 @@ the values straight out of `variables.css`, so the audit cannot drift from what
 ships. Run it with `node frontend/src/styles/contrast.mjs`; it exits non-zero on
 any failure.
 
-Text pairs are held to **4.5:1**, and pairs that only draw a boundary or a
-control to **3:1** (WCAG 1.4.11). All 48 pairs across both themes pass. The
-tightest are the control border on clay (3.11:1) and body text on clay
-(12.58:1 — comfortable); when the palette was first written the control border
-came out at 2.41:1 and `--color-rule-strong` was darkened until it cleared.
+Text pairs are held to **4.5:1**, and pairs that only draw a boundary, a dot, a
+bar or an icon to **3:1** (WCAG 1.4.11). There is one theme, so there is one
+pass: **all 36 pairs clear their threshold.**
+
+Three colours sampled off the target did not, and were darkened along their own
+hue until they did. They are the only places the image was overruled:
+
+| Sampled                        | Shipped   | Why                                           |
+| ------------------------------ | --------- | --------------------------------------------- |
+| `#88857D` nav, `#7F7E76` muted | `#6c6b64` | 3.1:1 and 3.5:1 on the page; text needs 4.5:1 |
+| `#0DA05C` bright green         | `#0c9b58` | 2.9:1 on the page; a bar or a dot needs 3:1   |
+| light input borders            | `#8d8475` | a control's own boundary needs 3:1            |
+
+The brightest green survives as `--color-success-bright` for bars, dots and
+tile icons, and `--color-success` is the darker one the words use — the two
+exist precisely so the drawing can stay bright while the writing stays
+readable.
 
 ## Seats, at a glance
 
@@ -114,11 +148,65 @@ bar, and the target wins.)
 Demand is a ratio (`5.6×`) with the request count, formatted in exactly one
 place (`utils/courseText.ts`).
 
+## Measured from the target
+
+Each screen on the sheet is a 1440-wide viewport scaled to 760px, so one
+target pixel is 1.895 CSS pixels. These are the measurements the tokens were
+set from, with each one's share of the viewport beside it — the proportions
+are what survive a different screen width.
+
+| Thing                   | Measured                               | Token                        | Share of the 1440 viewport |
+| ----------------------- | -------------------------------------- | ---------------------------- | -------------------------- |
+| Sidebar                 | 292px                                  | `--sidebar-width` (18rem)    | 20.3% of width             |
+| Header bar              | 81px                                   | `--app-header-height` (5rem) | 5.6% of width              |
+| Content gutter          | 30px                                   | `--app-gutter` (2rem)        | 2.1% of width              |
+| Gap between cards       | 20px                                   | `--space-grid`               | 1.4% of width              |
+| Card padding            | 24px                                   | `--space-5`                  | 1.7% of width              |
+| Card radius             | 10px                                   | `--radius-lg`                | —                          |
+| Control and chip radius | 8px                                    | `--radius-md`                | —                          |
+| Figure-tile radius      | 14px                                   | `--radius-tile`              | —                          |
+| Stat card               | 256 x 152                              | —                            | 17.8% of width             |
+| Figure tile             | 56px                                   | `--tile-size`                | —                          |
+| Activity tile           | 36px                                   | `--tile-size-sm`             | —                          |
+| Nav item                | 52px tall, 4px accent bar              | —                            | —                          |
+| Avatar                  | 44px                                   | —                            | —                          |
+| Toggle                  | 48 x 26, 18px knob                     | —                            | —                          |
+| Button                  | 44px; 36px small; 56px final           | `--control-height*`          | —                          |
+| Table row               | 48px                                   | —                            | —                          |
+| Seat bar                | 8px, pill                              | —                            | —                          |
+| Photograph band         | 92px on a card, 192px on a course page | —                            | —                          |
+
+The dashboard's three content rows measure 1.35fr / 1fr, then 1fr / 1fr, with
+four equal stat cards above them. The cart is 1fr / 19rem. The catalogue is
+three equal columns.
+
+### Type, measured the same way
+
+| Role                      | Measured | Face     | Weight | Token         |
+| ------------------------- | -------- | -------- | ------ | ------------- |
+| Page title                | 40px     | serif    | 700    | `--text-3xl`  |
+| Section heading           | 28px     | serif    | 700    | `--text-xl`   |
+| Card title                | 18-20px  | **sans** | 700    | `--text-md`   |
+| Figure (a stat's number)  | 30px     | **sans** | 700    | `--text-xl`   |
+| Page description          | 20px     | sans     | 400    | `--text-md`   |
+| Body                      | 17px     | sans     | 400    | `--text-base` |
+| Meta, table cell          | 15px     | sans     | 400    | `--text-sm`   |
+| Small label, table header | 13px     | sans     | 400    | `--text-xs`   |
+
+The serif sets the page title, the standalone section headings and the
+wordmark. **Every card heading in the target is a bold grotesque**, which is
+why `Card` overrides the element default — a card's title names a panel, not a
+document.
+
+Icons sit on a 16 / 20 / 24px grid through the `Icon` component. 24px in the
+sidebar and beside a card title, 16px inside a line of text.
+
 ## Shape, depth and layout
 
-- **Radii are consistent**: 6px (`sm`, chips and tags), 8px (`md`, controls),
-  12px (`lg`, cards), and `--radius-pill` only where the shape IS the
-  affordance: a switch, an avatar, a step number.
+- **Radii are consistent**: 6px (`sm`, small tags), 8px (`md`, controls and
+  chips), 10px (`lg`, cards), 14px (`tile`, the rounded square behind a figure
+  icon), and `--radius-pill` only where the shape IS the affordance: a switch,
+  an avatar, a seat bar, a step number.
 - **Cards sit on the page rather than above it**: a hairline plus
   `--shadow-card`, which is two shadows at 3-4% and no spread. `--shadow-float`
   and `--shadow-overlay` stay for the things that genuinely leave the page:
@@ -128,8 +216,9 @@ place (`utils/courseText.ts`).
   panels.
 - Positioning: `sticky` sidebar and page header, `fixed` phone nav and skip
   link, `absolute` overlays and badges, `relative` as their anchor.
-- Breakpoints at **1280 / 820 / 390**, as media queries on `width < 64rem` and
-  `width < 40rem`. Wide tables scroll inside their own keyboard-focusable
+- Breakpoints at **1440 / 820 / 390**, as media queries on `width < 64rem` and
+  `width < 40rem`. 1440 is the width the target was drawn at and the width the
+  comparison screenshots are taken at. Wide tables scroll inside their own keyboard-focusable
   region; the page itself never scrolls sideways.
 
 ## The shared system
@@ -154,23 +243,33 @@ thing twice is how a design system dies.
 | `DataTable`                 | Typed columns, sorting, filtering, paging, with its own async states     |
 | `EmptyState`                | A dashed note, left-aligned, with the one action that continues the flow |
 | `ErrorMessage` / `Skeleton` | The other two async states                                               |
-| `CourseArtwork`             | The generated band at the top of a course card                           |
+| `Notice`                    | A tinted line of explanation: why a period is closed, how to reorder     |
+| `WindowCard`                | The registration window and its countdown, in a page header              |
+| `CoursePhoto`               | The photograph at the top of a course card                               |
+| `CourseCard`                | One catalogue entry, photograph to buttons, with its "⋮"                 |
 | `GlobalSearch`              | The header's catalogue search, with Ctrl+K / Cmd+K                       |
 
-### Course artwork is generated, never photographed
+### Course photographs
 
-Each catalogue card opens with a band of abstract artwork drawn from the
-course's own codes (`utils/courseArtwork.ts`): the **department** sets the hue,
-so a page reads as departments at a glance, and the **course** picks the motif
-and shifts the hue by up to 20 degrees, so a page of one department is a family
-rather than the same picture twelve times. Only the hue ANGLE comes from the
-data; saturation and lightness are the stylesheet's, which is what keeps forty
-generated pictures inside the theme in both light and dark.
+Each catalogue card opens with a photograph: dark, wide and cinematic — server
+halls, circuit boards, bridges and city nights — the mood the target sets.
 
-Generated rather than stock: there is no licence to honour, no credit to
-print, no file to host and nothing to hotlink. It is decoration — the code,
-name and department are all written out underneath — so it is hidden from
-assistive technology.
+Seventeen of them live in
+[`frontend/public/course-photos`](../frontend/public/course-photos), and a
+course picks one by hashing its own code (`utils/coursePhoto.ts`), so a course
+always wears the same picture and three neighbouring cards almost never repeat.
+
+They are **all CC0 or public domain**, found through the Openverse API, which
+is what makes the credit in the README accurate rather than guessed;
+[`docs/redesign/course-photos.json`](redesign/course-photos.json) records each
+one's title, creator, licence and source page. They were downloaded once,
+cropped to the band's proportions and committed: **nothing is hotlinked, and
+no request leaves the reader's browser for anyone else's server.**
+
+The picture is decoration — the code, name, department and seat count are all
+written out underneath — so it carries an empty `alt` and is hidden from
+assistive technology. It is also `loading="lazy"`, because a catalogue of
+twelve cards should not cost twelve images before the first paint.
 
 ## Icons
 
@@ -245,6 +344,9 @@ writing legal advice from a codebase, which is worse than leaving the gap
 visible.
 
 ## Review
+
+> Entries before v1.6 describe reviews in a dark theme. The app no longer has
+> one — v1.6 removed it — and they are kept because they are what happened.
 
 ### Phase 4: design system and shell
 

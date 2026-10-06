@@ -52,7 +52,7 @@
 /* Sans, not serif: the target sets its figures in the interface face. */
 .value {
   align-self: end;
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.05;

@@ -1,6 +1,6 @@
 # Redesign
 
-## The target (v1.5)
+## The target (v1.6)
 
 [`target-ui.png`](target-ui.png) is **the source of truth for how the product
 looks**, and it overrides [`docs/DESIGN.md`](../DESIGN.md) wherever the two
@@ -9,8 +9,29 @@ catalogue (top right), Eligibility check (bottom left), My cart (bottom right)
 — and every other page is built from the same system so the whole app reads as
 one product.
 
-It is 1536x1024, so each screen occupies a 768x512 quadrant; cropping one out
-and upscaling it is the quickest way to read the detail.
+It is 1536x1024. The four screens are not on an even grid — they are separated
+by a dark gutter and the two columns are cut at different heights — so they are
+found by code rather than by arithmetic. Each one is a **1440-wide viewport**
+scaled to 760px, which makes one target pixel 1.895 CSS pixels.
+
+### Two scripts, so nothing is eyeballed
+
+| Script | What it does |
+| --- | --- |
+| [`scripts/measure-target.py`](../../scripts/measure-target.py) | Finds the four screens, samples the colours that cover each one, and measures the structure. Every number is reported as 1440-viewport pixels. `--json` for the machine-readable form. |
+| [`scripts/compare-target.py`](../../scripts/compare-target.py) | Scales each screenshot to its screen's width, crops both to the height they share, and writes a side-by-side, a difference heatmap and a red/cyan overlay into [`compare/`](compare/), with a score per page. |
+
+Both need Pillow and numpy (`pip install pillow numpy`), and the comparison
+needs `docs/screenshots/*-1440-light.png` to exist.
+
+```bash
+python scripts/measure-target.py
+npm run screenshots -- student-dashboard-1440
+python scripts/compare-target.py dashboard
+```
+
+The score is the share of pixels differing by more than 32/255. It never
+reaches zero: the app draws real data, and the target drew a story.
 
 ---
 

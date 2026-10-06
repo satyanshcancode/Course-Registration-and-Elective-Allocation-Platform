@@ -168,7 +168,7 @@ function CourseDetailBody({
           <CoursePhoto code={course.code} height="hero" />
           <div className={styles.heroBody}>
             <h2 id="about-heading" className={styles.heading}>
-              <Icon icon={BookOpen} size={20} className={styles.headingIcon} />
+              <Icon icon={BookOpen} size={24} className={styles.headingIcon} />
               About this course
             </h2>
             <p className={styles.description}>{course.description}</p>
@@ -241,7 +241,7 @@ function CourseDetailBody({
       </div>
 
       <aside className={styles.aside} aria-label="Seats and your status">
-        <Card title="Seats" titleIcon={Armchair}>
+        <Card title="Course status" titleIcon={Armchair}>
           <div className={styles.stack}>
             <div className={styles.live} data-changed={seatsChanged ? 'true' : undefined}>
               <SeatMeter
@@ -254,16 +254,14 @@ function CourseDetailBody({
                 <span>{describeDemand(course.demand, course.capacity)}</span>
               </p>
             </div>
-            {isOversubscribed(course.demand, course.capacity) && (
-              <>
-                <Badge tone="warning" icon={TrendingUp}>
-                  Oversubscribed
-                </Badge>
-                <p className={styles.note}>
-                  More students ranked this course than it has seats, so seats go by preference and
-                  priority when the window closes.
-                </p>
-              </>
+            {personal && (
+              <div className={styles.action}>
+                <CartAction
+                  action={cartActionFor(course.code, personal.eligibility, cart)}
+                  code={course.code}
+                  name={course.name}
+                />
+              </div>
             )}
           </div>
         </Card>
@@ -273,14 +271,16 @@ function CourseDetailBody({
             <div className={styles.stack}>
               <MyStatusBadge status={personal.myStatus} />
               <p className={styles.note}>{statusExplanation(personal.myStatus.code)}</p>
-              <div className={styles.cartSlot} data-slot="cart-action">
-                <CartAction
-                  action={cartActionFor(course.code, personal.eligibility, cart)}
-                  code={course.code}
-                  name={course.name}
-                />
-              </div>
             </div>
+          </Card>
+        )}
+
+        {isOversubscribed(course.demand, course.capacity) && (
+          <Card title="Oversubscribed" titleIcon={TrendingUp}>
+            <p className={styles.note}>
+              More students ranked this course than it has seats, so seats go by preference and
+              priority when the window closes.
+            </p>
           </Card>
         )}
       </aside>

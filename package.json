@@ -42,7 +42,8 @@
     "docker:seed:demo-submissions": "docker compose exec backend npm run seed:demo-submissions",
     "docker:demo:concurrent-submit": "docker compose exec backend npm run demo:concurrent-submit --",
     "docker:demo:seat-race": "docker compose exec backend npm run demo:seat-race --",
-    "docker:demo:reset": "docker compose exec backend npm run demo:reset --"
+    "docker:demo:reset": "docker compose exec backend npm run demo:reset --",
+    "screenshots": "node scripts/screenshot.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

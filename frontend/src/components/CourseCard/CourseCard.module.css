@@ -48,7 +48,7 @@
 .title {
   margin-top: calc(-1 * var(--space-1));
   font-family: var(--font-sans);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: var(--weight-heading);
   letter-spacing: -0.012em;
   line-height: var(--leading-snug);

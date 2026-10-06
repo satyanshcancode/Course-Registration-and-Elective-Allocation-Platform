@@ -10,7 +10,7 @@ that submits atomically, preference-and-priority allocation for oversubscribed
 electives, waitlists that promote automatically as seats free up, add/drop, and
 a personal registration history.
 
-![Student dashboard](docs/screenshots/student-dashboard-1280-light.png)
+![Student dashboard](docs/screenshots/student-dashboard-1440-light.png)
 
 | Document                                                   | What it covers                                    |
 | ---------------------------------------------------------- | ------------------------------------------------- |
@@ -85,7 +85,7 @@ page reloading. Search, department, credits, "eligible only" and "seats left"
 filters and five sort orders all live in the URL, so a view can be shared or
 refreshed. Cards or table, the reader's choice.
 
-![Course catalogue](docs/screenshots/student-courses-1280-light.png)
+![Course catalogue](docs/screenshots/student-courses-1440-light.png)
 
 ### 2. Eligibility pre-check — `/student/eligibility`
 
@@ -98,7 +98,7 @@ CS201 Data Structures first"), never just one.
 It works while the window is still a draft. That is the whole point: find out
 before registration opens, not after it closes.
 
-![Eligibility check](docs/screenshots/student-eligibility-1280-light.png)
+![Eligibility check](docs/screenshots/student-eligibility-1440-light.png)
 
 ### 3. Registration cart — `/student/cart`
 
@@ -117,7 +117,7 @@ the reference, the time and the arrival number.
 How that is guaranteed, with a sequence diagram:
 [docs/CONCURRENCY.md](docs/CONCURRENCY.md).
 
-![The cart](docs/screenshots/student-cart-1280-light.png)
+![The cart](docs/screenshots/student-cart-1440-light.png)
 
 ### 4. Allocation — `/admin/allocation-runs`, `/student/results`
 
@@ -131,8 +131,8 @@ Students get a plain-English explanation for every course they ranked — their
 score, what it was made of, and what the last seat went for — and never see
 another student's data.
 
-![An allocation run](docs/screenshots/admin-allocation-run-1280-light.png)
-![A student's results](docs/screenshots/student-results-1280-light.png)
+![An allocation run](docs/screenshots/admin-allocation-run-1440-light.png)
+![A student's results](docs/screenshots/student-results-1440-light.png)
 
 ### 5. Waitlists — `/student/waitlist`, `/admin/waitlists`
 
@@ -146,7 +146,7 @@ it caused commit together or not at all.
 Positions are never renumbered: a student's place is computed over the entries
 still waiting, so the queue stays honest as people leave it.
 
-![Waitlists](docs/screenshots/admin-waitlists-1280-light.png)
+![Waitlists](docs/screenshots/admin-waitlists-1440-light.png)
 
 ### 6. Add/drop — `/student/add-drop`
 
@@ -156,7 +156,7 @@ the period every such request is refused by the server, and the button says why
 rather than being greyed out with no explanation. A swap moves the seat in one
 step: if the new course fills up first, the student keeps the one they have.
 
-![Add or drop a course](docs/screenshots/student-add-drop-1280-light.png)
+![Add or drop a course](docs/screenshots/student-add-drop-1440-light.png)
 
 ### 7. Status and history — `/student/history`, `/student/notifications`
 
@@ -165,7 +165,7 @@ submitted, allocated, waitlisted, promoted, added, dropped. Events carry
 structured facts, not prebuilt sentences, so the wording lives in one place on
 the client and can change without rewriting history.
 
-![Registration history](docs/screenshots/student-history-1280-light.png)
+![Registration history](docs/screenshots/student-history-1440-light.png)
 
 ### Accounts, records and the course catalogue
 
@@ -178,8 +178,8 @@ flow. Nothing is ever deleted: an account is deactivated, a course is retired,
 and every submission, enrolment and result keeps pointing at a row that still
 exists.
 
-![Students](docs/screenshots/admin-students-1280-light.png)
-![Course catalogue administration](docs/screenshots/admin-course-catalogue-1280-light.png)
+![Students](docs/screenshots/admin-students-1440-light.png)
+![Course catalogue administration](docs/screenshots/admin-course-catalogue-1440-light.png)
 
 ### Co-administrators
 
@@ -200,7 +200,7 @@ that is a courtesy: `/api/admin/team` is the one router behind
 `requireAdminManager`, and it answers `403` to a co-administrator whatever the
 interface does.
 
-![The team](docs/screenshots/admin-team-1280-light.png)
+![The team](docs/screenshots/admin-team-1440-light.png)
 
 ---
 
@@ -231,36 +231,78 @@ with the exact figures beside it and the word "Full" when there is nothing left.
 Nothing is ever carried by colour alone — every status is an icon plus words,
 and every meter prints its numbers.
 
-**Every course card opens with artwork generated from its own codes.** The
-department sets the hue, so a page of the catalogue reads as departments at a
-glance; the course picks the motif and shifts the hue a little, so one
-department is a family rather than the same picture twelve times. It is drawn,
-not photographed: no licence to honour, no credit to print, no file to host and
-nothing to hotlink.
+**Every course card opens with a photograph** — dark, wide and cinematic, one
+of seventeen picked by hashing the course's own code, so a course always wears
+the same picture and no two cards in a row repeat. They are stored in this
+repository and credited below; nothing is hotlinked.
+
+**The app is light only.** There is no dark theme and no `prefers-color-scheme`
+block: the design was drawn as a light interface and the product follows it
+whatever the operating system prefers.
 
 [`node frontend/src/styles/contrast.mjs`](frontend/src/styles/contrast.mjs)
-reads the tokens straight out of the stylesheet and checks all 38 pairs across
-both themes against WCAG AA, 4.5:1 for text and 3:1 for borders. It exits
-non-zero on a failure, so the palette cannot quietly drift.
+reads the tokens straight out of the stylesheet and checks all 36 pairs against
+WCAG AA, 4.5:1 for text and 3:1 for a border, a bar or a dot. It exits non-zero
+on a failure, so the palette cannot quietly drift.
+
+**Nothing in the look was eyeballed.**
+[`scripts/measure-target.py`](scripts/measure-target.py) reads the four screens
+out of [`docs/redesign/target-ui.png`](docs/redesign/target-ui.png) and reports
+every colour and size as 1440-viewport pixels;
+[`scripts/compare-target.py`](scripts/compare-target.py) puts each screenshot
+beside its quadrant and draws the pixel difference into
+[`docs/redesign/compare/`](docs/redesign/compare/). Both tables are in
+[docs/DESIGN.md](docs/DESIGN.md).
 
 **A colour either carries a labelled key or it does not appear.** There are no
 decorative left stripes: an earlier draft hashed each department to one of five
 tones, and it went, because nothing on the page told a reader what plum meant.
-The generated artwork is the one thing hashed from a department, and it is
-openly decoration — the code, the name and the department are all written
-underneath it. Hover tells you a thing is interactive and stops there, and
-nothing lifts or glows.
+The card photograph is openly decoration — the code, the name, the department
+and the seat count are all written underneath it, and it carries an empty
+`alt`. Hover tells you a thing is interactive and stops there, and nothing
+lifts or glows.
 
 Privacy and Terms are written in plain English and linked from every footer.
 Both say up front that they are a template: the data controller, the retention
 period, the applicable law and the complaints route are the university's to
 fill in.
 
-The full system, the reasoning behind each decision, the dark theme and every
+The full system, the reasoning behind each decision, the measurements and every
 review round: [docs/DESIGN.md](docs/DESIGN.md). The target image and the three
 directions this grew out of: [docs/redesign/](docs/redesign/).
 
-![Course catalogue](docs/screenshots/student-courses-1280-light.png)
+### Photograph credits
+
+Every course-card photograph is CC0 or public domain, found through the
+[Openverse](https://openverse.org) API, downloaded once and committed to
+[`frontend/public/course-photos`](frontend/public/course-photos).
+[`docs/redesign/course-photos.json`](docs/redesign/course-photos.json) holds
+the same record in machine-readable form.
+
+| File                  | Title                                                                              | Creator                                | Licence | Source                                                                                                |
+| --------------------- | ---------------------------------------------------------------------------------- | -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `blue-racks.jpg`      | Free computer server room image                                                    | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5906639/photo-image-light-desktop-wallpapers-public-domain) |
+| `bridge-lights.jpg`   | Free Tower Bridge night, London                                                    | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5920507/photo-image-background-lights-public-domain)        |
+| `cable-bundle.jpg`    | Free networking cables image                                                       | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5919225/image-background-public-domain-technology)          |
+| `circuit-board.jpg`   | Computer circuitry microchip close up                                              | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/6039212/photo-image-public-domain-technology-lines)         |
+| `city-dusk.jpg`       | Free city skyline night image                                                      | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5906007/photo-image-background-light-public-domain)         |
+| `data-hall.jpg`       | Front Franklin Cray XT4 racks                                                      | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/6042704/photo-image-public-domain-free)                     |
+| `glass-atrium.jpg`    | Towers night architecture                                                          | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/6030610/photo-image-public-domain-purple-business)          |
+| `harbour-night.jpg`   | Outdoors, City, Night, Architecture, Illuminated, Reflection, Water, River, Travel | Milan Ivanovic                         | CC0 1.0 | [wordpress](https://wordpress.org/photos/photo/514642d667/)                                           |
+| `lit-facade.jpg`      | Towers night architecture                                                          | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/6030607/photo-image-light-public-domain-purple)             |
+| `machine-room.jpg`    | Front of server racks at NERSC                                                     | Derrick Coetzee from Berkeley, CA, USA | CC0 1.0 | [wikimedia](https://commons.wikimedia.org/w/index.php?curid=17445617)                                 |
+| `patch-panel.jpg`     | Free networking cables image                                                       | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5927875/photo-image-background-public-domain-technology)    |
+| `rack-corridor.jpg`   | Center of a building lobby                                                         | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/11515752/center-building-lobby)                             |
+| `river-crossing.jpg`  | Millennium Bridge night                                                            | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/3294053/free-photo-image-london-architecture-bridge)        |
+| `skyline-water.jpg`   | Outdoors, City, Night, Architecture, Illuminated, Reflection, Water, River, Travel | Milan Ivanovic                         | CC0 1.0 | [wordpress](https://wordpress.org/photos/photo/465642d663/)                                           |
+| `suspension-span.jpg` | Golden Gate Bridge night lights                                                    | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/3284899/free-photo-image-urban-architecture-sunset-america) |
+| `switch-stack.jpg`    | Free networking cables image                                                       | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/5918994/image-background-public-domain-technology)          |
+| `waterfront.jpg`      | city skyline night seen docks                                                      | —                                      | CC0 1.0 | [rawpixel](https://www.rawpixel.com/image/3302581/free-photo-image-architecture-asphalt-banister)     |
+
+A dash means the source published no creator name; CC0 waives the requirement
+to give one, and the source page is linked so the provenance is still checkable.
+
+![Course catalogue](docs/screenshots/student-courses-1440-light.png)
 
 ---
 

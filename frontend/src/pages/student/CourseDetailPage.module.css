@@ -10,17 +10,17 @@
   padding-bottom: var(--space-5);
 }
 
-/* Reading column + a narrower side column (Grid), stacked below 64rem. */
+/* Reading column + the status column (Grid), stacked below 64rem. */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) 20rem;
   align-items: start;
-  gap: var(--space-5);
+  gap: var(--space-grid);
 }
 
 .main {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   min-width: 0;
 }
 
@@ -38,15 +38,18 @@
   display: grid;
   justify-items: start;
   gap: var(--space-3);
-  padding: var(--space-4);
+  padding: var(--space-5);
 }
 
 /* The same heading as a Card's title, which this section cannot use. */
 .heading {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  font-family: var(--font-sans);
   font-size: var(--text-md);
+  font-weight: var(--weight-heading);
+  letter-spacing: -0.012em;
 }
 
 .headingIcon {
@@ -116,7 +119,7 @@
   position: sticky;
   top: calc(var(--app-header-height) + var(--space-4));
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-grid);
   min-width: 0;
 }
 
@@ -144,13 +147,12 @@
   font-variant-numeric: tabular-nums;
 }
 
-.cartSlot {
-  width: 100%;
-  padding-top: var(--space-3);
-  border-top: var(--border-hairline);
+/* The one action fills the card, as the target's buttons do. */
+.action {
+  justify-self: stretch;
 }
 
-.cartSlot:empty {
+.action:empty {
   display: none;
 }
 

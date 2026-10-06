@@ -63,7 +63,7 @@ export function CourseCard({
 
       <div className={styles.body}>
         <p className={styles.meta}>
-          <CourseCode code={course.code} size="sm" />
+          <CourseCode code={course.code} />
           {/* One chip, not two: a student who has already ranked, been given
               or been waitlisted for a course is told THAT, because it is what
               has happened; otherwise the chip answers the question they came

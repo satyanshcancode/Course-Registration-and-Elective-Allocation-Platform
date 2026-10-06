@@ -6,7 +6,7 @@
 }
 
 .label {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
 }
 
@@ -25,12 +25,12 @@
 
 .input {
   width: 100%;
-  min-height: 2.5rem;
+  min-height: var(--control-height);
   padding: var(--space-2) var(--space-6) var(--space-2) calc(var(--space-3) + 1.5rem);
   border: var(--border-control);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   appearance: none;
   transition: border-color var(--duration-fast) var(--ease-standard);
 }

@@ -139,3 +139,8 @@
 .viewAll:hover {
   text-decoration: underline;
 }
+
+/* `display` on .panel would otherwise beat the UA's `[hidden]` rule. */
+.panel[hidden] {
+  display: none;
+}

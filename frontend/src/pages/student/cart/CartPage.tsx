@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, LinkButton } from '../../../components/Button';
+import { Card } from '../../../components/Card';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { EmptyState } from '../../../components/EmptyState';
 import { ErrorMessage } from '../../../components/ErrorMessage';
@@ -232,158 +233,157 @@ export function CartPage() {
 
   return (
     <CartFrame step={step}>
-      <section
-        className={styles.layout}
-        aria-labelledby="cart-heading"
-        aria-busy={cart.saving || undefined}
-      >
-        <div className={styles.main}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 id="cart-heading" className={styles.heading}>
-                <Icon icon={CalendarDays} size={20} className={styles.headingIcon} />
-                {step === 'Review' ? 'Review your choices' : `Selected courses (${items.length})`}
-              </h2>
-              <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
-              {step === 'Select' && !empty && saved.editable && (
-                <button type="button" className={styles.clearAll} onClick={clearAll}>
-                  <Icon icon={Trash2} />
-                  Clear all
-                </button>
-              )}
-              {step === 'Review' && (
-                <p className={styles.count}>
-                  {items.length} of {MAX_PREFERENCES} · {totalCredits} credits
-                </p>
-              )}
-            </div>
+      <section className={styles.page} aria-label="Your cart" aria-busy={cart.saving || undefined}>
+        <div className={styles.layout}>
+          <div className={styles.main}>
+            <Card
+              title={
+                step === 'Review' ? 'Review your choices' : `Selected courses (${items.length})`
+              }
+              titleIcon={CalendarDays}
+              bodyFlush
+              footer={
+                empty ? undefined : (
+                  <p className={styles.totals} data-dirty={dirty ? 'true' : undefined}>
+                    <span>
+                      {items.length} of {MAX_PREFERENCES} courses ranked
+                    </span>
+                    <span>{totalCredits} credits</span>
+                    <span>{dirty ? 'You have unsaved changes.' : 'Everything is saved.'}</span>
+                  </p>
+                )
+              }
+              actions={
+                <>
+                  {step === 'Review' && (
+                    <LiveSeatsIndicator updatedAt={live.updatedAt} failing={live.failing} />
+                  )}
+                  {step === 'Select' && !empty && saved.editable && (
+                    <Button variant="dangerOutline" size="sm" iconStart={Trash2} onClick={clearAll}>
+                      Clear all
+                    </Button>
+                  )}
+                  {step === 'Review' && (
+                    <p className={styles.count}>
+                      {items.length} of {MAX_PREFERENCES} · {totalCredits} credits
+                    </p>
+                  )}
+                </>
+              }
+            >
+              {/* Announcements only; the list itself is not a live region. */}
+              <p className={styles.announcer} aria-live="polite">
+                {announcement}
+              </p>
 
-            {/* Announcements only; the list itself is not a live region. */}
-            <p className={styles.announcer} aria-live="polite">
-              {announcement}
-            </p>
+              {empty ? (
+                <EmptyState
+                  title="Your cart is empty"
+                  icon={ShoppingCart}
+                  headingLevel={3}
+                  action={<LinkButton to="/student/courses">Browse the catalogue</LinkButton>}
+                >
+                  <p>
+                    Add up to {MAX_PREFERENCES} courses from the catalogue, put them in the order
+                    you want them, and submit once.
+                  </p>
+                </EmptyState>
+              ) : (
+                <CartList
+                  items={items}
+                  editable={saved.editable && step === 'Select'}
+                  problems={byProblemCode}
+                  onReorder={reorder}
+                  onRemove={removeLocally}
+                  showSeats={step === 'Review'}
+                  listRef={listRef}
+                />
+              )}
+            </Card>
 
-            {empty ? (
-              <EmptyState
-                title="Your cart is empty"
-                icon={ShoppingCart}
-                headingLevel={3}
-                action={<LinkButton to="/student/courses">Browse the catalogue</LinkButton>}
+            {overall.length > 0 && (
+              <ul className={styles.overall}>
+                {overall.map((problem) => (
+                  <li key={problem.type}>{describeOverall(problem)}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <aside className={styles.side} aria-label="Submitting">
+            <CartWindowCard />
+          </aside>
+        </div>
+
+        {!empty && step === 'Select' && (
+          <Notice>
+            Set each course’s Priority, or drag a row, to change the order. Higher priorities are
+            considered first during allocation.
+          </Notice>
+        )}
+
+        {!empty && step === 'Review' && (
+          <Notice icon={Lock}>
+            This is the order allocation will use. Submitting is final: your list can’t be changed
+            afterwards.
+          </Notice>
+        )}
+
+        <div className={styles.footer}>
+          {step === 'Select' ? (
+            <>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => {
+                  saveDraft();
+                }}
+                loading={cart.saving}
+                disabled={!dirty}
               >
-                <p>
-                  Add up to {MAX_PREFERENCES} courses from the catalogue, put them in the order you
-                  want them, and submit once.
-                </p>
-              </EmptyState>
-            ) : (
-              <CartList
-                items={items}
-                editable={saved.editable && step === 'Select'}
-                problems={byProblemCode}
-                onReorder={reorder}
-                onRemove={removeLocally}
-                listRef={listRef}
-              />
-            )}
-          </div>
-
-          {overall.length > 0 && (
-            <ul className={styles.overall}>
-              {overall.map((problem) => (
-                <li key={problem.type}>{describeOverall(problem)}</li>
-              ))}
-            </ul>
-          )}
-
-          {!empty && step === 'Select' && (
-            <Notice>
-              Set each course’s Priority, or drag a row, to change the order. Higher priorities are
-              considered first during allocation.
-            </Notice>
-          )}
-
-          {!empty && step === 'Review' && (
-            <Notice icon={Lock}>
-              This is the order allocation will use. Submitting is final: your list can’t be changed
-              afterwards.
-            </Notice>
-          )}
-
-          <div className={styles.footer}>
-            {step === 'Select' ? (
-              <>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    saveDraft();
-                  }}
-                  loading={cart.saving}
-                  disabled={!dirty}
-                >
-                  Save draft
-                </Button>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  iconEnd={ArrowRight}
-                  onClick={goToReview}
-                  loading={cart.saving}
-                  disabled={empty || !saved.submittable}
-                >
-                  Continue to review
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="secondary"
-                  iconStart={ArrowLeft}
-                  onClick={() => {
-                    setReviewing(false);
-                  }}
-                >
-                  Back to selection
-                </Button>
-                <Button
-                  variant="primary"
-                  iconStart={Send}
-                  onClick={openConfirm}
-                  disabled={empty || dirty || !saved.submittable}
-                >
-                  Submit preferences
-                </Button>
-              </>
-            )}
-          </div>
-
-          {!saved.submittable && saved.submitBlockedReason && (
-            <p className={styles.hint}>
-              <Icon icon={Lock} /> {saved.submitBlockedReason}
-            </p>
+                Save draft
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                iconEnd={ArrowRight}
+                onClick={goToReview}
+                loading={cart.saving}
+                disabled={empty || !saved.submittable}
+              >
+                Continue to review
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                size="lg"
+                iconStart={ArrowLeft}
+                onClick={() => {
+                  setReviewing(false);
+                }}
+              >
+                Back to selection
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                iconStart={Send}
+                onClick={openConfirm}
+                disabled={empty || dirty || !saved.submittable}
+              >
+                Submit preferences
+              </Button>
+            </>
           )}
         </div>
 
-        <aside className={styles.side} aria-label="Submitting">
-          <CartWindowCard />
-          <div className={styles.panel}>
-            <h2 className={styles.panelHeading}>Before you submit</h2>
-            <dl className={styles.totals}>
-              <div>
-                <dt>Courses ranked</dt>
-                <dd>
-                  {items.length} of {MAX_PREFERENCES}
-                </dd>
-              </div>
-              <div>
-                <dt>Total credits</dt>
-                <dd>{totalCredits}</dd>
-              </div>
-            </dl>
-            <p className={styles.note} data-dirty={dirty ? 'true' : undefined}>
-              {dirty ? 'You have unsaved changes.' : 'Everything is saved.'}
-            </p>
-          </div>
-        </aside>
+        {!saved.submittable && saved.submitBlockedReason && (
+          <p className={styles.hint}>
+            <Icon icon={Lock} /> {saved.submitBlockedReason}
+          </p>
+        )}
       </section>
 
       <ConfirmDialog

@@ -1,0 +1,48 @@
+.card {
+  display: grid;
+  grid-template-areas:
+    'top arrow'
+    'bottom arrow';
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 15rem;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+}
+
+.card[data-link='true']:hover {
+  border-color: var(--color-rule-strong);
+}
+
+.top {
+  grid-area: top;
+}
+
+.name {
+  font-weight: var(--weight-semibold);
+}
+
+.bottom {
+  grid-area: bottom;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+.value {
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.arrow {
+  grid-area: arrow;
+  color: var(--color-ink-muted);
+}

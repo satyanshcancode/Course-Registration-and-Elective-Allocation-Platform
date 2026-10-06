@@ -124,7 +124,7 @@ describe('StudentDashboardPage', () => {
     ]);
   });
 
-  it('shows the last few events, in the same words the history page uses', async () => {
+  it('shows the last few events as a bold headline over a grey detail line', async () => {
     activity.getMyHistory.mockResolvedValue(
       ok(
         historyPage({
@@ -141,7 +141,10 @@ describe('StudentDashboardPage', () => {
     renderDashboard();
 
     const recent = card('Recent activity');
-    expect(await recent.findByText(/You were moved up from CS402 to CS401/)).toBeVisible();
+    expect(await recent.findByText('Moved up to CS401 Artificial Intelligence')).toBeVisible();
+    expect(recent.getByText('Released CS402, was 2nd in line.')).toBeVisible();
+    expect(recent.getByText('Submitted 1 preference')).toBeVisible();
+    expect(recent.getByText('CS401 (REF-3F9A2C71)')).toBeVisible();
     expect(recent.getByRole('link', { name: /View all/ })).toHaveAttribute(
       'href',
       '/student/history',
@@ -205,20 +208,24 @@ describe('StudentDashboardPage', () => {
     expect(allocation.getMyAllocationResults).toHaveBeenCalledOnce();
   });
 
-  it('shows what to do next for an open window', async () => {
+  it('links the window card to the catalogue while the window is open', async () => {
     renderDashboard();
-    await screen.findByText('You’re eligible for 1 of 3 courses');
 
-    expect(card('What to do next').getByText(/Rank up to five courses/)).toBeInTheDocument();
+    // The countdown moved from the old "What to do next" card to the window
+    // card beside the greeting; it goes where the time is spent.
+    const link = await screen.findByRole('link', { name: /Registration open|Open/ });
+    expect(link).toHaveAttribute('href', '/student/courses');
   });
 
-  it('shows draft guidance before registration opens', async () => {
+  it('sends the window card to add/drop once results are out', async () => {
     windowApi.getCurrentWindow.mockResolvedValue(
-      ok({ window: { ...fallWindow, status: 'DRAFT' }, serverTime: SERVER_TIME }),
+      ok({ window: { ...fallWindow, status: 'ALLOCATED' }, serverTime: SERVER_TIME }),
     );
 
     renderDashboard();
-    expect(await screen.findByText(/Run the eligibility pre-check/)).toBeInTheDocument();
+
+    const link = await screen.findByRole('link', { name: /Allocated|Results/ });
+    expect(link).toHaveAttribute('href', '/student/add-drop');
   });
 
   it('has no accessibility violations', async () => {

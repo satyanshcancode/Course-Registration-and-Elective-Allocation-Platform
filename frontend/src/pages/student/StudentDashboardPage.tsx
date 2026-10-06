@@ -1,9 +1,7 @@
 import {
-  MAX_PREFERENCES,
   type HistoryPage,
   type RegistrationWindowSummary,
   type EligibilityOverview,
-  type PreferenceCart,
   type StudentAllocationResults,
 } from '@course-reg/shared';
 import {
@@ -33,6 +31,7 @@ import { ProgressRing } from '../../components/ProgressRing';
 import { Skeleton } from '../../components/Skeleton';
 import { StatTile } from '../../components/StatTile';
 import { StatusBadge } from '../../components/StatusBadge';
+import { WindowCard } from '../../components/WindowCard';
 import { useCurrentStudent } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useDashboardSections } from '../../hooks/useDashboardSections';
@@ -43,10 +42,9 @@ import {
 } from '../../hooks/useRegistrationWindow';
 import { useServerClock } from '../../hooks/useServerClock';
 import type { AsyncState } from '../../types/asyncState';
-import { describeCountdown } from '../../utils/countdown';
 import { firstNameOf, greetingFor } from '../../utils/greeting';
 import { formatDateTime, formatRelative } from '../../utils/formatDate';
-import { describeHistoryEvent, historyEventIcon } from '../../utils/historyText';
+import { historyEventIcon, historyEventTone, summariseHistoryEvent } from '../../utils/historyText';
 import { WINDOW_STEPS, windowStepIndex } from '../../utils/windowTimeline';
 import styles from './StudentDashboardPage.module.css';
 
@@ -58,112 +56,6 @@ interface DashboardData extends Record<string, unknown> {
 
 /** How many events the dashboard shows before linking to the full history. */
 const RECENT_EVENTS = 5;
-
-/**
- * What the student should do next, given the window, their cart AND their
- * result. Once allocation has run, what to say depends on the add/drop period:
- * "use add/drop" is unhelpful advice while it is closed.
- *
- * `now` is the server's clock, passed in. A `now` of 0 means it has not arrived
- * yet, which reads as "before the period opens" — the cautious answer.
- */
-function nextSteps(
-  window: RegistrationWindowSummary | null | undefined,
-  cart: PreferenceCart | null,
-  results: StudentAllocationResults | null,
-  now: number,
-): string[] {
-  const status = window?.status;
-  if (status === 'ALLOCATED' && results?.ranAt) {
-    const waiting = results.results.filter((row) => row.outcome === 'WAITLISTED').length;
-    const queued =
-      waiting > 0
-        ? `You are on ${waiting} ${waiting === 1 ? 'waitlist' : 'waitlists'} and move up automatically when seats free up.`
-        : 'You are not waiting for anything else.';
-    const held = results.allocated ?? results.held;
-    return held
-      ? [
-          `You have a seat in ${held.course.code} ${held.course.name}.`,
-          queued,
-          addDropStep(window, now, 'change'),
-        ]
-      : [
-          'No seat this round. Open your results to see how close you came on each course.',
-          queued,
-          addDropStep(window, now, 'find'),
-        ];
-  }
-
-  if (status === 'OPEN' && cart) {
-    if (cart.status === 'SUBMITTED') {
-      return [
-        `Your ${cart.items.length} preferences are submitted${cart.reference ? ` (${cart.reference})` : ''}. They can’t be changed now.`,
-        'Allocation runs once the window closes; you’ll get a notification.',
-      ];
-    }
-    if (cart.items.length === 0) {
-      return [
-        'Add courses to your cart from the catalogue, most wanted first.',
-        `You can rank up to ${MAX_PREFERENCES}.`,
-        'Submit before the window closes: a saved draft is not a submission.',
-      ];
-    }
-    return [
-      `You have ${cart.items.length} of ${MAX_PREFERENCES} courses ranked. Check the order.`,
-      'Submit before the window closes: a saved draft is not a submission.',
-      'Seat counts change: check what is realistic before you submit.',
-    ];
-  }
-
-  switch (status) {
-    case 'DRAFT':
-      return [
-        'Run the eligibility pre-check so nothing is a surprise on the day.',
-        'Browse the catalogue and note the courses you want most.',
-        'Come back when registration opens to rank and submit them.',
-      ];
-    case 'OPEN':
-      return [
-        'Rank up to five courses in your cart, most wanted first.',
-        'Submit before the window closes: a saved draft is not a submission.',
-        'Check the seat counts: demand changes what is realistic.',
-      ];
-    case 'CLOSED':
-      return [
-        'Allocation runs shortly; nothing more to do right now.',
-        'Watch your notifications for the result.',
-      ];
-    case 'ALLOCATED':
-      return [
-        'Check your results and your place on any waitlist.',
-        addDropStep(window, now, 'change'),
-      ];
-    default:
-      return ['Registration has not been scheduled yet. Check back soon.'];
-  }
-}
-
-/** The add/drop line, which depends entirely on whether the period is open. */
-function addDropStep(
-  window: RegistrationWindowSummary | null | undefined,
-  now: number,
-  intent: 'change' | 'find',
-): string {
-  const opensAt = window?.addDropOpensAt;
-  const closesAt = window?.addDropClosesAt;
-  if (!opensAt || !closesAt) {
-    return 'Add/drop has not been scheduled yet; you will be notified when it opens.';
-  }
-  if (now < Date.parse(opensAt)) {
-    return `Add/drop opens ${formatDateTime(opensAt)}, and you can change your enrolment then.`;
-  }
-  if (now >= Date.parse(closesAt)) {
-    return `Add/drop closed ${formatDateTime(closesAt)}, so your enrolment is final.`;
-  }
-  return intent === 'change'
-    ? `Add/drop is open until ${formatDateTime(closesAt)}: drop or swap your course if your timetable needs it.`
-    : `Add/drop is open until ${formatDateTime(closesAt)}: add a course that still has seats, or join a waitlist.`;
-}
 
 export function StudentDashboardPage() {
   useDocumentTitle('Dashboard');
@@ -218,7 +110,15 @@ export function StudentDashboardPage() {
             ? `Here’s your registration overview for ${windowSummary.name}.`
             : 'Here’s your registration overview.'
         }
-        actions={<WindowPill window={windowSummary} clock={clock} />}
+        actions={
+          <WindowCard
+            window={windowSummary}
+            clock={clock}
+            // Where the countdown is actually spent: the catalogue while the
+            // window is open, add/drop once results are out.
+            to={windowSummary?.status === 'ALLOCATED' ? '/student/add-drop' : '/student/courses'}
+          />
+        }
       />
 
       <div className={styles.page}>
@@ -261,7 +161,7 @@ export function StudentDashboardPage() {
           />
         </section>
 
-        <div className={styles.row}>
+        <div className={styles.row} data-wide="start">
           <Section
             title="Registration window"
             icon={CalendarDays}
@@ -329,50 +229,8 @@ export function StudentDashboardPage() {
             {(data) => <RecentActivity page={data} />}
           </Section>
         </div>
-
-        <Card title="What to do next" headingLevel={2}>
-          <ol className={styles.steps}>
-            {nextSteps(
-              windowSummary,
-              cart?.cart ?? null,
-              results,
-              windowData ? clock.getTime() : 0,
-            ).map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </Card>
       </div>
     </>
-  );
-}
-
-/** The window's status and its live countdown, beside the greeting. */
-function WindowPill({ window, clock }: { window: RegistrationWindowSummary | null; clock: Date }) {
-  if (!window) {
-    return null;
-  }
-  const countdown = describeCountdown(window, clock);
-  // Where the countdown is actually spent: the catalogue while the window is
-  // open, add/drop once results are out.
-  const to = window.status === 'ALLOCATED' ? '/student/add-drop' : '/student/courses';
-
-  return (
-    <Link to={to} className={styles.pill}>
-      <span className={styles.pillTop}>
-        <StatusBadge kind="window" status={window.status} />
-      </span>
-      <span className={styles.pillBottom}>
-        {countdown.remaining ? (
-          <>
-            {countdown.label} <strong className={styles.pillValue}>{countdown.remaining}</strong>
-          </>
-        ) : (
-          countdown.text
-        )}
-      </span>
-      <Icon icon={ArrowRight} className={styles.pillArrow} />
-    </Link>
   );
 }
 
@@ -472,17 +330,15 @@ function Allocation({ results }: { results: StudentAllocationResults }) {
  */
 function SeatCube() {
   return (
-    <svg className={styles.cube} viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+    <svg className={styles.cube} viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+      {/* The space that was open: a larger box, drawn in cream. */}
+      <path className={styles.cubeFrame} d="M80 16 L144 48 L80 80 L16 48 Z" />
+      <path className={styles.cubeFrame} d="M16 48 L16 104 L80 136 L80 80 Z" />
+      <path className={styles.cubeFrame} d="M144 48 L144 104 L80 136 L80 80 Z" />
       {/* The seat itself, solid: top face, then the two it stands on. */}
-      <path className={styles.cubeTop} d="M60 30 L100 53 L60 76 L20 53 Z" />
-      <path className={styles.cubeLeft} d="M20 53 L20 90 L60 113 L60 76 Z" />
-      <path className={styles.cubeRight} d="M100 53 L100 90 L60 113 L60 76 Z" />
-      {/* The space it was open in: the same box drawn larger, in outline. */}
-      <g className={styles.cubeFrame}>
-        <path d="M60 6 L114 37 L114 83 L60 114 L6 83 L6 37 Z" />
-        <path d="M6 37 L60 68 L114 37" />
-        <path d="M60 68 L60 114" />
-      </g>
+      <path className={styles.cubeTop} d="M78 46 L111 62 L78 78 L45 62 Z" />
+      <path className={styles.cubeLeft} d="M45 62 L45 91 L78 107 L78 78 Z" />
+      <path className={styles.cubeRight} d="M111 62 L111 91 L78 107 L78 78 Z" />
     </svg>
   );
 }
@@ -521,17 +377,23 @@ function RecentActivity({ page }: { page: HistoryPage }) {
   }
   return (
     <ol className={styles.activity}>
-      {page.events.map((event) => (
-        <li key={event.id} className={styles.event}>
-          <span className={styles.eventIcon}>
-            <Icon icon={historyEventIcon(event.detail.type)} />
-          </span>
-          <span className={styles.eventText}>{describeHistoryEvent(event)}</span>
-          <time dateTime={event.at} className={styles.eventTime}>
-            {formatRelative(event.at)}
-          </time>
-        </li>
-      ))}
+      {page.events.map((event) => {
+        const { headline, detail } = summariseHistoryEvent(event);
+        return (
+          <li key={event.id} className={styles.event}>
+            <span className={styles.eventIcon} data-tone={historyEventTone(event.detail.type)}>
+              <Icon icon={historyEventIcon(event.detail.type)} />
+            </span>
+            <span className={styles.eventText}>
+              <span className={styles.eventHeadline}>{headline}</span>
+              {detail && <span className={styles.eventDetail}>{detail}</span>}
+            </span>
+            <time dateTime={event.at} className={styles.eventTime}>
+              {formatRelative(event.at)}
+            </time>
+          </li>
+        );
+      })}
     </ol>
   );
 }

@@ -12,26 +12,33 @@
 }
 
 .checkedAt {
+  margin: 0;
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
 }
 
 .record {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
-  gap: var(--space-3) var(--space-5);
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-4) var(--space-5);
   margin: 0;
 }
 
 .record dt {
   color: var(--color-ink-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
 .record dd {
   margin: 0;
   margin-block-start: var(--space-1);
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+}
+
+@media (width < 40rem) {
+  .record {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .wide {
@@ -77,7 +84,7 @@
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(0, 22rem) minmax(0, 14rem);
+  grid-template-columns: minmax(0, 20rem) minmax(0, 13rem);
   align-items: end;
   gap: var(--space-3);
 }
@@ -86,6 +93,13 @@
   .filters {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The shared search box and select are 40px; the target draws both at the
+   44px control height, and neither component takes a size for it. */
+.search input,
+.department select {
+  min-height: var(--control-height);
 }
 
 .verdictOk {
