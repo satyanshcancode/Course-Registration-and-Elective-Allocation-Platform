@@ -99,6 +99,7 @@ export function CatalogueFilterForm({
   const selects = (
     <>
       <Select
+        size="sm"
         name="department"
         aria-label="Department"
         value={filters.department}
@@ -112,6 +113,7 @@ export function CatalogueFilterForm({
         }}
       />
       <Select
+        size="sm"
         name="credits"
         aria-label="Credits"
         value={filters.credits === null ? '' : String(filters.credits)}
@@ -125,6 +127,7 @@ export function CatalogueFilterForm({
         }}
       />
       <Select
+        size="sm"
         name="sort"
         aria-label="Sort by"
         value={filters.sort}

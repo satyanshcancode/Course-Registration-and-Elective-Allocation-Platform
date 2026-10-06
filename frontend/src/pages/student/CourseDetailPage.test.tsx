@@ -62,14 +62,14 @@ describe('CourseDetailPage', () => {
 
     const eligibility = within(article)
       .getByRole('heading', { name: 'Your eligibility' })
-      .closest('section')!;
+      .closest('article')!;
     expect(eligibility).toHaveTextContent('Not eligible');
     expect(eligibility).toHaveTextContent('Needs semester 5, you’re in semester 3');
     expect(eligibility).toHaveTextContent('Complete MA201 Probability and Statistics first');
 
     const prerequisites = within(article)
       .getByRole('heading', { name: 'Prerequisites' })
-      .closest('section')!;
+      .closest('article')!;
     const items = within(prerequisites).getAllByRole('listitem');
     expect(items[0]).toHaveTextContent('CS201Data Structures and AlgorithmsPassed');
     expect(items[1]).toHaveTextContent('MA201Probability and StatisticsNot passed yet');

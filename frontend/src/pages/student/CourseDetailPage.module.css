@@ -7,7 +7,7 @@
 }
 
 .body {
-  padding-top: var(--space-5);
+  padding-bottom: var(--space-5);
 }
 
 /* Reading column + a narrower side column (Grid), stacked below 64rem. */
@@ -15,33 +15,63 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
   align-items: start;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 .main {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-width: 0;
 }
 
-.section {
+/* The catalogue card's own surface, so the page opens like one of its cards. */
+.hero {
+  min-width: 0;
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.heroBody {
   display: grid;
   justify-items: start;
-  gap: var(--space-2);
-  padding-bottom: var(--space-5);
-  border-bottom: var(--border-hairline);
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
-.section:last-child {
-  border-bottom: 0;
-}
-
+/* The same heading as a Card's title, which this section cannot use. */
 .heading {
-  font-size: var(--text-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+}
+
+.headingIcon {
+  flex: none;
+  color: var(--color-accent);
 }
 
 .description {
   max-width: 65ch;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* What a Card's body holds: a short stack, left-aligned. */
+.stack {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
 }
 
 .note {
@@ -50,10 +80,10 @@
   font-size: var(--text-sm);
 }
 
-/* Met / not met, each with an icon and words. */
+/* Met / not met, each with an icon and words, ruled apart by hairlines. */
 .checklist {
   display: grid;
-  gap: var(--space-2);
+  width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -64,29 +94,21 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
+  padding-block: var(--space-2);
 }
 
-.check[data-met='true'] > svg {
-  color: var(--color-success);
+.check:not(:last-child) {
+  border-bottom: var(--border-hairline);
 }
 
-.check[data-met='false'] > svg {
+.checkName {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.unmet {
+  flex: none;
   color: var(--color-danger);
-}
-
-.checkState {
-  color: var(--color-ink-muted);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
-}
-
-.plainList {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding-left: var(--space-4);
 }
 
 /* The side column follows the page while the main column scrolls. */
@@ -98,28 +120,19 @@
   min-width: 0;
 }
 
-.panel {
+/* Seats and demand: the part that updates live. */
+.live {
   display: grid;
-  justify-items: start;
   gap: var(--space-2);
-  padding: var(--space-4);
-  border: var(--border-hairline);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
+  justify-self: stretch;
+  padding: var(--space-2);
+  margin: calc(-1 * var(--space-2));
+  border-radius: var(--radius-sm);
   transition: background-color var(--duration-base) var(--ease-standard);
 }
 
-.panel[data-changed='true'] {
+.live[data-changed='true'] {
   background-color: var(--color-warning-soft);
-}
-
-.panelHeading {
-  color: var(--color-ink-muted);
-  font-family: var(--font-sans);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
 }
 
 .demand {
@@ -132,7 +145,7 @@
 }
 
 .cartSlot {
-  margin-top: var(--space-3);
+  width: 100%;
   padding-top: var(--space-3);
   border-top: var(--border-hairline);
 }

@@ -1,12 +1,27 @@
 import type { CourseDetail, MyCourseStatusCode } from '@course-reg/shared';
-import { ArrowLeft, BookX, CircleCheck, CircleX, TrendingUp, Users } from 'lucide-react';
+import {
+  Armchair,
+  ArrowLeft,
+  BookOpen,
+  BookX,
+  CircleCheck,
+  CircleX,
+  GraduationCap,
+  ListChecks,
+  ShieldCheck,
+  TrendingUp,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { isNotFound } from '../../api/unwrap';
 import { Badge } from '../../components/Badge';
 import { CartAction } from '../../components/CartAction';
+import { Card } from '../../components/Card';
 import { LinkButton } from '../../components/Button';
 import { EligibilityBadge, MyStatusBadge } from '../../components/CourseBadges';
+import { CourseArtwork } from '../../components/CourseArtwork';
 import { CourseCode } from '../../components/CourseCode';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorMessage } from '../../components/ErrorMessage';
@@ -147,129 +162,126 @@ function CourseDetailBody({
       onClick={handleClick}
     >
       <div className={styles.main}>
-        <section className={styles.section} aria-labelledby="about-heading">
-          <h2 id="about-heading" className={styles.heading}>
-            About this course
-          </h2>
-          <p className={styles.description}>{course.description}</p>
+        {/* Not a Card: the artwork has to run to the edges, which Card's padded
+            body cannot do. It borrows Card's tokens instead. */}
+        <section className={styles.hero} aria-labelledby="about-heading">
+          <CourseArtwork code={course.code} departmentCode={course.department.code} height="hero" />
+          <div className={styles.heroBody}>
+            <h2 id="about-heading" className={styles.heading}>
+              <Icon icon={BookOpen} size={20} className={styles.headingIcon} />
+              About this course
+            </h2>
+            <p className={styles.description}>{course.description}</p>
+            <div className={styles.chips}>
+              <Badge tone="neutral">Semester {course.minSemester} or later</Badge>
+              <Badge tone="neutral">{course.minCredits} completed credits</Badge>
+            </div>
+          </div>
         </section>
 
         {personal && (
-          <section className={styles.section} aria-labelledby="eligibility-heading">
-            <h2 id="eligibility-heading" className={styles.heading}>
-              Your eligibility
-            </h2>
-            <EligibilityBadge eligibility={personal.eligibility} />
-            {personal.eligibility.eligible ? (
-              <p className={styles.note}>
-                You meet every requirement: semester {course.minSemester} or later,{' '}
-                {course.minCredits} completed credits, the programme and the prerequisites.
-              </p>
-            ) : (
-              <ul className={styles.checklist}>
-                {personal.eligibility.reasons.map((reason) => (
-                  <li key={describeReason(reason)} className={styles.check} data-met="false">
-                    <Icon icon={CircleX} />
-                    <span>{describeReason(reason)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <Card title="Your eligibility" titleIcon={ShieldCheck}>
+            <div className={styles.stack}>
+              <EligibilityBadge eligibility={personal.eligibility} />
+              {personal.eligibility.eligible ? (
+                <p className={styles.note}>
+                  You meet every requirement: semester {course.minSemester} or later,{' '}
+                  {course.minCredits} completed credits, the programme and the prerequisites.
+                </p>
+              ) : (
+                <ul className={styles.checklist}>
+                  {personal.eligibility.reasons.map((reason) => (
+                    <li key={describeReason(reason)} className={styles.check}>
+                      <Icon icon={CircleX} className={styles.unmet} />
+                      <span>{describeReason(reason)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Card>
         )}
 
-        <section className={styles.section} aria-labelledby="prerequisites-heading">
-          <h2 id="prerequisites-heading" className={styles.heading}>
-            Prerequisites
-          </h2>
+        <Card title="Prerequisites" titleIcon={ListChecks}>
           {course.prerequisites.length === 0 ? (
             <p className={styles.note}>None: any student who meets the other rules can take it.</p>
           ) : (
             <ul className={styles.checklist}>
               {course.prerequisites.map((prerequisite) => (
-                <li
-                  key={prerequisite.code}
-                  className={styles.check}
-                  data-met={prerequisite.met === null ? undefined : String(prerequisite.met)}
-                >
-                  {prerequisite.met !== null && (
-                    <Icon icon={prerequisite.met ? CircleCheck : CircleX} />
-                  )}
+                <li key={prerequisite.code} className={styles.check}>
                   <CourseCode code={prerequisite.code} size="sm" />
-                  <span>{prerequisite.name}</span>
+                  <span className={styles.checkName}>{prerequisite.name}</span>
                   {prerequisite.met !== null && (
-                    <span className={styles.checkState}>
+                    <Badge
+                      tone={prerequisite.met ? 'success' : 'danger'}
+                      icon={prerequisite.met ? CircleCheck : CircleX}
+                    >
                       {prerequisite.met ? 'Passed' : 'Not passed yet'}
-                    </span>
+                    </Badge>
                   )}
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
-        <section className={styles.section} aria-labelledby="programmes-heading">
-          <h2 id="programmes-heading" className={styles.heading}>
-            Eligible programmes
-          </h2>
+        <Card title="Eligible programmes" titleIcon={GraduationCap}>
           {course.eligiblePrograms.length === 0 ? (
             <p className={styles.note}>Open to students of every programme.</p>
           ) : (
-            <ul className={styles.plainList}>
+            <ul className={styles.chips}>
               {course.eligiblePrograms.map((program) => (
-                <li key={program.code}>{program.name}</li>
+                <li key={program.code}>
+                  <Badge tone="neutral">{program.name}</Badge>
+                </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
       </div>
 
       <aside className={styles.aside} aria-label="Seats and your status">
-        <section
-          className={styles.panel}
-          aria-labelledby="seats-heading"
-          data-changed={seatsChanged ? 'true' : undefined}
-        >
-          <h2 id="seats-heading" className={styles.panelHeading}>
-            Seats
-          </h2>
-          <SeatMeter
-            allocated={course.allocated}
-            capacity={course.capacity}
-            label={`Seats in ${course.name}`}
-          />
-          <p className={styles.demand}>
-            <Icon icon={Users} />
-            <span>{describeDemand(course.demand, course.capacity)}</span>
-          </p>
-          {isOversubscribed(course.demand, course.capacity) && (
-            <>
-              <Badge tone="warning" icon={TrendingUp}>
-                Oversubscribed
-              </Badge>
-              <p className={styles.note}>
-                More students ranked this course than it has seats, so seats go by preference and
-                priority when the window closes.
+        <Card title="Seats" titleIcon={Armchair}>
+          <div className={styles.stack}>
+            <div className={styles.live} data-changed={seatsChanged ? 'true' : undefined}>
+              <SeatMeter
+                allocated={course.allocated}
+                capacity={course.capacity}
+                label={`Seats in ${course.name}`}
+              />
+              <p className={styles.demand}>
+                <Icon icon={Users} />
+                <span>{describeDemand(course.demand, course.capacity)}</span>
               </p>
-            </>
-          )}
-        </section>
+            </div>
+            {isOversubscribed(course.demand, course.capacity) && (
+              <>
+                <Badge tone="warning" icon={TrendingUp}>
+                  Oversubscribed
+                </Badge>
+                <p className={styles.note}>
+                  More students ranked this course than it has seats, so seats go by preference and
+                  priority when the window closes.
+                </p>
+              </>
+            )}
+          </div>
+        </Card>
 
         {personal && (
-          <section className={styles.panel} aria-labelledby="status-heading">
-            <h2 id="status-heading" className={styles.panelHeading}>
-              Your status
-            </h2>
-            <MyStatusBadge status={personal.myStatus} />
-            <p className={styles.note}>{statusExplanation(personal.myStatus.code)}</p>
-            <div className={styles.cartSlot} data-slot="cart-action">
-              <CartAction
-                action={cartActionFor(course.code, personal.eligibility, cart)}
-                code={course.code}
-                name={course.name}
-              />
+          <Card title="Your status" titleIcon={UserCheck}>
+            <div className={styles.stack}>
+              <MyStatusBadge status={personal.myStatus} />
+              <p className={styles.note}>{statusExplanation(personal.myStatus.code)}</p>
+              <div className={styles.cartSlot} data-slot="cart-action">
+                <CartAction
+                  action={cartActionFor(course.code, personal.eligibility, cart)}
+                  code={course.code}
+                  name={course.name}
+                />
+              </div>
             </div>
-          </section>
+          </Card>
         )}
       </aside>
     </article>
@@ -297,13 +309,12 @@ function DetailSkeleton() {
   return (
     <div className={styles.layout} aria-hidden="true">
       <div className={styles.main}>
-        <Skeleton width="30%" />
-        <Skeleton lines={3} />
-        <Skeleton width="40%" />
-        <Skeleton lines={2} />
+        <Skeleton height="12rem" />
+        <Skeleton height="7rem" />
+        <Skeleton height="7rem" />
       </div>
       <div className={styles.aside}>
-        <Skeleton height="7rem" />
+        <Skeleton height="9rem" />
       </div>
     </div>
   );

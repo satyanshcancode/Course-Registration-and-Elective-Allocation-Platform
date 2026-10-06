@@ -37,16 +37,21 @@
   width: 100%;
   min-height: 2.5rem;
   padding: 0 var(--space-3) 0 2.25rem;
-  border: var(--border-hairline);
+  border: var(--border-control);
   border-radius: var(--radius-md);
-  background-color: var(--color-surface-sunken);
+  background-color: var(--color-surface);
   color: var(--color-ink);
   font-family: inherit;
   font-size: var(--text-sm);
 }
 
 .searchInput:hover {
-  border-color: var(--color-rule-strong);
+  border-color: var(--color-ink-muted);
+}
+
+.searchInput:focus-visible {
+  border-color: var(--color-accent);
+  outline-offset: 1px;
 }
 
 .searchInput::-webkit-search-cancel-button {
