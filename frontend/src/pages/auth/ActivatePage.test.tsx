@@ -202,7 +202,9 @@ describe('ActivatePage in reset mode', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Choose a new password' }),
     ).toBeVisible();
-    expect(screen.getByText(/signs you out on every other device/i)).toBeVisible();
+    // The loading branch draws the same heading with no lead, so waiting for
+    // the heading is not enough: wait for the sentence being asserted.
+    expect(await screen.findByText(/signs you out on every other device/i)).toBeVisible();
 
     await user.type(screen.getByLabelText('New password'), LONG_PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Save password and sign in' }));
