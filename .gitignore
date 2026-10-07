@@ -35,9 +35,5 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Local editor settings
-.editor/settings.local.json
-.editor/launch.json
-
 .vercel
 .env*
