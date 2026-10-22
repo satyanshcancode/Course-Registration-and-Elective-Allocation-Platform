@@ -192,6 +192,7 @@ export type {
 } from './api/eligibility.js';
 export type {
   AdminWindowDetail,
+  UpdateWindowDeadlineRequest,
   UpdateWindowRequest,
   WindowActionRequest,
   WindowCounts,

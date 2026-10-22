@@ -60,6 +60,37 @@ export function frozenPolicyMessage(status: RegistrationWindowStatus): string {
   return `The registration policy was frozen when the window opened, so it can't be changed while it is ${STATUS_WORDS[status]}.`;
 }
 
+/**
+ * Validates updating an open window's closing time.
+ * Only allowed while OPEN, must be in the future, and must be after starts_at.
+ */
+export function checkDeadlineUpdate(
+  status: RegistrationWindowStatus,
+  startsAt: Date,
+  newEndsAt: Date,
+  now: Date,
+): RuleCheck {
+  if (status !== 'OPEN') {
+    return {
+      ok: false,
+      message: `The registration deadline can only be changed while the window is open; this one is ${STATUS_WORDS[status]}.`,
+    };
+  }
+  if (newEndsAt <= startsAt) {
+    return {
+      ok: false,
+      message: 'Registration must close after it opens.',
+    };
+  }
+  if (newEndsAt <= now) {
+    return {
+      ok: false,
+      message: 'Registration would already be over: move the closing time into the future.',
+    };
+  }
+  return { ok: true };
+}
+
 /** Everything that must hold before a window can accept submissions. */
 export function checkReadyToOpen(
   policy: AllocationConfig,

@@ -2,6 +2,7 @@ import type {
   AdminWindowDetail,
   AllocationConfig,
   UpdateAddDropPeriodRequest,
+  UpdateWindowDeadlineRequest,
   UpdateWindowRequest,
   WindowActionRequest,
 } from '@course-reg/shared';
@@ -17,6 +18,7 @@ import { AppError } from '../utils/appError.js';
 import { toEligibilityCourse } from './catalogueRules.js';
 import { evaluateEligibility } from './eligibilityRules.js';
 import {
+  checkDeadlineUpdate,
   checkReadyToOpen,
   checkTransition,
   frozenPolicyMessage,
@@ -33,6 +35,11 @@ export interface RegistrationWindowService {
   /** Opens registration, freezing the policy and notifying every student. */
   open(actorUserId: string, request: WindowActionRequest): Promise<AdminWindowDetail>;
   close(actorUserId: string, request: WindowActionRequest): Promise<AdminWindowDetail>;
+  /** OPEN only: updates the closing time without changing policy or status. */
+  updateDeadline(
+    actorUserId: string,
+    change: UpdateWindowDeadlineRequest,
+  ): Promise<AdminWindowDetail>;
   /**
    * Schedules (or clears) the add/drop period. Only meaningful once allocation
    * has run, and deliberately NOT part of the frozen policy: extending the
@@ -61,6 +68,7 @@ export const WINDOW_AUDIT_ACTIONS = {
   open: 'REGISTRATION_WINDOW_OPENED',
   close: 'REGISTRATION_WINDOW_CLOSED',
   addDrop: 'ADD_DROP_PERIOD_UPDATED',
+  updateDeadline: 'REGISTRATION_WINDOW_DEADLINE_UPDATED',
 } as const;
 
 const WINDOW_ENTITY_TYPE = 'registration_window';
@@ -259,6 +267,35 @@ export function createRegistrationWindowService({
             addDropOpensAt: opensAt?.toISOString() ?? null,
             addDropClosesAt: closesAt?.toISOString() ?? null,
           },
+          reason: change.reason,
+        });
+      });
+      return buildDetail();
+    },
+
+    async updateDeadline(actorUserId, change) {
+      await withTransaction(pool, async (client) => {
+        const { repository, window } = await requireLockedWindow(client);
+        const newEndsAt = new Date(change.endsAt);
+        const startsAt = new Date(window.summary.startsAt);
+        const check = checkDeadlineUpdate(window.summary.status, startsAt, newEndsAt, now());
+        if (!check.ok) {
+          if (window.summary.status !== 'OPEN') {
+            throw new AppError(409, check.message);
+          }
+          throw AppError.badRequest(check.message, [{ field: 'endsAt', message: check.message }]);
+        }
+
+        const previousEndsAt = window.summary.endsAt;
+        await repository.updateDeadline(window.id, newEndsAt);
+
+        await auditLogsFor(client).record({
+          actorUserId,
+          action: WINDOW_AUDIT_ACTIONS.updateDeadline,
+          entityType: WINDOW_ENTITY_TYPE,
+          entityId: window.id,
+          oldValue: { endsAt: previousEndsAt },
+          newValue: { endsAt: newEndsAt.toISOString() },
           reason: change.reason,
         });
       });

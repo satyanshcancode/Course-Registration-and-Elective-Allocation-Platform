@@ -1,0 +1,40 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.lead {
+  max-width: 72ch;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  margin: 0;
+}
+
+.currentDeadline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.currentDeadline strong {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+}
+
+.fields {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 32rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}

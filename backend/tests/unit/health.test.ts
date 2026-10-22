@@ -94,6 +94,7 @@ function buildApp(repository: HealthRepository) {
       registrationWindowService: {
         getDetail: notUsed,
         updateWindow: notUsed,
+        updateDeadline: notUsed,
         open: notUsed,
         close: notUsed,
         setAddDropPeriod: notUsed,

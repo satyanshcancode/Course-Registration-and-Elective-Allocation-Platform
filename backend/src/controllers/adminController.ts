@@ -7,7 +7,11 @@ import { sendSuccess } from '../utils/apiResponse.js';
 import { courseCodeSchema, updateCapacitySchema } from '../validation/courseSchemas.js';
 import { parseInput } from '../validation/parse.js';
 import { addDropPeriodSchema } from '../validation/addDropSchemas.js';
-import { updateWindowSchema, windowActionSchema } from '../validation/windowSchemas.js';
+import {
+  updateDeadlineSchema,
+  updateWindowSchema,
+  windowActionSchema,
+} from '../validation/windowSchemas.js';
 
 export interface AdminController {
   ping: RequestHandler;
@@ -15,6 +19,7 @@ export interface AdminController {
   updateCapacity: RequestHandler;
   getWindow: RequestHandler;
   updateWindow: RequestHandler;
+  updateDeadline: RequestHandler;
   openWindow: RequestHandler;
   closeWindow: RequestHandler;
   setAddDropPeriod: RequestHandler;
@@ -60,6 +65,12 @@ export function createAdminController({
       const change = parseInput(updateWindowSchema, req.body);
       const detail = await registrationWindowService.updateWindow(getAuth(req).userId, change);
       sendSuccess(res, detail, { message: 'Registration window saved.' });
+    },
+
+    async updateDeadline(req, res) {
+      const change = parseInput(updateDeadlineSchema, req.body);
+      const detail = await registrationWindowService.updateDeadline(getAuth(req).userId, change);
+      sendSuccess(res, detail, { message: 'Registration closing time updated.' });
     },
 
     async openWindow(req, res) {

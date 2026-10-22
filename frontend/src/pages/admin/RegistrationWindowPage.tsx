@@ -31,6 +31,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useServerClock } from '../../hooks/useServerClock';
 import { formatDateTime } from '../../utils/formatDate';
 import { AddDropPeriodForm } from './window/AddDropPeriodForm';
+import { RegistrationDeadlineForm } from './window/RegistrationDeadlineForm';
 import { WindowPolicyForm } from './window/WindowPolicyForm';
 import styles from './RegistrationWindowPage.module.css';
 
@@ -184,6 +185,23 @@ export function RegistrationWindowPage() {
                 </dl>
               </div>
             </Card>
+
+            {detail.window.status === 'OPEN' && (
+              <Card
+                key={detail.window.endsAt}
+                title="Registration deadline"
+                titleIcon={CalendarClock}
+                headingLevel={2}
+              >
+                <RegistrationDeadlineForm
+                  detail={detail}
+                  onSaved={(updated, message) => {
+                    setSaved(measured(updated));
+                    toast.show({ tone: 'success', title: message });
+                  }}
+                />
+              </Card>
+            )}
 
             {detail.editable ? (
               <Card

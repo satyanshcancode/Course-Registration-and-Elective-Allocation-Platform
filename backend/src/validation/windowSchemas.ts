@@ -7,6 +7,7 @@ import {
   WINDOW_REASON_LENGTH,
   isAcademicTerm,
   type AllocationConfig,
+  type UpdateWindowDeadlineRequest,
   type UpdateWindowRequest,
 } from '@course-reg/shared';
 import { z } from 'zod';
@@ -102,3 +103,8 @@ export const updateWindowSchema = z
 export const windowActionSchema = z.object({
   reason: z.string().trim().max(WINDOW_REASON_LENGTH.max).optional(),
 });
+
+export const updateDeadlineSchema = z.object({
+  endsAt: isoDateTime,
+  reason: z.string().trim().max(WINDOW_REASON_LENGTH.max).optional(),
+}) satisfies z.ZodType<UpdateWindowDeadlineRequest>;

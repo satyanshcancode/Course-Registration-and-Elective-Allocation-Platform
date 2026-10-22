@@ -11,6 +11,7 @@ import { RegistrationWindowPage } from './RegistrationWindowPage';
 vi.mock('../../api/adminApi', () => ({
   getRegistrationWindow: vi.fn(),
   updateRegistrationWindow: vi.fn(),
+  updateRegistrationDeadline: vi.fn(),
   openRegistrationWindow: vi.fn(),
   closeRegistrationWindow: vi.fn(),
 }));
@@ -195,6 +196,135 @@ describe('RegistrationWindowPage', () => {
     expect(screen.getByRole('button', { name: 'Close registration' })).toBeInTheDocument();
     // The stored policy is still shown, just not editable.
     expect(screen.getByText(/P1 100 · P2 80/)).toBeInTheDocument();
+  });
+
+  describe('when registration is open', () => {
+    const openDetail = () =>
+      adminWindow({
+        window: {
+          ...adminWindow().window!,
+          status: 'OPEN',
+          startsAt: '2026-09-21T10:00:00.000Z',
+          endsAt: '2026-10-05T18:00:00.000Z',
+        },
+        editable: false,
+        serverTime: '2026-09-22T10:00:00.000Z',
+      });
+
+    beforeEach(() => {
+      api.getRegistrationWindow.mockResolvedValue(ok(openDetail()));
+    });
+
+    it('shows the Registration deadline card prefilled with current closing time', async () => {
+      renderWindowPage();
+
+      expect(
+        await screen.findByRole('heading', { name: 'Registration deadline' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Current closing time:')).toBeInTheDocument();
+      expect(screen.getByLabelText('New closing time')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save closing time' })).toBeInTheDocument();
+      // Frozen policy remains frozen
+      expect(screen.getByRole('heading', { name: 'Allocation policy' })).toBeInTheDocument();
+      expect(screen.getByText('Policy frozen')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Save window' })).not.toBeInTheDocument();
+    });
+
+    it('refuses a new deadline that is not after opening time', async () => {
+      const user = userEvent.setup();
+      renderWindowPage();
+
+      const input = await screen.findByLabelText('New closing time');
+      await user.clear(input);
+      await user.type(input, '2026-09-20T09:00');
+      await user.click(screen.getByRole('button', { name: 'Save closing time' }));
+
+      expect(
+        await screen.findByText('Registration must close after it opens.'),
+      ).toBeInTheDocument();
+      expect(api.updateRegistrationDeadline).not.toHaveBeenCalled();
+    });
+
+    it('refuses a new deadline in the past', async () => {
+      const user = userEvent.setup();
+      renderWindowPage();
+
+      const input = await screen.findByLabelText('New closing time');
+      await user.clear(input);
+      await user.type(input, '2026-09-21T23:00');
+      await user.click(screen.getByRole('button', { name: 'Save closing time' }));
+
+      expect(
+        await screen.findByText(
+          'Registration would already be over: move the closing time into the future.',
+        ),
+      ).toBeInTheDocument();
+      expect(api.updateRegistrationDeadline).not.toHaveBeenCalled();
+    });
+
+    it('saves an updated deadline with optional reason and updates the UI', async () => {
+      const user = userEvent.setup();
+      const updatedDetail = adminWindow({
+        window: {
+          ...adminWindow().window!,
+          status: 'OPEN',
+          startsAt: '2026-09-21T10:00:00.000Z',
+          endsAt: '2026-10-12T18:00:00.000Z',
+        },
+        editable: false,
+        serverTime: '2026-09-22T10:00:00.000Z',
+      });
+      api.updateRegistrationDeadline.mockResolvedValue(ok(updatedDetail));
+
+      renderWindowPage();
+
+      const input = await screen.findByLabelText('New closing time');
+      await user.clear(input);
+      await user.type(input, '2026-10-12T18:00');
+      await user.type(screen.getByLabelText('Reason'), 'Extended by faculty request');
+      await user.click(screen.getByRole('button', { name: 'Save closing time' }));
+
+      await waitFor(() => {
+        expect(api.updateRegistrationDeadline).toHaveBeenCalled();
+      });
+      expect(api.updateRegistrationDeadline.mock.calls[0]?.[0]?.reason).toBe(
+        'Extended by faculty request',
+      );
+      expect(api.updateRegistrationDeadline.mock.calls[0]?.[0]?.endsAt).toContain('2026-10-12');
+
+      expect(
+        await screen.findByRole('heading', { name: 'Registration deadline' }),
+      ).toBeInTheDocument();
+    });
+
+    it('displays server errors when saving the deadline fails', async () => {
+      const user = userEvent.setup();
+      api.updateRegistrationDeadline.mockResolvedValue({
+        success: false,
+        data: null,
+        message:
+          'The registration deadline can only be changed while the window is open; this one is already closed.',
+      });
+
+      renderWindowPage();
+
+      const input = await screen.findByLabelText('New closing time');
+      await user.clear(input);
+      await user.type(input, '2026-10-12T18:00');
+      await user.click(screen.getByRole('button', { name: 'Save closing time' }));
+
+      expect(
+        await screen.findByText(
+          'The registration deadline can only be changed while the window is open; this one is already closed.',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations when open', async () => {
+      const { container } = renderWindowPage();
+      await screen.findByRole('heading', { name: 'Registration deadline' });
+      await expectNoA11yViolations(container, { isolated: false });
+    });
   });
 
   it('has no accessibility violations', async () => {

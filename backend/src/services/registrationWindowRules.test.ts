@@ -6,6 +6,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   canSubmitNow,
+  checkDeadlineUpdate,
   checkPolicyComplete,
   checkReadyToOpen,
   checkTransition,
@@ -154,5 +155,59 @@ describe('generateRandomSeed', () => {
     expect(generateRandomSeed(() => 0)).toBe(RANDOM_SEED_LIMITS.min);
     expect(generateRandomSeed(() => 0.9999999)).toBeLessThanOrEqual(RANDOM_SEED_LIMITS.max);
     expect(Number.isInteger(generateRandomSeed())).toBe(true);
+  });
+});
+
+describe('checkDeadlineUpdate', () => {
+  const startsAt = new Date('2026-09-21T10:00:00.000Z');
+  const extendedDeadline = new Date('2026-10-05T18:00:00.000Z');
+  const shortenedDeadline = new Date('2026-09-25T18:00:00.000Z');
+
+  it('allows extending the deadline of an open window', () => {
+    expect(checkDeadlineUpdate('OPEN', startsAt, extendedDeadline, NOW)).toEqual({ ok: true });
+  });
+
+  it('allows shortening the deadline to a future time', () => {
+    expect(checkDeadlineUpdate('OPEN', startsAt, shortenedDeadline, NOW)).toEqual({ ok: true });
+  });
+
+  it('refuses when the window is not OPEN', () => {
+    const draft = checkDeadlineUpdate('DRAFT', startsAt, extendedDeadline, NOW);
+    expect(draft.ok).toBe(false);
+    expect(messageOf(draft)).toContain('still a draft');
+
+    const closed = checkDeadlineUpdate('CLOSED', startsAt, extendedDeadline, NOW);
+    expect(closed.ok).toBe(false);
+    expect(messageOf(closed)).toContain('already closed');
+
+    const allocated = checkDeadlineUpdate('ALLOCATED', startsAt, extendedDeadline, NOW);
+    expect(allocated.ok).toBe(false);
+    expect(messageOf(allocated)).toContain('already allocated');
+  });
+
+  it('refuses a deadline that is not after the opening time', () => {
+    const beforeOpen = new Date('2026-09-20T10:00:00.000Z');
+    const atOpen = startsAt;
+
+    const res1 = checkDeadlineUpdate('OPEN', startsAt, beforeOpen, NOW);
+    expect(res1.ok).toBe(false);
+    expect(messageOf(res1)).toContain('close after it opens');
+
+    const res2 = checkDeadlineUpdate('OPEN', startsAt, atOpen, NOW);
+    expect(res2.ok).toBe(false);
+    expect(messageOf(res2)).toContain('close after it opens');
+  });
+
+  it('refuses a deadline in the past or present', () => {
+    const past = new Date('2026-09-21T11:00:00.000Z');
+    const present = NOW;
+
+    const res1 = checkDeadlineUpdate('OPEN', startsAt, past, NOW);
+    expect(res1.ok).toBe(false);
+    expect(messageOf(res1)).toContain('future');
+
+    const res2 = checkDeadlineUpdate('OPEN', startsAt, present, NOW);
+    expect(res2.ok).toBe(false);
+    expect(messageOf(res2)).toContain('future');
   });
 });

@@ -40,6 +40,8 @@ export interface RegistrationWindowRepository {
   updatePolicy(windowId: string, update: WindowPolicyUpdate): Promise<void>;
   /** Replaces the offered courses, keeping the seats of courses that stay. */
   replaceOfferings(windowId: string, courseCodes: readonly string[]): Promise<void>;
+  /** Updates only ends_at; allowed while the window is OPEN. */
+  updateDeadline(windowId: string, endsAt: Date): Promise<void>;
   setStatus(windowId: string, status: string): Promise<void>;
   /**
    * The add/drop period. Deliberately separate from `updatePolicy`: the policy
@@ -225,6 +227,13 @@ export function createRegistrationWindowRepository(
          WHERE id = $1`,
         [windowId, opensAt, closesAt],
       );
+    },
+
+    async updateDeadline(windowId, endsAt) {
+      await pool.query(`UPDATE registration_windows SET ends_at = $2 WHERE id = $1`, [
+        windowId,
+        endsAt,
+      ]);
     },
 
     async setStatus(windowId, status) {

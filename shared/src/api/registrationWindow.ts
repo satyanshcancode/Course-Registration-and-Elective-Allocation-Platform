@@ -68,6 +68,12 @@ export interface WindowActionRequest {
   reason?: string;
 }
 
+/** PATCH /api/admin/registration-window/deadline (OPEN only). */
+export interface UpdateWindowDeadlineRequest {
+  endsAt: IsoDateTime;
+  reason?: string;
+}
+
 export const WINDOW_NAME_LENGTH = { min: 3, max: 80 } as const;
 export const WINDOW_REASON_LENGTH = { max: 500 } as const;
 /** Preference weights and priority points are percentages of a 100-point scale. */

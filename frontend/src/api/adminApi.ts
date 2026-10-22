@@ -4,6 +4,7 @@ import type {
   ApiResponse,
   UpdateCapacityRequest,
   UpdateCapacityResult,
+  UpdateWindowDeadlineRequest,
   UpdateWindowRequest,
   WindowActionRequest,
 } from '@course-reg/shared';
@@ -34,6 +35,15 @@ export function updateRegistrationWindow(
   change: UpdateWindowRequest,
 ): Promise<ApiResponse<AdminWindowDetail>> {
   return apiClient.patch<AdminWindowDetail>('/admin/registration-window', { body: change });
+}
+
+/** OPEN windows only: updates closing date-time without altering policy or status. */
+export function updateRegistrationDeadline(
+  request: UpdateWindowDeadlineRequest,
+): Promise<ApiResponse<AdminWindowDetail>> {
+  return apiClient.patch<AdminWindowDetail>('/admin/registration-window/deadline', {
+    body: request,
+  });
 }
 
 export function openRegistrationWindow(

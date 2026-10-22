@@ -3,6 +3,7 @@
  * opening and closing it, and the freeze that holds afterwards — in the
  * service AND in the database.
  */
+import { randomUUID } from 'node:crypto';
 import {
   DEFAULT_PREFERENCE_PRIORITY_CONFIG,
   FCFS_CONFIG,
@@ -11,6 +12,8 @@ import {
 } from '@course-reg/shared';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import { createServices } from '../../src/container.js';
+import { createMemoryMailer } from '../../src/mail/memoryMailer.js';
 import { WINDOW_AUDIT_ACTIONS } from '../../src/services/registrationWindowService.js';
 import {
   createCourse,
@@ -21,7 +24,14 @@ import {
   createUser,
   createWindow,
 } from './fixtures.js';
-import { buildApp, dataOf, sessionFor } from './http.js';
+import {
+  APP_BASE_URL,
+  JWT_SECRET,
+  TEST_HASH_ROUNDS,
+  buildApp,
+  dataOf,
+  sessionFor,
+} from './http.js';
 import { getTestPool } from './testDatabase.js';
 
 const WINDOW_PATH = '/api/admin/registration-window';
@@ -84,10 +94,13 @@ function messageOf(response: request.Response): string {
 
 async function auditRows(pool: ReturnType<typeof getTestPool>, action: string) {
   const result = await pool.query<{
+    actor_user_id: string | null;
     reason: string | null;
     old_value: unknown;
     new_value: unknown;
-  }>('SELECT reason, old_value, new_value FROM audit_logs WHERE action = $1', [action]);
+  }>('SELECT actor_user_id, reason, old_value, new_value FROM audit_logs WHERE action = $1', [
+    action,
+  ]);
   return result.rows;
 }
 
@@ -414,5 +427,319 @@ describe('the frozen policy', () => {
       [windowId, codes.ai],
     );
     expect(result.rows[0]?.capacity).toBe(25);
+  });
+});
+
+describe('PATCH /api/admin/registration-window/deadline', () => {
+  const DEADLINE_PATH = `${WINDOW_PATH}/deadline`;
+
+  it('is admin only', async () => {
+    const { students } = await buildWindow('OPEN');
+    const [student] = students;
+    await request(buildApp()).patch(DEADLINE_PATH).expect(401);
+    await request(buildApp())
+      .patch(DEADLINE_PATH)
+      .set('Cookie', sessionFor(student, 'STUDENT'))
+      .send({ endsAt: new Date(Date.now() + 86400000).toISOString() })
+      .expect(403);
+  });
+
+  it('extends the deadline of an open window, records an audit log, and leaves policy unchanged', async () => {
+    const { admin, pool, windowId } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    const initialWindow = await pool.query<{
+      starts_at: string;
+      ends_at: string;
+      status: string;
+      allocation_method: string;
+      random_seed: string;
+      config: unknown;
+    }>(
+      'SELECT starts_at, ends_at, status, allocation_method, random_seed, config FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    const previousEndsAt = new Date(initialWindow.rows[0]!.ends_at).toISOString();
+
+    const newDeadline = new Date(Date.now() + 14 * 86400000).toISOString();
+    const response = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: newDeadline, reason: 'Extended by faculty request' })
+      .expect(200);
+
+    const detail = dataOf(response) as AdminWindowDetail;
+    expect(new Date(detail.window?.endsAt ?? '').getTime()).toBe(new Date(newDeadline).getTime());
+    expect(detail.window?.status).toBe('OPEN');
+    expect(detail.editable).toBe(false);
+
+    // Verify database state: only ends_at changed
+    const afterWindow = await pool.query<{
+      starts_at: string;
+      ends_at: string;
+      status: string;
+      allocation_method: string;
+      random_seed: string;
+      config: unknown;
+    }>(
+      'SELECT starts_at, ends_at, status, allocation_method, random_seed, config FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+
+    expect(new Date(afterWindow.rows[0]!.ends_at).getTime()).toBe(new Date(newDeadline).getTime());
+    expect(afterWindow.rows[0]!.status).toBe(initialWindow.rows[0]!.status);
+    expect(new Date(afterWindow.rows[0]!.starts_at).getTime()).toBe(
+      new Date(initialWindow.rows[0]!.starts_at).getTime(),
+    );
+    expect(afterWindow.rows[0]!.allocation_method).toBe(initialWindow.rows[0]!.allocation_method);
+    expect(afterWindow.rows[0]!.random_seed).toBe(initialWindow.rows[0]!.random_seed);
+    expect(afterWindow.rows[0]!.config).toEqual(initialWindow.rows[0]!.config);
+
+    // Verify offerings are unchanged
+    const offerings = await pool.query(
+      'SELECT course_id, capacity FROM registration_window_courses WHERE window_id = $1 ORDER BY course_id',
+      [windowId],
+    );
+    expect(offerings.rows).toHaveLength(2);
+
+    // Verify audit log entry
+    const rows = await auditRows(pool, WINDOW_AUDIT_ACTIONS.updateDeadline);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.actor_user_id).toBe(admin);
+    expect(rows[0]?.reason).toBe('Extended by faculty request');
+    expect(rows[0]?.old_value).toEqual({ endsAt: previousEndsAt });
+    expect(rows[0]?.new_value).toEqual({ endsAt: newDeadline });
+  });
+
+  it('shortens the deadline to a future time', async () => {
+    const { admin, pool, windowId } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    const newDeadline = new Date(Date.now() + 2 * 86400000).toISOString();
+    const response = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: newDeadline })
+      .expect(200);
+
+    const detail = dataOf(response) as AdminWindowDetail;
+    expect(new Date(detail.window?.endsAt ?? '').getTime()).toBe(new Date(newDeadline).getTime());
+
+    const after = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    expect(new Date(after.rows[0]!.ends_at).getTime()).toBe(new Date(newDeadline).getTime());
+  });
+
+  it('refuses invalid deadline values', async () => {
+    const { admin } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    const response = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: 'not-a-valid-date' });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('refuses a deadline in the past or present, leaving the existing deadline unchanged', async () => {
+    const { admin, pool, windowId } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    // Ensure starts_at is in the past so that pastDate is strictly testing the past-deadline check
+    await pool.query(
+      "UPDATE registration_windows SET starts_at = now() - interval '2 days' WHERE id = $1",
+      [windowId],
+    );
+
+    const before = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+
+    const pastDate = new Date(Date.now() - 3600000).toISOString();
+    const response = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: pastDate });
+
+    expect(response.status).toBe(400);
+    expect(messageOf(response)).toMatch(/future/i);
+
+    const after = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    expect(new Date(after.rows[0]!.ends_at).getTime()).toBe(
+      new Date(before.rows[0]!.ends_at).getTime(),
+    );
+    expect(await auditRows(pool, WINDOW_AUDIT_ACTIONS.updateDeadline)).toHaveLength(0);
+  });
+
+  it('refuses a deadline that is not after the opening time', async () => {
+    const { admin, pool, windowId } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    // Set starts_at to a future time (e.g. 2 hours from now)
+    await pool.query(
+      "UPDATE registration_windows SET starts_at = now() + interval '2 hours' WHERE id = $1",
+      [windowId],
+    );
+
+    const before = await pool.query<{ starts_at: string; ends_at: string }>(
+      'SELECT starts_at, ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    // Deadline is in the future (1 hour from now), but BEFORE starts_at (2 hours from now)
+    const beforeStartsAt = new Date(Date.now() + 3600000).toISOString();
+
+    const response = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: beforeStartsAt });
+
+    expect(response.status).toBe(400);
+    expect(messageOf(response)).toMatch(/close after it opens/i);
+
+    const after = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    expect(new Date(after.rows[0]!.ends_at).getTime()).toBe(
+      new Date(before.rows[0]!.ends_at).getTime(),
+    );
+  });
+
+  it('refuses when the window is not OPEN (DRAFT, CLOSED, or ALLOCATED)', async () => {
+    const { admin, pool, windowId } = await buildWindow('DRAFT');
+    const { app, cookie } = adminRequest(admin);
+    const newDeadline = new Date(Date.now() + 86400000).toISOString();
+
+    // 1. DRAFT
+    const draftRes = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: newDeadline });
+    expect(draftRes.status).toBe(409);
+    expect(messageOf(draftRes)).toMatch(/still a draft/i);
+
+    // 2. CLOSED
+    await pool.query("UPDATE registration_windows SET status = 'CLOSED' WHERE id = $1", [windowId]);
+    const closedRes = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: newDeadline });
+    expect(closedRes.status).toBe(409);
+    expect(messageOf(closedRes)).toMatch(/already closed/i);
+
+    // 3. ALLOCATED
+    await pool.query("UPDATE registration_windows SET status = 'ALLOCATED' WHERE id = $1", [
+      windowId,
+    ]);
+    const allocatedRes = await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', cookie)
+      .send({ endsAt: newDeadline });
+    expect(allocatedRes.status).toBe(409);
+    expect(messageOf(allocatedRes)).toMatch(/already allocated/i);
+  });
+
+  it('rolls back the deadline update if the audit log insert fails', async () => {
+    const { pool, windowId } = await buildWindow('OPEN');
+    const before = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+
+    const services = createServices(pool, {
+      jwtSecret: JWT_SECRET,
+      appBaseUrl: APP_BASE_URL,
+      mailer: createMemoryMailer(),
+      passwordHashRounds: TEST_HASH_ROUNDS,
+    });
+
+    const newDeadline = new Date(Date.now() + 7 * 86400000).toISOString();
+    // Non-existent actorUserId UUID triggers foreign key constraint violation in audit_logs table
+    const nonExistentUserId = '00000000-0000-0000-0000-000000000000';
+
+    await expect(
+      services.registrationWindowService.updateDeadline(nonExistentUserId, {
+        endsAt: newDeadline,
+      }),
+    ).rejects.toThrow();
+
+    // Check PostgreSQL state: ends_at rolled back to original value
+    const after = await pool.query<{ ends_at: string }>(
+      'SELECT ends_at FROM registration_windows WHERE id = $1',
+      [windowId],
+    );
+    expect(new Date(after.rows[0]!.ends_at).getTime()).toBe(
+      new Date(before.rows[0]!.ends_at).getTime(),
+    );
+    expect(await auditRows(pool, WINDOW_AUDIT_ACTIONS.updateDeadline)).toHaveLength(0);
+  });
+
+  it('continues protecting policy and offered courses via database freeze triggers after deadline change', async () => {
+    const { admin, pool, windowId, codes } = await buildWindow('OPEN');
+    const { app, cookie } = adminRequest(admin);
+
+    const newDeadline = new Date(Date.now() + 5 * 86400000).toISOString();
+    await app.patch(DEADLINE_PATH).set('Cookie', cookie).send({ endsAt: newDeadline }).expect(200);
+
+    // Attempting to change policy directly in the database is blocked by freeze trigger
+    await expect(
+      pool.query("UPDATE registration_windows SET allocation_method = 'FCFS' WHERE id = $1", [
+        windowId,
+      ]),
+    ).rejects.toThrow(/frozen/i);
+
+    // Attempting to add an offering directly in the database is blocked by freeze trigger
+    await expect(createOffering(pool, windowId, codes.spare, 15)).rejects.toThrow(/frozen/i);
+  });
+
+  it('allows student submissions once an expired window deadline is extended', async () => {
+    const { admin, pool, windowId, students } = await buildWindow('OPEN');
+    const [student] = students;
+    const { app, cookie: adminCookie } = adminRequest(admin);
+    const studentCookie = sessionFor(student, 'STUDENT');
+
+    // Save student cart with CS401
+    await request(buildApp())
+      .put('/api/preferences')
+      .set('Cookie', studentCookie)
+      .send({ courseCodes: ['CS401'] })
+      .expect(200);
+
+    // Expire the window: starts 2 days ago, ended 1 hour ago
+    await pool.query(
+      "UPDATE registration_windows SET starts_at = now() - interval '2 days', ends_at = now() - interval '1 hour' WHERE id = $1",
+      [windowId],
+    );
+
+    // Student submission fails because window deadline has passed
+    const refusedRes = await request(buildApp())
+      .post('/api/registration/submit')
+      .set('Cookie', studentCookie)
+      .set('Idempotency-Key', randomUUID())
+      .send({ courseCodes: ['CS401'] });
+    expect(refusedRes.status).toBe(409);
+
+    // Admin extends deadline to 3 days in the future
+    const extendedDeadline = new Date(Date.now() + 3 * 86400000).toISOString();
+    await app
+      .patch(DEADLINE_PATH)
+      .set('Cookie', adminCookie)
+      .send({ endsAt: extendedDeadline, reason: 'Late submissions allowed' })
+      .expect(200);
+
+    // Student submission now succeeds immediately
+    const acceptedRes = await request(buildApp())
+      .post('/api/registration/submit')
+      .set('Cookie', studentCookie)
+      .set('Idempotency-Key', randomUUID())
+      .send({ courseCodes: ['CS401'] });
+    expect(acceptedRes.status).toBe(200);
   });
 });
