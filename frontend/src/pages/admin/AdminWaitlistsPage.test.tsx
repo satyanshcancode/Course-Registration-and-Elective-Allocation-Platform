@@ -65,7 +65,7 @@ describe('AdminWaitlistsPage', () => {
   it('puts the chosen course in the URL', async () => {
     const user = userEvent.setup();
     const { router } = renderPage('/admin/waitlists');
-    await screen.findByLabelText('Course');
+    await screen.findByRole('option', { name: /CS402/ });
 
     await user.selectOptions(screen.getByLabelText('Course'), 'CS402');
 

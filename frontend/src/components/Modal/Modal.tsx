@@ -115,9 +115,9 @@ export function Modal({
           </button>
         </header>
         {description && (
-          <p id={descriptionId} className={styles.description}>
+          <div id={descriptionId} className={styles.description}>
             {description}
-          </p>
+          </div>
         )}
         {children && <div className={styles.body}>{children}</div>}
         {footer && <footer className={styles.footer}>{footer}</footer>}
