@@ -19,6 +19,7 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
 | 0011      | The add/drop period, one elective per student, `add_drop_requests`                                                                                                       |
 | 0012      | `account_tokens`, `users.is_active` / `password_changed_at` (and a nullable `password_hash`), `courses.is_active`, a nullable `student_completed_courses.completed_term` |
 | 0013      | The `CO_ADMIN` role and `users.display_name` (the staff name)                                                                                                            |
+| 0014      | Enable Row Level Security (RLS) on all 23 public tables (deny-all default for PostgREST / anon)                                                                          |
 
 **Conventions**
 
@@ -33,6 +34,11 @@ applied in order by `npm run migrate` and recorded in `schema_migrations`.
   into a precise message.
 - Academic terms are text in the form `YYYY-SPRING` / `YYYY-FALL`.
 - Tables that change have `updated_at`, maintained by the `set_updated_at()` trigger.
+- Row-Level Security (RLS) is enabled on all public tables (migration 0014).
+  All authentication and authorization live in the Express backend, so no public
+  policies are granted; direct external access via Supabase's PostgREST Data API
+  (`anon` and `authenticated` roles) is denied by default, while the backend
+  connection pool (`postgres` role) retains full access.
 
 ## Entity-relationship diagram
 

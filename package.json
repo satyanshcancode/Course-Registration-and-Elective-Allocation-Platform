@@ -17,6 +17,7 @@
     "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
     "build:vercel": "npm run build && tsc -p api/tsconfig.json",
     "check:pooler": "node scripts/check-pooler.mjs",
+    "migrate:prod": "node scripts/migrate-prod.mjs",
     "preview": "concurrently --names backend,frontend --prefix-colors blue,magenta \"npm run start -w backend\" \"npm run preview -w frontend\"",
     "migrate": "npm run migrate -w backend",
     "seed": "npm run seed -w backend",
